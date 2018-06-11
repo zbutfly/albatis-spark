@@ -65,6 +65,18 @@ public class SparkConnection implements Connection, Serializable {
 	public <I extends SparkInput> I input(URISpec uri, String... table) {
 		return SparkIO.input(spark, uri);
 	}
+	
+	public SparkJoinInput innerJoin(SparkInput... inputs) {
+		return new SparkInnerJoinInput(inputs);
+	}
+	
+	public SparkJoinInput orJoin(SparkInput... inputs) {
+		return new SparkOrJoinInput(inputs);
+	}
+	
+	public SparkJoinInput nonJoin(SparkInput... inputs) {
+		return new SparkNonJoinInput(inputs);
+	}
 
 	@Override
 	public String defaultSchema() {

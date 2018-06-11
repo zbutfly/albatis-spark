@@ -18,7 +18,8 @@ public abstract class SparkIO {
 	protected JavaSparkContext jsc;
 	protected URISpec targetUri;
 
-	public SparkIO() {}
+	public SparkIO() {
+	}
 
 	protected SparkIO(SparkSession spark, URISpec targetUri) {
 		super();
@@ -40,13 +41,15 @@ public abstract class SparkIO {
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<O> c = (Class<O>) ADAPTER_OUTPUT.get(s);
-			if (null == c) break;
-			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
-			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException e) {
-				throw new RuntimeException(e);
-			}
+			if (null == c)
+				break;
+			else
+				try {
+					return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
+				} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+						| IllegalArgumentException | InvocationTargetException e) {
+					throw new RuntimeException(e);
+				}
 		}
 		throw new RuntimeException("No matched adapter with scheme: " + s);
 	}
@@ -56,15 +59,17 @@ public abstract class SparkIO {
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<I> c = (Class<I>) ADAPTER_INPUT.get(s);
-			if (null == c) s = s.substring(0, s.lastIndexOf(':'));
-			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
-			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
-					| IllegalArgumentException e) {
-				throw new RuntimeException(e);
-			} catch (InvocationTargetException e) {
-				throw new RuntimeException(e.getTargetException());
-			}
+			if (null == c)
+				s = s.substring(0, s.lastIndexOf(':'));
+			else
+				try {
+					return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
+				} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+						| IllegalArgumentException e) {
+					throw new RuntimeException(e);
+				} catch (InvocationTargetException e) {
+					throw new RuntimeException(e.getTargetException());
+				}
 		}
 		throw new RuntimeException("No matched adapter with scheme: " + s);
 	}
@@ -73,6 +78,8 @@ public abstract class SparkIO {
 		Map<String, Class<? extends C>> map = Maps.of();
 		for (Class<? extends C> c : Reflections.getSubClasses(parentClass))
 			try {
+				if (SparkJoinInput.class.isAssignableFrom(c))
+					continue;
 				for (String s : c.newInstance().schema().split(","))
 					map.put(s, c);
 			} catch (InstantiationException | IllegalAccessException e) {
