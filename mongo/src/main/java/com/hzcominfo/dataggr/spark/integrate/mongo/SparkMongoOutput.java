@@ -73,7 +73,9 @@ public class SparkMongoOutput extends SparkOutput {
 				logger.warn("Mongodb connection created");
 			}
 		}
-		collection.insertOne(new Document(FuncUtil.rowMap(row)));
+		Document doc = new Document(FuncUtil.rowMap(row));
+		if (doc.containsKey("_id")) doc.remove("_id");
+		collection.insertOne(doc);
 		logger.trace("inserted: " + row.toString());
 		return true;
 	}
