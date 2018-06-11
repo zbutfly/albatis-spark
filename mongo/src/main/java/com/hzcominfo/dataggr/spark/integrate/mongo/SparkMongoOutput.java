@@ -51,7 +51,8 @@ public class SparkMongoOutput extends SparkOutput {
 	protected java.util.Map<String, String> options() {
 		String file = targetUri.getFile();
 		String[] path = targetUri.getPaths();
-		if (path.length != 1) throw new RuntimeException("Mongodb URI is incorrect");
+		if (path.length != 1)
+			throw new RuntimeException("Mongodb URI is incorrect");
 		String database = path[0];
 		String collection = file;
 		String uri = targetUri.getScheme() + "://" + targetUri.getAuthority() + "/" + database;
@@ -74,7 +75,8 @@ public class SparkMongoOutput extends SparkOutput {
 			}
 		}
 		Document doc = new Document(FuncUtil.rowMap(row));
-		if (doc.containsKey("_id")) doc.remove("_id");
+		if (doc.containsKey("_id"))
+			doc.remove("_id");
 		collection.insertOne(doc);
 		logger.trace("inserted: " + row.toString());
 		return true;
