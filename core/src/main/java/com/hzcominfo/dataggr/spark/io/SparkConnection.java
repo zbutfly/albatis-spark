@@ -2,6 +2,7 @@ package com.hzcominfo.dataggr.spark.io;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,10 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.albatis.nosql.Connection;
+import com.hzcominfo.dataggr.spark.join.SparkInnerJoinInput;
+import com.hzcominfo.dataggr.spark.join.SparkJoinInput;
+import com.hzcominfo.dataggr.spark.join.SparkNonJoinInput;
+import com.hzcominfo.dataggr.spark.join.SparkOrJoinInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
@@ -31,8 +36,8 @@ public class SparkConnection implements Connection, Serializable {
 		parameters.put("spark.mongodb.input.uri", "mongodb://user:pwd@localhost:80/db.tbl");
 		parameters.put("spark.mongodb.output.uri", "mongodb://user:pwd@localhost:80/db.tbl");
 		parameters.forEach((key, value) -> sparkConf.set(key, value));
-		this.spark = SparkSession.builder().master(DEFAULT_HOST).appName(name == null ? "Simulation" : name).config(sparkConf)
-				.getOrCreate();
+		this.spark = SparkSession.builder().master(DEFAULT_HOST).appName(name == null ? "Simulation" : name)
+				.config(sparkConf).getOrCreate();
 	}
 
 	@Override
@@ -46,7 +51,8 @@ public class SparkConnection implements Connection, Serializable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public SparkInput input(String... table) throws IOException {
-		if (table.length == 0) throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
+		if (table.length == 0)
+			throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
 		String[] ts = Colls.list(table).subList(1, table.length - 1).toArray(new String[0]);
 		return input(new URISpec(table[0]), ts);
 	}
@@ -65,17 +71,30 @@ public class SparkConnection implements Connection, Serializable {
 	public <I extends SparkInput> I input(URISpec uri, String... table) {
 		return SparkIO.input(spark, uri);
 	}
-	
-	public SparkJoinInput innerJoin(SparkInput... inputs) {
+
+	public SparkJoinInput innerJoin(List<SparkInput> inputs) {
 		return new SparkInnerJoinInput(inputs);
 	}
-	
-	public SparkJoinInput orJoin(SparkInput... inputs) {
+
+	public SparkJoinInput orJoin(List<SparkInput> inputs) {
 		return new SparkOrJoinInput(inputs);
 	}
-	
-	public SparkJoinInput nonJoin(SparkInput... inputs) {
+
+	public SparkJoinInput nonJoin(List<SparkInput> inputs) {
 		return new SparkNonJoinInput(inputs);
+	}
+
+	@SuppressWarnings("unchecked")
+	public SparkJoinInput ruleInput(String className, List<SparkInput> inputs) {
+		try {
+			Class<? extends SparkJoinInput> c = (Class<? extends SparkJoinInput>) Class.forName(className);
+			return c.getConstructor(List.class).newInstance(inputs);
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
+				| IllegalAccessException | IllegalArgumentException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e.getTargetException());
+		}
 	}
 
 	@Override

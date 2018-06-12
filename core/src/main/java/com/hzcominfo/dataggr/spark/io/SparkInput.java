@@ -20,7 +20,6 @@ public abstract class SparkInput extends SparkIO implements OddInput<Row>, Seria
 
 	private transient Dataset<Row> dataset;
 	private transient StreamingQuery streaming = null;
-	private String key;
 
 	public SparkInput() {
 		super();
@@ -30,14 +29,6 @@ public abstract class SparkInput extends SparkIO implements OddInput<Row>, Seria
 		super(spark, targetUri);
 	}
 	
-	public void joinCol(String key) {
-		this.key = key;
-	}
-	
-	protected String key() {
-		return key;
-	}
-
 	@Override
 	public void open() {
 		OddInput.super.open();

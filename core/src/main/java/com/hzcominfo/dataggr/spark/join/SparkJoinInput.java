@@ -1,21 +1,24 @@
-package com.hzcominfo.dataggr.spark.io;
+package com.hzcominfo.dataggr.spark.join;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import com.hzcominfo.dataggr.spark.io.SparkInput;
+
 public class SparkJoinInput extends SparkInput {
 	private static final long serialVersionUID = -1813416909589214047L;
-	protected final SparkInput[] inputs;
+	protected final List<SparkInput> inputs;
 	protected final String joinType;
 
-	public SparkJoinInput(SparkInput... inputs) {
+	public SparkJoinInput(List<SparkInput> inputs) {
 		this("inner", inputs);
 	}
 	
-	public SparkJoinInput(String joinType, SparkInput... inputs) {
-		if (inputs == null || inputs.length < 2)
+	public SparkJoinInput(String joinType, List<SparkInput> inputs) {
+		if (inputs == null || inputs.size() < 2)
 			throw new RuntimeException("Not conforming to the conditions of join");
 		this.joinType = joinType;
 		this.inputs = inputs;
@@ -30,12 +33,13 @@ public class SparkJoinInput extends SparkInput {
 
 	@Override
 	protected Dataset<Row> load() {
-		SparkInput in0 = inputs[0];
+		SparkInput in0 = inputs.get(0);
 		Dataset<Row> ds0 = in0.dataset();
-		for (int i = 1; i < inputs.length; i++) {
-			SparkInput ini = inputs[i];
+		for (int i = 1; i < inputs.size(); i++) {
+			SparkInput ini = inputs.get(i);
 			Dataset<Row> dsi = ini.dataset();
-			ds0 = ds0.join(dsi, ds0.col(in0.key()).equalTo(dsi.col(ini.key())), joinType).distinct();
+			//TODO 
+//			ds0 = ds0.join(dsi, ds0.col(in0.key()).equalTo(dsi.col(ini.key())), joinType).distinct();
 		}
 		return ds0;
 	}
@@ -48,5 +52,12 @@ public class SparkJoinInput extends SparkInput {
 	@Override
 	protected String schema() {
 		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public void close() {
+		super.close();
+		for (SparkInput in : inputs)
+			in.close();
 	}
 }
