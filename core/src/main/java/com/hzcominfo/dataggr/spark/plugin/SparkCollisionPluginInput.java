@@ -11,11 +11,12 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	private static final long serialVersionUID = -8270271411455957886L;
 	private final Map<String, SparkInput> cInputs;
 
-	public SparkCollisionPluginInput(SparkInput input, PluginConfig pc, Map<String, SparkInput> collisionInputs) {
+	public SparkCollisionPluginInput(SparkInput input, PluginConfig pc) {
 		super(input, pc);
-		if (collisionInputs == null || collisionInputs.isEmpty())
+		Map<String, SparkInput> cInputs = pc.getCollisionInputs();
+		if (cInputs == null || cInputs.isEmpty())
 			throw new RuntimeException("Not conforming to the conditions of collision plugin");
-		this.cInputs = collisionInputs;
+		this.cInputs = cInputs;
 	}
 
 	@Override
