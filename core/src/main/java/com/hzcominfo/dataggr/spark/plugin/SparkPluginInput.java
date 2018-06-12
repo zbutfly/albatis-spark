@@ -42,7 +42,7 @@ public class SparkPluginInput extends SparkInput {
 		Dataset<Row> ds0 = dsList.get(0);
 		for (int i = 1; i < dsList.size(); i++)
 			ds0.union(dsList.get(i));
-		return ds0.distinct();
+		return ds0;
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.ForeachWriter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 
@@ -58,7 +59,7 @@ public abstract class SparkInput extends SparkIO implements OddInput<Row>, Seria
 	}
 
 	void start(OddOutput<Row> output) {
-		if (dataset.isStreaming()) streaming = dataset.writeStream().foreach(new ForeachWriter<Row>() {
+		if (dataset.isStreaming()) streaming = dataset.writeStream().outputMode(OutputMode.Complete()).foreach(new ForeachWriter<Row>() {
 			private static final long serialVersionUID = 3602739322755312373L;
 
 			@Override
