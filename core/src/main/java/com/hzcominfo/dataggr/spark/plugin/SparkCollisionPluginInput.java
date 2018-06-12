@@ -21,9 +21,9 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 
 	@Override
 	public void open() {
-		super.open();
 		for (SparkInput in : cInputs.values())
 			in.open();
+		super.open();
 	}
 
 	@Override

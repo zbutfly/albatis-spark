@@ -16,6 +16,8 @@ import com.hzcominfo.dataggr.spark.join.SparkInnerJoinInput;
 import com.hzcominfo.dataggr.spark.join.SparkJoinInput;
 import com.hzcominfo.dataggr.spark.join.SparkNonJoinInput;
 import com.hzcominfo.dataggr.spark.join.SparkOrJoinInput;
+import com.hzcominfo.dataggr.spark.plugin.PluginConfig;
+import com.hzcominfo.dataggr.spark.plugin.SparkPluginInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
@@ -43,7 +45,6 @@ public class SparkConnection implements Connection, Serializable {
 	@Override
 	public void close() {
 		if (spark != null) {
-			spark.cloneSession();
 			spark.close();
 		}
 	}
@@ -85,10 +86,10 @@ public class SparkConnection implements Connection, Serializable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput ruleInput(String className, List<SparkInput> inputs) {
+	public SparkPluginInput plugin(String className, SparkInput input, PluginConfig pc) {
 		try {
-			Class<? extends SparkJoinInput> c = (Class<? extends SparkJoinInput>) Class.forName(className);
-			return c.getConstructor(List.class).newInstance(inputs);
+			Class<? extends SparkPluginInput> c = (Class<? extends SparkPluginInput>) Class.forName(className);
+			return c.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
 				| IllegalAccessException | IllegalArgumentException e) {
 			throw new RuntimeException(e);

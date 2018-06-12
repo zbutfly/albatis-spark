@@ -7,6 +7,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.join.SparkJoinInput;
+import com.hzcominfo.dataggr.spark.plugin.SparkPluginInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.Reflections;
@@ -80,7 +81,7 @@ public abstract class SparkIO {
 		Map<String, Class<? extends C>> map = Maps.of();
 		for (Class<? extends C> c : Reflections.getSubClasses(parentClass))
 			try {
-				if (SparkJoinInput.class.isAssignableFrom(c))
+				if (SparkJoinInput.class.isAssignableFrom(c) || SparkPluginInput.class.isAssignableFrom(c))
 					continue;
 				for (String s : c.newInstance().schema().split(","))
 					map.put(s, c);
