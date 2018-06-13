@@ -34,12 +34,14 @@ public class FuncUtil implements Serializable {
 		String file = u.getFile();
 		String[] path = u.getPaths();
 		String tbl = null;
-		if (path.length > 0) tbl = file;
+		if (path.length > 0)
+			tbl = file;
 		return tbl;
 	};
 
 	public static Map<String, Object> rowMap(Row row) {
-		Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala().toSeq();
+		Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator())
+				.asScala().toSeq();
 		return JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
 	}
 
@@ -48,22 +50,38 @@ public class FuncUtil implements Serializable {
 	}
 
 	public static final DataType classType(Class<?> c) {
-		if (CharSequence.class.isAssignableFrom(c)) return DataTypes.StringType;
-		if (int.class.isAssignableFrom(c) || Integer.class.isAssignableFrom(c)) return DataTypes.IntegerType;
-		if (long.class.isAssignableFrom(c) || Long.class.isAssignableFrom(c)) return DataTypes.LongType;
-		if (boolean.class.isAssignableFrom(c) || Boolean.class.isAssignableFrom(c)) return DataTypes.BooleanType;
-		if (double.class.isAssignableFrom(c) || Double.class.isAssignableFrom(c)) return DataTypes.DoubleType;
-		if (float.class.isAssignableFrom(c) || Float.class.isAssignableFrom(c)) return DataTypes.FloatType;
-		if (byte.class.isAssignableFrom(c) || Byte.class.isAssignableFrom(c)) return DataTypes.ByteType;
-		if (short.class.isAssignableFrom(c) || Short.class.isAssignableFrom(c)) return DataTypes.ShortType;
-		if (byte[].class.isAssignableFrom(c)) return DataTypes.BinaryType;
-		if (Date.class.isAssignableFrom(c)) return DataTypes.DateType;
-		if (Timestamp.class.isAssignableFrom(c)) return DataTypes.TimestampType;
-		if (Void.class.isAssignableFrom(c)) return DataTypes.NullType;
-		// if (CharSequence.class.isAssignableFrom(c)) return DataTypes.CalendarIntervalType;
-		if (c.isArray()) return DataTypes.createArrayType(classType(c.getComponentType()));
-		// if (Iterable.class.isAssignableFrom(c)) return DataTypes.createArrayType(elementType);
-		// if (Map.class.isAssignableFrom(c)) return DataTypes.createMapType(keyType, valueType);
+		if (CharSequence.class.isAssignableFrom(c))
+			return DataTypes.StringType;
+		if (int.class.isAssignableFrom(c) || Integer.class.isAssignableFrom(c))
+			return DataTypes.IntegerType;
+		if (long.class.isAssignableFrom(c) || Long.class.isAssignableFrom(c))
+			return DataTypes.LongType;
+		if (boolean.class.isAssignableFrom(c) || Boolean.class.isAssignableFrom(c))
+			return DataTypes.BooleanType;
+		if (double.class.isAssignableFrom(c) || Double.class.isAssignableFrom(c))
+			return DataTypes.DoubleType;
+		if (float.class.isAssignableFrom(c) || Float.class.isAssignableFrom(c))
+			return DataTypes.FloatType;
+		if (byte.class.isAssignableFrom(c) || Byte.class.isAssignableFrom(c))
+			return DataTypes.ByteType;
+		if (short.class.isAssignableFrom(c) || Short.class.isAssignableFrom(c))
+			return DataTypes.ShortType;
+		if (byte[].class.isAssignableFrom(c))
+			return DataTypes.BinaryType;
+		if (Date.class.isAssignableFrom(c))
+			return DataTypes.DateType;
+		if (Timestamp.class.isAssignableFrom(c))
+			return DataTypes.TimestampType;
+		if (Void.class.isAssignableFrom(c))
+			return DataTypes.NullType;
+		// if (CharSequence.class.isAssignableFrom(c)) return
+		// DataTypes.CalendarIntervalType;
+		if (c.isArray())
+			return DataTypes.createArrayType(classType(c.getComponentType()));
+		// if (Iterable.class.isAssignableFrom(c)) return
+		// DataTypes.createArrayType(elementType);
+		// if (Map.class.isAssignableFrom(c)) return DataTypes.createMapType(keyType,
+		// valueType);
 		throw new UnsupportedOperationException(c.getName() + " not support for spark sql data type");
 	}
 

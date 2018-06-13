@@ -1,6 +1,7 @@
 package com.hzcominfo.dataggr.spark.io;
 
 import java.io.Serializable;
+import java.util.function.Function;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.ForeachWriter;
@@ -53,18 +54,22 @@ public abstract class SparkInput extends SparkIO implements OddInput<Row>, Seria
 	public final Dataset<Row> dataset() {
 		return dataset;
 	}
-
-	public SparkPump pump(OddOutput<Row> output) {
-		return new SparkPump(this, output);
+	
+	public SparkPump<Row> pump(OddOutput<Row> output) {
+		return pump(output, null);
 	}
 
-	void start(OddOutput<Row> output) {
-		if (dataset.isStreaming()) streaming = dataset.writeStream().outputMode(OutputMode.Complete()).foreach(new ForeachWriter<Row>() {
+	public <E> SparkPump<E> pump(OddOutput<E> output, E e) {
+		return new SparkPump<E>(this, output, e);
+	}
+
+	<E> void start(OddOutput<E> output, Function<Row, E> func) {
+		if (dataset.isStreaming()) streaming = dataset.writeStream().outputMode(OutputMode.Update()).foreach(new ForeachWriter<Row>() {
 			private static final long serialVersionUID = 3602739322755312373L;
 
 			@Override
 			public void process(Row r) {
-				output.enqueue(r);
+				output.enqueue(func.apply(r));
 			}
 
 			@Override
@@ -75,7 +80,7 @@ public abstract class SparkInput extends SparkIO implements OddInput<Row>, Seria
 			@Override
 			public void close(Throwable err) {}
 		}).start();
-		else dataset.foreach(output::enqueue);
+		else dataset.foreach(r -> output.enqueue(func.apply(r)));
 	}
 
 	void await() {

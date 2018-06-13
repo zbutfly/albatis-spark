@@ -15,7 +15,7 @@ public class SparkJoinInput extends SparkInput {
 	protected final String joinType;
 
 	public SparkJoinInput(SparkInput input, String col, Map<String, SparkInput> joinInputs, String joinType) {
-		if (joinInputs == null || joinInputs.size() < 2)
+		if (joinInputs == null || joinInputs.size() < 1)
 			throw new RuntimeException("Not conforming to the conditions of join");
 		this.input = input;
 		this.col = col;
