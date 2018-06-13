@@ -19,8 +19,8 @@ public class URISpecTest {
 			tbl = file;
 			uri = u.getScheme() + "://" +u.getAuthority() + "/" +db;
 		}
-		System.err.println("db: " + db);
-		System.err.println("tbl: " + tbl);
+		System.out.println("db: " + db);
+		System.out.println("tbl: " + tbl);
 		System.out.println("uri: " + uri);
 	}
 }

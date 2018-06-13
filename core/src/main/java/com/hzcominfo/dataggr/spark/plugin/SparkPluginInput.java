@@ -13,11 +13,18 @@ import org.apache.spark.sql.Row;
 
 import com.hzcominfo.dataggr.spark.io.SparkInput;
 
+/**
+ * for feature
+ * @author chenw
+ *
+ */
 public class SparkPluginInput extends SparkInput {
 	private static final long serialVersionUID = -3514105763334222049L;
 	protected final SparkInput input;
 	protected final PluginConfig pc;
-	protected final static String PLUGIN_KEY = "PLUGIN_KEY";
+	protected final static String PLUGIN_KEY = PluginElement.PLUGIN_KEY.name();
+	protected final static String COUNT = PluginElement.COUNT.name();
+	protected final static String MAX_SCORE = PluginElement.MAX_SCORE.name();
 
 	public SparkPluginInput(SparkInput input, PluginConfig pc) {
 		this.input = input;
@@ -37,7 +44,7 @@ public class SparkPluginInput extends SparkInput {
 		String maxScore = pc.getMaxScore();
 		List<Dataset<Row>> dsList = new ArrayList<>();
 		keys.forEach(k -> dsList
-				.add(ds.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as("COUNT"), max(maxScore).as("MAX_SCORE"))));
+				.add(ds.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))));
 		// if (dsList.isEmpty()) return null;
 		Dataset<Row> ds0 = dsList.get(0);
 		for (int i = 1; i < dsList.size(); i++)
@@ -54,7 +61,7 @@ public class SparkPluginInput extends SparkInput {
 	protected String schema() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public void close() {
 		super.close();

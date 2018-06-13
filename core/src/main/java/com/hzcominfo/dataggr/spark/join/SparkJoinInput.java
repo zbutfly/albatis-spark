@@ -1,6 +1,5 @@
 package com.hzcominfo.dataggr.spark.join;
 
-import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
@@ -10,36 +9,35 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 public class SparkJoinInput extends SparkInput {
 	private static final long serialVersionUID = -1813416909589214047L;
-	protected final List<SparkInput> inputs;
+	protected final SparkInput input;
+	protected final String col;
+	protected final Map<String, SparkInput> joinInputs;
 	protected final String joinType;
 
-	public SparkJoinInput(List<SparkInput> inputs) {
-		this("inner", inputs);
-	}
-	
-	public SparkJoinInput(String joinType, List<SparkInput> inputs) {
-		if (inputs == null || inputs.size() < 2)
+	public SparkJoinInput(SparkInput input, String col, Map<String, SparkInput> joinInputs, String joinType) {
+		if (joinInputs == null || joinInputs.size() < 2)
 			throw new RuntimeException("Not conforming to the conditions of join");
+		this.input = input;
+		this.col = col;
+		this.joinInputs = joinInputs;
 		this.joinType = joinType;
-		this.inputs = inputs;
 	}
-	
+
 	@Override
 	public void open() {
-		for (SparkInput in : inputs)
+		for (SparkInput in : joinInputs.values())
 			in.open();
+		input.open();
 		super.open();
 	}
 
 	@Override
 	protected Dataset<Row> load() {
-		SparkInput in0 = inputs.get(0);
-		Dataset<Row> ds0 = in0.dataset();
-		for (int i = 1; i < inputs.size(); i++) {
-			SparkInput ini = inputs.get(i);
-			Dataset<Row> dsi = ini.dataset();
-			//TODO 
-//			ds0 = ds0.join(dsi, ds0.col(in0.key()).equalTo(dsi.col(ini.key())), joinType).distinct();
+		Dataset<Row> ds0 = input.dataset();
+		for (String key : joinInputs.keySet()) {
+			SparkInput in = joinInputs.get(key);
+			Dataset<Row> ds = in.dataset();
+			ds0 = ds0.join(ds, ds0.col(col).equalTo(ds.col(key)), joinType).distinct();
 		}
 		return ds0;
 	}
@@ -53,11 +51,12 @@ public class SparkJoinInput extends SparkInput {
 	protected String schema() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public void close() {
 		super.close();
-		for (SparkInput in : inputs)
+		input.close();
+		for (SparkInput in : joinInputs.values())
 			in.close();
 	}
 }
