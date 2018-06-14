@@ -10,6 +10,7 @@ import com.hzcominfo.dataggr.spark.util.FuncUtil;
 
 import net.butfly.albacore.base.Namedly;
 import net.butfly.albacore.utils.Reflections;
+import net.butfly.albatis.io.Message;
 import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.pump.Pump;
 
@@ -37,7 +38,9 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 			return (V) r;
 		else if (Map.class.isAssignableFrom(v.getClass())) {
 			return (V) FuncUtil.rowMap(r);
-		} else {
+		}else if (Message.class.isAssignableFrom(v.getClass()))
+			return (V) new Message(FuncUtil.rowMap(r));
+		else {
 			throw new RuntimeException("There is no transformation method for this class: " + v.getClass().getName());
 		}
 	};
