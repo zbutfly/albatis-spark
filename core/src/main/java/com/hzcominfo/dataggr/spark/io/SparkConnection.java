@@ -72,16 +72,16 @@ public class SparkConnection implements Connection, Serializable {
 	public <I extends SparkInput> I input(URISpec uri, String... table) {
 		return SparkIO.input(spark, uri);
 	}
-
-	public SparkJoinInput innerJoin(SparkInput input, String col, Map<String, SparkInput> joinInputs) {
+	
+	public SparkJoinInput innerJoin(SparkInput input, String col, Map<SparkInput, String> joinInputs) {
 		return new SparkInnerJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput orJoin(SparkInput input, String col, Map<String, SparkInput> joinInputs) {
+	public SparkJoinInput orJoin(SparkInput input, String col, Map<SparkInput, String> joinInputs) {
 		return new SparkOrJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput nonJoin(SparkInput input, String col, Map<String, SparkInput> joinInputs) {
+	public SparkJoinInput nonJoin(SparkInput input, String col, Map<SparkInput, String> joinInputs) {
 		return new SparkNonJoinInput(input, col, joinInputs);
 	}
 

@@ -7,18 +7,18 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 public class InputMapTool {
 
-	private final Map<String, SparkInput> map;
+	private final Map<SparkInput, String> map;
 	
 	public InputMapTool() {
 		this.map = new HashMap<>();;
 	}
 	
-	public InputMapTool append(String k, SparkInput v) {
+	public InputMapTool append(SparkInput k, String v) {
 		map.put(k, v);
 		return this;
 	}
 	
-	public Map<String, SparkInput> get() {
+	public Map<SparkInput, String> get() {
 		return map;
 	}
 }

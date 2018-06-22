@@ -11,10 +11,10 @@ public class SparkJoinInput extends SparkInput {
 	private static final long serialVersionUID = -1813416909589214047L;
 	protected final SparkInput input;
 	protected final String col;
-	protected final Map<String, SparkInput> joinInputs;
+	protected final Map<SparkInput, String> joinInputs;
 	protected final String joinType;
 
-	public SparkJoinInput(SparkInput input, String col, Map<String, SparkInput> joinInputs, String joinType) {
+	public SparkJoinInput(SparkInput input, String col, Map<SparkInput, String> joinInputs, String joinType) {
 		if (joinInputs == null || joinInputs.size() < 1)
 			throw new RuntimeException("Not conforming to the conditions of join");
 		this.input = input;
@@ -25,7 +25,7 @@ public class SparkJoinInput extends SparkInput {
 
 	@Override
 	public void open() {
-		for (SparkInput in : joinInputs.values())
+		for (SparkInput in : joinInputs.keySet())
 			in.open();
 		input.open();
 		super.open();
@@ -34,8 +34,8 @@ public class SparkJoinInput extends SparkInput {
 	@Override
 	protected Dataset<Row> load() {
 		Dataset<Row> ds0 = input.dataset();
-		for (String key : joinInputs.keySet()) {
-			SparkInput in = joinInputs.get(key);
+		for (SparkInput in : joinInputs.keySet()) {
+			String key = joinInputs.get(in);
 			Dataset<Row> ds = in.dataset();
 			ds0 = ds0.join(ds, ds0.col(col).equalTo(ds.col(key)), joinType).distinct();
 		}
@@ -56,7 +56,7 @@ public class SparkJoinInput extends SparkInput {
 	public void close() {
 		super.close();
 		input.close();
-		for (SparkInput in : joinInputs.values())
+		for (SparkInput in : joinInputs.keySet())
 			in.close();
 	}
 }
