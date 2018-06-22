@@ -16,7 +16,7 @@ public class SparkKafkaInput extends SparkInput {
 		super();
 	}
 
-	protected SparkKafkaInput(SparkSession spark, URISpec targetUri) {
+	public SparkKafkaInput(SparkSession spark, URISpec targetUri) {
 		super(spark, targetUri);
 	}
 
