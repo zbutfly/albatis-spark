@@ -22,9 +22,9 @@ public class SparkPluginInput extends SparkInput {
 	private static final long serialVersionUID = -3514105763334222049L;
 	protected final SparkInput input;
 	protected final PluginConfig pc;
-	protected final static String PLUGIN_KEY = PluginElement.PLUGIN_KEY.name();
-	protected final static String COUNT = PluginElement.COUNT.name();
-	protected final static String MAX_SCORE = PluginElement.MAX_SCORE.name();
+	protected final static String PLUGIN_KEY = PluginElement.zjhm.name();
+	protected final static String COUNT = PluginElement.count.name();
+	protected final static String MAX_SCORE = PluginElement.max_score.name();
 
 	public SparkPluginInput(SparkInput input, PluginConfig pc) {
 		this.input = input;

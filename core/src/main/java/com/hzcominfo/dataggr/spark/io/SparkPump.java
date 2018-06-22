@@ -36,10 +36,10 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 	transient PumpFunction<Row, V> converter = r -> {
 		if (v == null)
 			return (V) r;
-		else if (Map.class.isAssignableFrom(v.getClass())) {
-			return (V) FuncUtil.rowMap(r);
-		}else if (Message.class.isAssignableFrom(v.getClass()))
+		else if (Message.class.isAssignableFrom(v.getClass()))
 			return (V) new Message(FuncUtil.rowMap(r));
+		else if (Map.class.isAssignableFrom(v.getClass()))
+			return (V) FuncUtil.rowMap(r);
 		else {
 			throw new RuntimeException("There is no transformation method for this class: " + v.getClass().getName());
 		}

@@ -63,7 +63,7 @@ public abstract class SparkIO {
 			@SuppressWarnings("unchecked")
 			Class<I> c = (Class<I>) ADAPTER_INPUT.get(s);
 			if (null == c)
-				s = s.substring(0, s.lastIndexOf(':'));
+				break;
 			else
 				try {
 					return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
