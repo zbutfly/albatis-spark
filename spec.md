@@ -12,17 +12,17 @@
 
 - spark-integrate-core：核心依赖包，创建spark会话、关闭会话
 - 集成模块：
-	- spark-integrate-kafka：kafka组装配置，读取数据
-	- spark-integrate-mongo：mongo组装配置，读取数据
-	- spark-integrate-rdbms：rdbms组装配置，读取数据
-	- spark-integrate-hdfs: hdfs组装配置，读取数据
+	- spark-integrate-kafka：kafka输入、输出
+	- spark-integrate-mongo：mongo输入，输出
+	- spark-integrate-rdbms：rdbms输入，输出
+	- spark-integrate-hdfs: hdfs输入，输出
 	
 
 #### 代码
 
 ##### 代码管理
 
-首个版本开发阶段，使用dataggr仓库组、dataggr仓库，lib-spark-integrate目录。
+首个版本开发阶段，使用albatis仓库组、albatis仓库，spark-io目录。
 
 开发完成首个测试，发布RC版本，切换到独立仓库，作为独立框架组件。
 
@@ -43,10 +43,10 @@
 
 ## 总体设计
 
-SPARK集成作为各类数据处理的框架，主要为pump项目提供统一的数据输入，以及数据之间相互碰撞。应**逐步**支持以下功能：
-1. 提供各类数据的读取配置
-2. 读取各类数据
-3. 统一各类数据输出
+SPARK集成作为各类数据处理的框架，主要为pump项目提供统一的数据输入、输出，以及数据之间相互碰撞。应**逐步**支持以下功能：
+1. 提供各类数据的输入
+2. 提供各类数据的输出
+3. 提供各类数据之间的碰撞
 
 ## 接口定义
 
