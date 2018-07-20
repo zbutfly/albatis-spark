@@ -45,6 +45,6 @@ public class SparkSolrInput extends SparkInput {
 
 	@Override
 	protected String schema() {
-		return "solr";
+		return "solr,zk";
 	}
 }

@@ -42,7 +42,6 @@ public abstract class SparkInput extends SparkIO implements OddInput<Row>, Seria
 	@Override
 	public void close() {
 		OddInput.super.close();
-//		spark.close();
 	}
 
 	@Override

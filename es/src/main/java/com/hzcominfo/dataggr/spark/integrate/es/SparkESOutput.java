@@ -23,6 +23,6 @@ public class SparkESOutput extends SparkOutput {
 
 	@Override
 	protected String schema() {
-		return "es";
+		return "es,elasticsearch";
 	}
 }

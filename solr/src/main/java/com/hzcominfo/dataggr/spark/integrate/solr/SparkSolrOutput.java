@@ -23,6 +23,6 @@ public class SparkSolrOutput extends SparkOutput {
 
 	@Override
 	protected String schema() {
-		return "solr";
+		return "solr,zk";
 	}
 }

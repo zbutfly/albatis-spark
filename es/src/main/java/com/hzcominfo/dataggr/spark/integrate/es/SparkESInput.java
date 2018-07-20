@@ -14,6 +14,7 @@ import net.butfly.albacore.utils.collection.Maps;
 
 public class SparkESInput extends SparkInput {
 	private static final long serialVersionUID = 5472880102313131224L;
+	private static String HTTP_PORT = "httpport";
 
 	public SparkESInput() {
 		super();
@@ -34,7 +35,7 @@ public class SparkESInput extends SparkInput {
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
-		options.put("es.port", String.valueOf(addr.getPort()));
+		options.put("es.port", targetUri.getParameter(HTTP_PORT));
 		options.put("es.resource", targetUri.getPath());
 		return options;
 	}
@@ -46,6 +47,6 @@ public class SparkESInput extends SparkInput {
 
 	@Override
 	protected String schema() {
-		return "es";
+		return "es,elasticsearch";
 	}
 }
