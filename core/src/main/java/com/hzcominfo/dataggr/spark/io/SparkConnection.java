@@ -25,10 +25,10 @@ import com.hzcominfo.dataggr.spark.join.SparkNonJoinInput;
 import com.hzcominfo.dataggr.spark.join.SparkOrJoinInput;
 import com.hzcominfo.dataggr.spark.plugin.PluginConfig;
 import com.hzcominfo.dataggr.spark.plugin.SparkPluginInput;
-import com.hzcominfo.dataggr.spark.util.Colls;
-import com.hzcominfo.dataggr.spark.util.Maps;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albacore.utils.collection.Maps;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 

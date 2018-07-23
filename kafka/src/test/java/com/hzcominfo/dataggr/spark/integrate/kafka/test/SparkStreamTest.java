@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.apache.spark.SparkConf;
 
-import com.hzcominfo.dataggr.spark.util.Maps;
+import net.butfly.albacore.utils.collection.Maps;
 
 public class SparkStreamTest {
 

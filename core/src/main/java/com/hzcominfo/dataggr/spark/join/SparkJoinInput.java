@@ -1,8 +1,6 @@
 package com.hzcominfo.dataggr.spark.join;
 
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -60,10 +58,5 @@ public class SparkJoinInput extends SparkInput {
 		input.close();
 		for (SparkInput in : joinInputs.keySet())
 			in.close();
-	}
-
-	@Override
-	public void dequeue(Consumer<Stream<Row>> using, int batchSize) {
-		throw new UnsupportedOperationException();
 	}
 }

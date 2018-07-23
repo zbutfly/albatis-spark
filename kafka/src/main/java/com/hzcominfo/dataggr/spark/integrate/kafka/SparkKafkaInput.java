@@ -1,16 +1,13 @@
 package com.hzcominfo.dataggr.spark.integrate.kafka;
 
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.io.SparkInput;
-import com.hzcominfo.dataggr.spark.util.Maps;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.collection.Maps;
 
 public class SparkKafkaInput extends SparkInput {
 	private static final long serialVersionUID = 9003837433163351306L;
@@ -48,10 +45,5 @@ public class SparkKafkaInput extends SparkInput {
 	@Override
 	protected String schema() {
 		return "kafka";
-	}
-
-	@Override
-	public void dequeue(Consumer<Stream<Row>> using, int batchSize) {
-		throw new UnsupportedOperationException();
 	}
 }

@@ -1,7 +1,6 @@
 package com.hzcominfo.dataggr.spark.integrate.solr;
 
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.apache.spark.sql.Row;
 
@@ -25,10 +24,5 @@ public class SparkSolrOutput extends SparkOutput {
 	@Override
 	protected String schema() {
 		return "solr,zk";
-	}
-
-	@Override
-	public void enqueue(Stream<Row> items) {
-		throw new UnsupportedOperationException();
 	}
 }

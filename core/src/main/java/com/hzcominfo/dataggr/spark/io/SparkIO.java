@@ -8,10 +8,10 @@ import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.join.SparkJoinInput;
 import com.hzcominfo.dataggr.spark.plugin.SparkPluginInput;
-import com.hzcominfo.dataggr.spark.util.Maps;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.Reflections;
+import net.butfly.albacore.utils.collection.Maps;
 
 public abstract class SparkIO {
 	private static final Map<String, Class<? extends SparkInput>> ADAPTER_INPUT = scan(SparkInput.class);
