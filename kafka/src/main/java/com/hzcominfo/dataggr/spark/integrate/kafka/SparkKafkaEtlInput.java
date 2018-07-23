@@ -13,9 +13,9 @@ import org.apache.spark.sql.types.TimestampType;
 
 import com.hzcominfo.dataggr.spark.util.BytesUtils;
 import com.hzcominfo.dataggr.spark.util.FuncUtil;
+import com.hzcominfo.dataggr.spark.util.Maps;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 
 public class SparkKafkaEtlInput extends SparkKafkaInput {

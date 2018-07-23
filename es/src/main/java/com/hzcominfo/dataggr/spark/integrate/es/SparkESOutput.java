@@ -1,6 +1,7 @@
 package com.hzcominfo.dataggr.spark.integrate.es;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.spark.sql.Row;
 
@@ -24,5 +25,10 @@ public class SparkESOutput extends SparkOutput {
 	@Override
 	protected String schema() {
 		return "es,elasticsearch";
+	}
+
+	@Override
+	public void enqueue(Stream<Row> items) {
+		throw new UnsupportedOperationException();
 	}
 }

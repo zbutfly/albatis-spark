@@ -7,11 +7,10 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
+import com.hzcominfo.dataggr.spark.util.Maps;
 import com.mongodb.spark.MongoSpark;
 import com.mongodb.spark.config.ReadConfig;
 import com.mongodb.spark.rdd.api.java.JavaMongoRDD;
-
-import net.butfly.albacore.utils.collection.Maps;
 
 public class MongoTest {
 

@@ -1,17 +1,19 @@
 package com.hzcominfo.dataggr.spark.integrate.mongo;
 
+import java.util.stream.Stream;
+
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
 import com.hzcominfo.dataggr.spark.util.FuncUtil;
+import com.hzcominfo.dataggr.spark.util.Maps;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.spark.MongoSpark;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 
 public class SparkMongoOutput extends SparkOutput {
@@ -85,5 +87,10 @@ public class SparkMongoOutput extends SparkOutput {
 	@Override
 	protected String schema() {
 		return "mongodb";
+	}
+
+	@Override
+	public void enqueue(Stream<Row> items) {
+		throw new UnsupportedOperationException();
 	}
 }

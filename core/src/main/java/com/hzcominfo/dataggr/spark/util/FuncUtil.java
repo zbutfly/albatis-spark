@@ -17,7 +17,6 @@ import org.apache.spark.sql.types.StructField;
 import com.google.common.base.Supplier;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.utils.collection.Colls;
 import scala.Function0;
 import scala.collection.JavaConversions;
 import scala.collection.JavaConverters;

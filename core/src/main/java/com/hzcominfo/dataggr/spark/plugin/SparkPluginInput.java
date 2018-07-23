@@ -7,6 +7,8 @@ import static org.apache.spark.sql.functions.max;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -15,6 +17,7 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 /**
  * for feature
+ * 
  * @author chenw
  *
  */
@@ -66,5 +69,10 @@ public class SparkPluginInput extends SparkInput {
 	public void close() {
 		super.close();
 		input.close();
+	}
+
+	@Override
+	public void dequeue(Consumer<Stream<Row>> using, int batchSize) {
+		throw new UnsupportedOperationException();
 	}
 }

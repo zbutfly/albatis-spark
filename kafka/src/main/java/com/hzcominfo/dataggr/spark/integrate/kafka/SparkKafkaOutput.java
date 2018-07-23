@@ -3,9 +3,12 @@ package com.hzcominfo.dataggr.spark.integrate.kafka;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
+import com.hzcominfo.dataggr.spark.util.Maps;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.utils.collection.Maps;
+
+import java.util.stream.Stream;
+
 import org.apache.spark.sql.Row;
 
 public class SparkKafkaOutput extends SparkOutput {
@@ -37,5 +40,10 @@ public class SparkKafkaOutput extends SparkOutput {
 	@Override
 	protected String schema() {
 		return "kafka";
+	}
+
+	@Override
+	public void enqueue(Stream<Row> items) {
+		throw new UnsupportedOperationException();
 	}
 }
