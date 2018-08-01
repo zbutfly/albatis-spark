@@ -22,7 +22,7 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>spark-integrate.pom</name>
+			<name>spark-io.pom</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/pom.xml</locationURI>
 		</link>

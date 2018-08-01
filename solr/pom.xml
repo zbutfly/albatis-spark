@@ -3,17 +3,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.hzcominfo.dataggr.spark.integrate</groupId>
-		<artifactId>spark-integrate</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<groupId>net.butfly.albatis</groupId>
+		<artifactId>albatis-spark-io</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>spark-integrate-solr</artifactId>
-	<packaging>jar</packaging>
+	<artifactId>albatis-spark-io-solr</artifactId>
 	<dependencies>
 		<dependency>
-			<groupId>com.hzcominfo.dataggr.spark.integrate</groupId>
-			<artifactId>spark-integrate-core</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<groupId>net.butfly.albatis</groupId>
+			<artifactId>albatis-spark-io-core</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.lucidworks.spark</groupId>

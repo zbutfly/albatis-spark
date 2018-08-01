@@ -10,7 +10,7 @@ import com.hzcominfo.dataggr.spark.util.FuncUtil;
 
 import net.butfly.albacore.base.Namedly;
 import net.butfly.albacore.utils.Reflections;
-import net.butfly.albatis.io.Message;
+import net.butfly.albatis.io.R;
 import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.pump.Pump;
 
@@ -28,7 +28,7 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 		this.v = v;
 	}
 	
-	interface PumpFunction<T, R> extends Function<T, R>, Serializable {
+	interface PumpFunction<T, RR> extends Function<T, RR>, Serializable {
 		static final long serialVersionUID = -5417601923795663049L;
 	}
 
@@ -36,8 +36,8 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 	transient PumpFunction<Row, V> converter = r -> {
 		if (v == null)
 			return (V) r;
-		else if (Message.class.isAssignableFrom(v.getClass()))
-			return (V) new Message(FuncUtil.rowMap(r));
+		else if (R.class.isAssignableFrom(v.getClass()))
+			return (V) new R(FuncUtil.rowMap(r));
 		else if (Map.class.isAssignableFrom(v.getClass()))
 			return (V) FuncUtil.rowMap(r);
 		else {
