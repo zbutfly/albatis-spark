@@ -1,27 +1,26 @@
 package com.hzcominfo.dataggr.spark.integrate.kafka;
 
+import java.util.Enumeration;
 import java.util.Map;
 
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DateType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.TimestampType;
 
-import com.hzcominfo.dataggr.spark.util.BytesUtils;
-import com.hzcominfo.dataggr.spark.util.FuncUtil;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
+import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.R.Op;
 
+@Deprecated
 public class SparkKafkaEtlInput extends SparkKafkaInput {
 	private static final long serialVersionUID = -8077483839198954L;
 	protected static final Logger logger = Logger.getLogger(SparkKafkaEtlInput.class);
-	private StructType schema;
+	private final Map<String, StructField> struct = Maps.of();
 
 	public SparkKafkaEtlInput() {
 		super();
@@ -36,37 +35,41 @@ public class SparkKafkaEtlInput extends SparkKafkaInput {
 		return "kafka:etl";
 	}
 
-	public SparkKafkaEtlInput schema(StructType schema) {
-		this.schema = schema;
+	public SparkKafkaEtlInput struct(StructType schema) {
+		for (StructField f : schema.fields())
+			struct.put(f.name(), f);
 		return this;
 	}
 
 	@Override
-	protected Dataset<Row> load() {
-		if (null == schema) throw new IllegalStateException("Etl input need schema of inner map.");
-		Dataset<Row> ds = super.load();
-		ds = ds.map(this::der, RowEncoder.apply(schema));
-		return ds;
+	protected R conv(Row row) {
+		R etl = etl(super.conv(row));
+		return filter(etl);
 	}
 
-	private Row der(Row r) {
-		byte[] bytes = r.getAs("value");
-		Map<String, Object> der = BytesUtils.der(bytes);
-		der.get("oper_type");
+	protected R etl(Map<String, Object> etl) {
 		@SuppressWarnings("unchecked")
-		Map<String, Object> value = (Map<String, Object>) der.get("value");
-		Map<String, Object> value2 = Maps.of();
-		Object v;
-		for (StructField f : schema.fields())
-			if (null != (v = value.get(f.name()))) {
-				if (v instanceof java.util.Date) {
-					if (f.dataType() instanceof TimestampType && !(v instanceof java.sql.Timestamp)) //
-						v = new java.sql.Timestamp(((java.util.Date) v).getTime());
-					else if (f.dataType() instanceof DateType && !(v instanceof java.sql.Date)) //
-						v = new java.sql.Date(((java.util.Date) v).getTime());
-				}
-				value2.put(f.name(), v);
+		Map<String, Object> value = (Map<String, Object>) etl.get("value");
+		R r = new R(table(), value);
+		String op = (String) etl.get("oper_type");
+		int opv = null == op ? Integer.parseInt(op) : Op.DEFAULT;
+		r.op(opv);
+		return r;
+	}
+
+	private R filter(R r) {
+		if (!struct.isEmpty()) for (Enumeration<String> keys = r.keys(); keys.hasMoreElements();) {
+			String f = keys.nextElement();
+			StructField s = struct.get(f);
+			if (null == s) r.remove(f);
+			final Object v = r.get(f);
+			if (v instanceof java.util.Date) {
+				if (s.dataType() instanceof TimestampType && !(v instanceof java.sql.Timestamp)) //
+					r.put(f, new java.sql.Timestamp(((java.util.Date) v).getTime()));
+				else if (s.dataType() instanceof DateType && !(v instanceof java.sql.Date)) //
+					r.put(f, new java.sql.Date(((java.util.Date) v).getTime()));
 			}
-		return FuncUtil.mapRow(value2);
+		}
+		return r;
 	}
 }

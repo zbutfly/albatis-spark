@@ -5,11 +5,11 @@
 //import java.util.function.Function;
 //
 //import org.apache.spark.sql.ForeachWriter;
-//import org.apache.spark.sql.Row;
+//import net.butfly.albatis.io.R;
 //
-//public interface RowConsumer extends Consumer<Row>, Serializable {
-//	default ForeachWriter<Row> writer() {
-//		return new ForeachWriter<Row>() {
+//public interface RowConsumer extends Consumer<R>, Serializable {
+//	default ForeachWriter<R> writer() {
+//		return new ForeachWriter<R>() {
 //			private static final long serialVersionUID = 3602739322755312373L;
 //
 //			@Override

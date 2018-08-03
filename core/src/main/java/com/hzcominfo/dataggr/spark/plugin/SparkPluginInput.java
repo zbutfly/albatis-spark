@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import com.hzcominfo.dataggr.spark.io.SparkIOLess;
 import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 /**
@@ -19,15 +20,15 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
  * @author chenw
  *
  */
-public class SparkPluginInput extends SparkInput {
+public class SparkPluginInput extends SparkInput<Row> implements SparkIOLess {
 	private static final long serialVersionUID = -3514105763334222049L;
-	protected final SparkInput input;
+	protected final SparkInput<Row> input;
 	protected final PluginConfig pc;
 	protected final static String PLUGIN_KEY = PluginElement.zjhm.name();
 	protected final static String COUNT = PluginElement.count.name();
 	protected final static String MAX_SCORE = PluginElement.max_score.name();
 
-	public SparkPluginInput(SparkInput input, PluginConfig pc) {
+	public SparkPluginInput(SparkInput<Row> input, PluginConfig pc) {
 		this.input = input;
 		this.pc = pc;
 	}
@@ -40,12 +41,10 @@ public class SparkPluginInput extends SparkInput {
 
 	@Override
 	protected Dataset<Row> load() {
-		Dataset<Row> ds = input.dataset();
-		List<String> keys = pc.getKeys();
 		String maxScore = pc.getMaxScore();
 		List<Dataset<Row>> dsList = new ArrayList<>();
-		keys.forEach(k -> dsList
-				.add(ds.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))));
+		pc.getKeys().forEach(k -> dsList.add(input.dataset().groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(
+				MAX_SCORE))));
 		// if (dsList.isEmpty()) return null;
 		Dataset<Row> ds0 = dsList.get(0);
 		for (int i = 1; i < dsList.size(); i++)

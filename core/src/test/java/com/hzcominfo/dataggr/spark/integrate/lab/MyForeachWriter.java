@@ -2,19 +2,19 @@
 //
 //import java.util.HashMap;
 //import java.util.List;
-//import org.apache.spark.sql.Row;
+//import net.butfly.albatis.io.R;
 //
 //import org.apache.spark.sql.ForeachWriter;
-//import org.apache.spark.sql.Row;
+//import net.butfly.albatis.io.R;
 //import org.apache.spark.sql.types.StructType;
 //
 //import net.butfly.albacore.utils.collection.Colls;
 //
-//public class MyForeachWriter extends ForeachWriter<Row> {
+//public class MyForeachWriter extends ForeachWriter<R> {
 //	private static final long serialVersionUID = -1072922526110204753L;
-//	private List<Row> ms = Colls.list();
+//	private List<R> ms = Colls.list();
 //
-//	public List<Row> getMs() {
+//	public List<R> getMs() {
 //		return ms;
 //	}
 //

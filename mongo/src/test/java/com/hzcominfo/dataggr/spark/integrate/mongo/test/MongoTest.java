@@ -29,7 +29,7 @@ public class MongoTest {
 		JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
 		ReadConfig readConfig = ReadConfig.create(jsc).withOptions(options);
 
-		// Dataset<Row> dataset = MongoSpark.load(jsc, readConfig).toDF();
+		// Dataset<R> dataset = MongoSpark.load(jsc, readConfig).toDF();
 		JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, readConfig);// ZJHM
 		System.out.println(rdd.first().toJson());;
 	}

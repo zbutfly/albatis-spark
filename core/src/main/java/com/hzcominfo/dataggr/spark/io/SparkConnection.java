@@ -18,7 +18,7 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.albatis.nosql.Connection;
+import com.hzcominfo.albatis.nosql.EnvironmentConnection;
 import com.hzcominfo.dataggr.spark.join.SparkInnerJoinInput;
 import com.hzcominfo.dataggr.spark.join.SparkJoinInput;
 import com.hzcominfo.dataggr.spark.join.SparkNonJoinInput;
@@ -29,10 +29,13 @@ import com.hzcominfo.dataggr.spark.plugin.SparkPluginInput;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.io.Input;
+import net.butfly.albatis.io.Output;
+import net.butfly.albatis.io.R;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
-public class SparkConnection implements Connection, Serializable {
+public class SparkConnection implements EnvironmentConnection, Serializable {
 	private static final long serialVersionUID = 5093686615279489589L;
 	private final static String DEFAULT_HOST = "local[*]";
 
@@ -48,11 +51,12 @@ public class SparkConnection implements Connection, Serializable {
 		this.uriSpec = uriSpec;
 		SparkConf sparkConf = new SparkConf();
 		parameters.put("spark.sql.shuffle.partitions", "2001");
-		parameters.put("spark.mongodb.input.uri", "mongodb://user:pwd@localhost:80/db.tbl");
-		parameters.put("spark.mongodb.output.uri", "mongodb://user:pwd@localhost:80/db.tbl");
+		// parameters.put("spark.mongodb.input.uri", "mongodb://user:pwd@localhost:80/db.tbl");
+		// parameters.put("spark.mongodb.output.uri", "mongodb://user:pwd@localhost:80/db.tbl");
 		parameters.forEach((key, value) -> sparkConf.set(key, value));
-		this.spark = SparkSession.builder().master(DEFAULT_HOST).appName(name == null ? "Simulation" : name)
-				.config(sparkConf).getOrCreate();
+		String host = uriSpec.getHost();
+		if (host.isEmpty()) host = DEFAULT_HOST;
+		this.spark = SparkSession.builder().master(host).appName(name == null ? "Simulation" : name).config(sparkConf).getOrCreate();
 	}
 
 	@Override
@@ -62,49 +66,49 @@ public class SparkConnection implements Connection, Serializable {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public SparkInput input(String... table) throws IOException {
-		if (table.length == 0)
-			throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
+	@Deprecated
+	public <M extends R> Input<M> input(String... table) throws IOException {
+		if (table.length == 0) throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
 		String[] ts = Colls.list(table).subList(1, table.length - 1).toArray(new String[0]);
 		return input(new URISpec(table[0]), ts);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	@Deprecated
-	public SparkOutput output() throws IOException {
+	public <M extends R> Output<M> output() throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public <O extends SparkOutput> O output(URISpec uri) {
+	@Override
+	public <V, O extends Output<V>> O output(URISpec uri) {
 		return SparkIO.output(spark, uri);
 	}
 
-	public <I extends SparkInput> I input(URISpec uri, String... table) {
+	@Override
+	public <V, I extends Input<V>> I input(URISpec uri, String... table) {
 		return SparkIO.input(spark, uri);
 	}
 
-	public SparkJoinInput innerJoin(SparkInput input, String col, Map<SparkInput, String> joinInputs) {
+	public <V> SparkJoinInput innerJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkInnerJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput orJoin(SparkInput input, String col, Map<SparkInput, String> joinInputs) {
+	public SparkJoinInput orJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkOrJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput nonJoin(SparkInput input, String col, Map<SparkInput, String> joinInputs) {
+	public SparkJoinInput nonJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkNonJoinInput(input, col, joinInputs);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkPluginInput plugin(String className, SparkInput input, PluginConfig pc) {
+	public SparkPluginInput plugin(String className, SparkInput<R> input, PluginConfig pc) {
 		try {
 			Class<? extends SparkPluginInput> c = (Class<? extends SparkPluginInput>) Class.forName(className);
 			return c.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException
-				| IllegalAccessException | IllegalArgumentException e) {
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+				| IllegalArgumentException e) {
 			throw new RuntimeException(e);
 		} catch (InvocationTargetException e) {
 			throw new RuntimeException(e.getTargetException());
@@ -163,19 +167,34 @@ public class SparkConnection implements Connection, Serializable {
 			}
 		});
 	}
-	
+
 	public int getJobId() {
 		return spark.sparkContext().dagScheduler().nextJobId().get();
 	}
 
 	public void endJob(String key) {
 		Integer jobId = SparkSchedule.getJob(key);
-		if (jobId == null)
-			return;
+		if (jobId == null) return;
 		spark.sparkContext().cancelJob(jobId);
 	}
-	
+
 	public Dataset<Row> sql(String sql) {
 		return spark.sql(sql);
+	}
+
+	public static class Driver implements com.hzcominfo.albatis.nosql.Connection.Driver<SparkConnection> {
+		static {
+			DriverManager.register(new Driver());
+		}
+
+		@Override
+		public SparkConnection connect(URISpec uriSpec) throws IOException {
+			return new SparkConnection("SparkConnection", uriSpec);
+		}
+
+		@Override
+		public List<String> schemas() {
+			return Colls.list("spark");
+		}
 	}
 }

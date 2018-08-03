@@ -2,15 +2,15 @@ package com.hzcominfo.dataggr.spark.integrate.es;
 
 import java.util.Map;
 
-import org.apache.spark.sql.Row;
+import net.butfly.albatis.io.R;
 
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
 
-public class SparkESOutput extends SparkOutput {
+public class SparkESOutput extends SparkOutput<R> {
 	private static final long serialVersionUID = 2840201452393061853L;
 
 	@Override
-	public boolean enqueue(Row row) {
+	public boolean enqueue(R row) {
 		// TODO Auto-generated method stub
 		return false;
 	}

@@ -1,6 +1,6 @@
 //package com.hzcominfo.dataggr.spark.integrate.lab;
 //
-//import org.apache.spark.sql.Row;
+//import net.butfly.albatis.io.R;
 //
 //public class ReadConfig {
 //

@@ -1,28 +1,29 @@
 package com.hzcominfo.dataggr.spark.io;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.dataggr.spark.join.SparkJoinInput;
-import com.hzcominfo.dataggr.spark.plugin.SparkPluginInput;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.Reflections;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.io.Input;
+import net.butfly.albatis.io.Output;
 
 public abstract class SparkIO {
+	@SuppressWarnings("rawtypes")
 	private static final Map<String, Class<? extends SparkInput>> ADAPTER_INPUT = scan(SparkInput.class);
+	@SuppressWarnings("rawtypes")
 	private static final Map<String, Class<? extends SparkOutput>> ADAPTER_OUTPUT = scan(SparkOutput.class);
 
 	protected SparkSession spark;
 	protected JavaSparkContext jsc;
 	protected URISpec targetUri;
 
-	public SparkIO() {
-	}
+	public SparkIO() {}
 
 	protected SparkIO(SparkSession spark, URISpec targetUri) {
 		super();
@@ -39,40 +40,36 @@ public abstract class SparkIO {
 
 	protected abstract String schema();
 
-	public static <O extends SparkOutput> O output(SparkSession spark, URISpec uri) {
+	public static <V, O extends Output<V>> O output(SparkSession spark, URISpec uri) {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<O> c = (Class<O>) ADAPTER_OUTPUT.get(s);
-			if (null == c)
-				break;
-			else
-				try {
-					return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
-				} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
-						| IllegalArgumentException | InvocationTargetException e) {
-					throw new RuntimeException(e);
-				}
+			if (null == c) break;
+			else try {
+				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
+			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				throw new RuntimeException(e);
+			}
 		}
-		throw new RuntimeException("No matched adapter with scheme: " + s);
+		return null;
 	}
 
-	public static <I extends SparkInput> I input(SparkSession spark, URISpec uri) {
+	public static <V, I extends Input<V>> I input(SparkSession spark, URISpec uri) {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<I> c = (Class<I>) ADAPTER_INPUT.get(s);
-			if (null == c)
-				break;
-			else
-				try {
-					return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
-				} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
-						| IllegalArgumentException e) {
-					throw new RuntimeException(e);
-				} catch (InvocationTargetException e) {
-					throw new RuntimeException(e.getTargetException());
-				}
+			if (null == c) break;
+			else try {
+				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
+			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+					| IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (InvocationTargetException e) {
+				throw new RuntimeException(e.getTargetException());
+			}
 		}
 		throw new RuntimeException("No matched adapter with scheme: " + s);
 	}
@@ -81,9 +78,8 @@ public abstract class SparkIO {
 		Map<String, Class<? extends C>> map = Maps.of();
 		for (Class<? extends C> c : Reflections.getSubClasses(parentClass))
 			try {
-				if (SparkJoinInput.class.isAssignableFrom(c) || SparkPluginInput.class.isAssignableFrom(c))
-					continue;
-				for (String s : c.newInstance().schema().split(","))
+				if (!Modifier.isAbstract(c.getModifiers()) && //
+						!SparkIOLess.class.isAssignableFrom(c)) for (String s : c.newInstance().schema().split(","))
 					map.put(s, c);
 			} catch (InstantiationException | IllegalAccessException e) {
 				throw new RuntimeException(e);

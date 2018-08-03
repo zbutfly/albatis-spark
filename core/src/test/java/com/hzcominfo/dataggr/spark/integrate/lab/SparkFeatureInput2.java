@@ -3,12 +3,12 @@
 //import java.io.Serializable;
 //import java.util.HashMap;
 //import java.util.List;
-//import org.apache.spark.sql.Row;
+//import net.butfly.albatis.io.R;
 //import java.util.function.Consumer;
 //
 //import org.apache.spark.sql.Dataset;
 //import org.apache.spark.sql.ForeachWriter;
-//import org.apache.spark.sql.Row;
+//import net.butfly.albatis.io.R;
 //import org.apache.spark.sql.streaming.DataStreamWriter;
 //import org.apache.spark.sql.types.StructType;
 //
@@ -26,10 +26,10 @@
 // * @author chenw
 // *
 // */
-//public class SparkFeatureInput2 implements Input<Row>, Serializable {
+//public class SparkFeatureInput2 implements Input<R>, Serializable {
 //	private static final long serialVersionUID = -4742008582795468309L;
 //	private final SparkConnection client;
-//	private final Dataset<Row> dataset;
+//	private final Dataset<R> dataset;
 //
 //	public SparkFeatureInput2(String name, String bootstrapUrl) {
 //		this(name, new URISpec(bootstrapUrl));
@@ -41,12 +41,12 @@
 //		closing(this::close);
 //	}
 //
-//	private static interface Writing extends Consumer<Sdream<Row>>, Serializable {}
+//	private static interface Writing extends Consumer<Sdream<R>>, Serializable {}
 //
-//	private class ForeachWriter$anonfun$ extends ForeachWriter<Row> implements Serializable {
+//	private class ForeachWriter$anonfun$ extends ForeachWriter<R> implements Serializable {
 //		private static final long serialVersionUID = -6782476040095757847L;
 //
-//		public ForeachWriter$anonfun$(Consumer<Sdream<Row>> using) {
+//		public ForeachWriter$anonfun$(Consumer<Sdream<R>> using) {
 //			super();
 //			this.using = using::accept;
 //		}
@@ -70,19 +70,19 @@
 //				map.put(fn, row.getAs(fn));
 //			}
 //			Map<String, Object> message = new Map<String, Object>(map);
-//			List<Row> ms = Colls.list();
+//			List<R> ms = Colls.list();
 //			ms.add(message);
 //			using.accept(Sdream.of(ms));
 //		}
 //	}
 //
 //	@Override
-//	public void dequeue(Consumer<Sdream<Row>> using) {
+//	public void dequeue(Consumer<Sdream<R>> using) {
 //		if (dataset == null) return;
 //
 //		if (dataset.isStreaming()) {
-//			DataStreamWriter<Row> s = dataset.writeStream();
-//			ForeachWriter$anonfun$ fw = new ForeachWriter$anonfun$((Consumer<Sdream<Row>> & Serializable) using::accept);
+//			DataStreamWriter<R> s = dataset.writeStream();
+//			ForeachWriter$anonfun$ fw = new ForeachWriter$anonfun$((Consumer<Sdream<R>> & Serializable) using::accept);
 //			s.foreach(fw);
 //		} else {
 //			dataset.foreach(row -> {
@@ -94,7 +94,7 @@
 //				}
 //				System.out.println(map); //
 //				Map<String, Object> message = new Map<String, Object>(map);
-//				List<Row> ms = Colls.list();
+//				List<R> ms = Colls.list();
 //				ms.add(message);
 //				using.accept(Sdream.of(ms));
 //			});
