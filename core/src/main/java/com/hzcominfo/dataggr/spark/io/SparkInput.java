@@ -25,7 +25,7 @@ public abstract class SparkInput extends SparkInputBase<R> {
 
 	@Override
 	protected Dataset<R> load() {
-		return spark.readStream().format(format()).options(options()).load().map(row -> new R(table(), conv(row)), FuncUtil.ENC_R);
+		return spark.readStream().format(format()).options(options()).load().map(this::conv, FuncUtil.ENC_R);
 	}
 
 	protected String table() {

@@ -3,6 +3,7 @@ package com.hzcominfo.dataggr.spark.io;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -19,11 +20,11 @@ import com.hzcominfo.dataggr.spark.util.FuncUtil;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.logger.Logger;
-import net.butfly.albatis.io.Input;
+import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.R;
 
-public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Serializable {
+public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, Serializable {
 	private static final long serialVersionUID = 6966901980613011951L;
 	private static final Logger logger = Logger.getLogger(SparkInputBase.class);
 
@@ -41,7 +42,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 
 	@Override
 	public void open() {
-		Input.super.open();
+		OddInput.super.open();
 		dataset = load();
 	}
 
@@ -49,7 +50,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 
 	@Override
 	public void close() {
-		Input.super.close();
+		OddInput.super.close();
 	}
 
 	public final Dataset<V> dataset() {
@@ -62,7 +63,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 
 			@Override
 			public void process(V r) {
-				using.accept(r);;
+				using.accept(r);
 			}
 
 			@Override
@@ -110,11 +111,6 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 	}
 
 	@Override
-	public void dequeue(Consumer<Sdream<V>> using) {
-		start(v -> using.accept(Sdream.of(v)));
-	}
-
-	@Override
 	public SparkInputBase<V> filter(Predicate<V> predicater) {
 		return new SparkInputWrapper<>(this, dataset.filter(predicater::test));
 	}
@@ -130,18 +126,18 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <V1> Input<V1> then(Function<V, V1> conv) {
+	public <V1> SparkInputBase<V1> then(Function<V, V1> conv) {
 		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (R) conv.apply(r), FuncUtil.ENC_R));
 	}
 
 	@Override
-	public <V1> Input<V1> thens(Function<Sdream<V>, Sdream<V1>> conv) {
+	public <V1> SparkInputBase<V1> thens(Function<Sdream<V>, Sdream<V1>> conv) {
 		return thenFlat(v -> conv.apply(Sdream.of(v)));
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public <V1> Input<V1> thens(Function<Sdream<V>, Sdream<V1>> conv, int parallelism) {
+	public <V1> SparkInputBase<V1> thens(Function<Sdream<V>, Sdream<V1>> conv, int parallelism) {
 		return thens(conv);
 	}
 
@@ -150,7 +146,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <V1> Input<V1> thenFlat(Function<V, Sdream<V1>> conv) {
+	public <V1> SparkInputBase<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.flatMap(v -> ((List<R>) conv.apply(v).list()).iterator(),
 				FuncUtil.ENC_R));
 	}
@@ -162,5 +158,24 @@ public abstract class SparkInputBase<V> extends SparkIO implements Input<V>, Ser
 
 	public SparkPump<V> pump(Output<V> output) {
 		return pump(-1, output);
+	}
+
+	@Override
+	@Deprecated
+	public final V dequeue() {
+		AtomicReference<V> r = new AtomicReference<>();
+		deq(r::lazySet);
+		return r.get();
+	}
+
+	@Override
+	@Deprecated
+	public final void dequeue(Consumer<Sdream<V>> using) {
+		deq(v -> using.accept(Sdream.of(v)));
+	}
+
+	@Override
+	public void deq(Consumer<V> using) {
+		start(using::accept);
 	}
 }

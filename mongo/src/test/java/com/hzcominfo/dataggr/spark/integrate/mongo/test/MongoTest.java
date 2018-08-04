@@ -31,6 +31,6 @@ public class MongoTest {
 
 		// Dataset<R> dataset = MongoSpark.load(jsc, readConfig).toDF();
 		JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, readConfig);// ZJHM
-		System.out.println(rdd.first().toJson());;
+		System.out.println(rdd.first().toJson());
 	}
 }

@@ -10,7 +10,7 @@ public class InputMapTool {
 	private final Map<SparkInputBase, String> map;
 
 	public InputMapTool() {
-		this.map = new HashMap<>();;
+		this.map = new HashMap<>();
 	}
 
 	public InputMapTool append(SparkInputBase k, String v) {
