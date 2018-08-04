@@ -3,6 +3,7 @@ package com.hzcominfo.dataggr.spark.integrate.mongo;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
+import com.hzcominfo.dataggr.spark.io.SparkIO.Schema;
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.spark.MongoSpark;
@@ -11,6 +12,7 @@ import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.R;
 
+@Schema("mongodb")
 public class SparkMongoOutput extends SparkOutput<R> {
 	private static final long serialVersionUID = -887072515139730517L;
 
@@ -20,15 +22,11 @@ public class SparkMongoOutput extends SparkOutput<R> {
 
 	private transient MongoDatabase db;
 
-	public SparkMongoOutput() {
-		super();
-	}
-
 	public SparkMongoOutput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		java.util.Map<String, String> opts = options();
 		logger().info("Spark output [" + getClass().toString() + "] constructing: " + opts.toString());
-		mongo = MongoSpark.builder().javaSparkContext(jsc).options(opts).build();
+		mongo = MongoSpark.builder().javaSparkContext(jsc()).options(opts).build();
 		this.dbName = opts.get("database");
 	}
 
@@ -60,10 +58,5 @@ public class SparkMongoOutput extends SparkOutput<R> {
 		db.getCollection(row.table()).insertOne(doc);
 		logger().trace("inserted: " + row.toString());
 		return true;
-	}
-
-	@Override
-	protected String schema() {
-		return "mongodb";
 	}
 }

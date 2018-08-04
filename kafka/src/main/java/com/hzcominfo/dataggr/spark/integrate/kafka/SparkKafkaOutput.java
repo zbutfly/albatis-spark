@@ -4,16 +4,14 @@ import net.butfly.albatis.io.R;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
+import com.hzcominfo.dataggr.spark.io.SparkIO.Schema;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 
+@Schema("kafka")
 public class SparkKafkaOutput extends SparkOutput<R> {
 	private static final long serialVersionUID = 9003837433163351306L;
-
-	public SparkKafkaOutput() {
-		super();
-	}
 
 	SparkKafkaOutput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri);
@@ -32,10 +30,5 @@ public class SparkKafkaOutput extends SparkOutput<R> {
 	public boolean enqueue(R row) {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	@Override
-	protected String schema() {
-		return "kafka";
 	}
 }

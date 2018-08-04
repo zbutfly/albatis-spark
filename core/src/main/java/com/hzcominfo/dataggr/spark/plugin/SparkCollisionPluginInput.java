@@ -42,11 +42,6 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	}
 
 	@Override
-	protected String schema() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void close() {
 		super.close();
 		for (SparkInputBase<Row> in : cInputs.keySet())

@@ -10,8 +10,6 @@ import net.butfly.albatis.io.OddOutput;
 public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V>, Serializable {
 	private static final long serialVersionUID = 7339834746933783020L;
 
-	public SparkOutput() {}
-
 	protected SparkOutput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 	}

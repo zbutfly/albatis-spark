@@ -1,8 +1,8 @@
 //package com.hzcominfo.dataggr.spark.util;
 //
 //import java.io.Serializable;
-//import java.util.function.Consumer;
-//import java.util.function.Function;
+//import net.butfly.albacore.io.lambda.Consumer;
+//import net.butfly.albacore.io.lambda.Function;
 //
 //import org.apache.spark.sql.ForeachWriter;
 //import net.butfly.albatis.io.R;

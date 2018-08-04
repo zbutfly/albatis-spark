@@ -14,12 +14,6 @@ import org.apache.spark.sql.Row;
 import com.hzcominfo.dataggr.spark.io.SparkIOLess;
 import com.hzcominfo.dataggr.spark.io.SparkInputBase;
 
-/**
- * for feature
- * 
- * @author chenw
- *
- */
 public class SparkPluginInput extends SparkInputBase<Row> implements SparkIOLess {
 	private static final long serialVersionUID = -3514105763334222049L;
 	protected final SparkInputBase<Row> input;
@@ -29,6 +23,7 @@ public class SparkPluginInput extends SparkInputBase<Row> implements SparkIOLess
 	protected final static String MAX_SCORE = PluginElement.max_score.name();
 
 	public SparkPluginInput(SparkInputBase<Row> input, PluginConfig pc) {
+		super(input.spark, input.targetUri);
 		this.input = input;
 		this.pc = pc;
 	}
@@ -54,11 +49,6 @@ public class SparkPluginInput extends SparkInputBase<Row> implements SparkIOLess
 
 	@Override
 	protected Map<String, String> options() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected String schema() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -6,17 +6,15 @@ import java.util.Map;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.io.SparkInput;
+import com.hzcominfo.dataggr.spark.io.SparkIO.Schema;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 
+@Schema({ "es", "elasticsearch" })
 public class SparkESInput extends SparkInput {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
-
-	public SparkESInput() {
-		super();
-	}
 
 	public SparkESInput(SparkSession spark, URISpec targetUri) {
 		super(spark, targetUri, targetUri.getPath());
@@ -36,10 +34,5 @@ public class SparkESInput extends SparkInput {
 	@Override
 	protected String format() {
 		return "es";
-	}
-
-	@Override
-	protected String schema() {
-		return "es,elasticsearch";
 	}
 }

@@ -4,16 +4,18 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import net.butfly.albacore.io.lambda.Consumer;
+import net.butfly.albacore.io.lambda.Function;
+import net.butfly.albacore.io.lambda.Predicate;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.ForeachWriter;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
+import org.apache.spark.sql.streaming.Trigger;
 
 import com.hzcominfo.dataggr.spark.util.FuncUtil;
 
@@ -28,12 +30,8 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, 
 	private static final long serialVersionUID = 6966901980613011951L;
 	private static final Logger logger = Logger.getLogger(SparkInputBase.class);
 
-	protected transient Dataset<V> dataset;
+	protected Dataset<V> dataset;
 	private transient StreamingQuery streaming = null;
-
-	public SparkInputBase() {
-		super();
-	}
 
 	protected SparkInputBase(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
@@ -75,7 +73,11 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, 
 				@Override
 				public void close(Throwable err) {}
 			};
-			streaming = dataset.writeStream().outputMode(OutputMode.Update()).foreach(w).start();
+			DataStreamWriter<V> s = dataset.writeStream();
+			s = s.foreach(w);
+			s = s.outputMode(OutputMode.Update());
+			s = s.trigger(Trigger.ProcessingTime(500));
+			streaming = s.start();
 		} else dataset.foreach(using::accept);
 	}
 
@@ -103,11 +105,6 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, 
 
 		@Override
 		protected Map<String, String> options() {
-			return null;
-		}
-
-		@Override
-		protected String schema() {
 			return null;
 		}
 	}

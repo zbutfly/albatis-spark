@@ -16,11 +16,6 @@ import net.butfly.albatis.io.R;
  */
 public abstract class SparkInput extends SparkInputBase<R> {
 	private static final long serialVersionUID = 8309576584660953676L;
-	protected String[] tables;
-
-	public SparkInput() {
-		super();
-	}
 
 	public SparkInput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
@@ -30,7 +25,10 @@ public abstract class SparkInput extends SparkInputBase<R> {
 	protected Dataset<R> load() {
 		Map<String, String> opts = options();
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
-		return spark.readStream().format(format()).options(opts).load().map(this::conv, FuncUtil.ENC_R);
+		Dataset<Row> ds = spark.readStream().format(format()).options(opts).load();
+		// dds.printSchema();
+		Dataset<R> dds = ds.map(this::conv, FuncUtil.ENC_R);
+		return dds;
 	}
 
 	protected R conv(Row row) {

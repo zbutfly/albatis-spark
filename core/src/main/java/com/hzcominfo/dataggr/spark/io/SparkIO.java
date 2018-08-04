@@ -1,7 +1,11 @@
 package com.hzcominfo.dataggr.spark.io;
 
+import java.io.Serializable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaSparkContext;
@@ -13,26 +17,31 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.Output;
 
-public abstract class SparkIO {
+public abstract class SparkIO implements Serializable {
+	private static final long serialVersionUID = 3265459356239387878L;
 	@SuppressWarnings("rawtypes")
 	private static final Map<String, Class<? extends SparkInputBase>> ADAPTER_INPUT = scan(SparkInputBase.class);
 	@SuppressWarnings("rawtypes")
 	private static final Map<String, Class<? extends SparkOutput>> ADAPTER_OUTPUT = scan(SparkOutput.class);
 
-	protected SparkSession spark;
-	protected JavaSparkContext jsc;
-	protected URISpec targetUri;
-	private String[] tables;
-
-	public SparkIO() {}
+	public final SparkSession spark;
+	private transient JavaSparkContext jsc;
+	public final URISpec targetUri;
+	public final String[] tables;
 
 	protected SparkIO(SparkSession spark, URISpec targetUri, String... table) {
 		super();
 		this.spark = spark;
-		this.jsc = new JavaSparkContext(spark.sparkContext());
 		this.targetUri = targetUri;
-		if (table.length > 0) tables = table;
-		else if (null != targetUri.getFile()) tables = new String[] { targetUri.getFile() };
+		String[] t;
+		if (table.length > 0) t = table;
+		else if (null != targetUri.getFile()) t = new String[] { targetUri.getFile() };
+		else t = new String[0];
+		tables = t;
+	}
+
+	protected JavaSparkContext jsc() {
+		return null == jsc ? (jsc = new JavaSparkContext(spark.sparkContext())) : jsc;
 	}
 
 	protected abstract Map<String, String> options();
@@ -40,8 +49,6 @@ public abstract class SparkIO {
 	protected String format() {
 		return null;
 	}
-
-	protected abstract String schema();
 
 	public static <V, O extends Output<V>> O output(SparkSession spark, URISpec uri, String... table) {
 		String s = uri.getScheme();
@@ -79,19 +86,24 @@ public abstract class SparkIO {
 
 	private static <C extends SparkIO> Map<String, Class<? extends C>> scan(Class<C> parentClass) {
 		Map<String, Class<? extends C>> map = Maps.of();
-		for (Class<? extends C> c : Reflections.getSubClasses(parentClass))
-			try {
-				if (!Modifier.isAbstract(c.getModifiers()) && //
-						!SparkIOLess.class.isAssignableFrom(c)) for (String s : c.newInstance().schema().split(","))
-					map.put(s, c);
-			} catch (InstantiationException | IllegalAccessException e) {
-				throw new RuntimeException(e);
-			}
+		for (Class<? extends C> c : Reflections.getSubClasses(parentClass)) {
+			Schema a = c.getAnnotation(Schema.class);
+			if (null != a) for (String s : c.getAnnotation(Schema.class).value())
+				map.put(s, c);
+		}
 		return map;
 	}
 
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.TYPE)
+	public static @interface Schema {
+		String[] value();
+	}
+
 	protected String table() {
-		if (tables.length == 0) throw new RuntimeException("No table defined for spark i/o.");
+		// String[] tables = tables.getValue();
+		if (null == tables || tables.length == 0) //
+			throw new RuntimeException("No table defined for spark i/o.");
 		if (tables.length > 1) Logger.getLogger(this.getClass()).warn("Multiple tables defined [" + tables
 				+ "] for spark i/o, now only support the first: [" + tables[0] + "].");
 		return tables[0];

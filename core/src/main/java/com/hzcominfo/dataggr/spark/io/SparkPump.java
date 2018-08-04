@@ -1,7 +1,7 @@
 package com.hzcominfo.dataggr.spark.io;
 
 import java.io.Serializable;
-import java.util.function.Function;
+import net.butfly.albacore.io.lambda.Function;
 
 import net.butfly.albacore.base.Namedly;
 import net.butfly.albacore.utils.Reflections;

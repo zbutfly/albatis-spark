@@ -4,7 +4,7 @@
 //import java.util.HashMap;
 //import java.util.List;
 //import net.butfly.albatis.io.R;
-//import java.util.function.Consumer;
+//import net.butfly.albacore.io.lambda.Consumer;
 //
 //import org.apache.spark.sql.Dataset;
 //import org.apache.spark.sql.ForeachWriter;

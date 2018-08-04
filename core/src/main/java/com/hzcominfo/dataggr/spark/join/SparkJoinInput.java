@@ -20,6 +20,7 @@ public class SparkJoinInput extends SparkInputBase<R> implements SparkIOLess {
 	protected final String joinType;
 
 	public SparkJoinInput(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs, String joinType) {
+		super(input.spark, input.targetUri);
 		if (joinInputs == null || joinInputs.size() < 1) throw new RuntimeException("Not conforming to the conditions of join");
 		this.input = input;
 		this.col = col;
@@ -48,11 +49,6 @@ public class SparkJoinInput extends SparkInputBase<R> implements SparkIOLess {
 
 	@Override
 	protected Map<String, String> options() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected String schema() {
 		throw new UnsupportedOperationException();
 	}
 

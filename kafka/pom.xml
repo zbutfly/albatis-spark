@@ -29,5 +29,10 @@
 			<artifactId>spark-sql-kafka-0-10_2.11</artifactId>
 			<version>${version.spark}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.butfly.albatis</groupId>
+			<artifactId>albatis-kafka-io</artifactId>
+			<version>1.5.2-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>
