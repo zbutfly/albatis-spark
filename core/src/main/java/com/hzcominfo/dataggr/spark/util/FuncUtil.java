@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
@@ -35,7 +34,7 @@ public class FuncUtil implements Serializable {
 	public static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);
 	public static final Encoder<R> ENC_R = Encoders.javaSerialization(R.class);
 
-	public static Function<URISpec, String> defaultcoll = u -> {
+	public static String defaultColl(URISpec u) {
 		String file = u.getFile();
 		String[] path = u.getPaths();
 		String tbl = null;

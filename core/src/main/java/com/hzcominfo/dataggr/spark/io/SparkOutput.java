@@ -12,7 +12,7 @@ public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V>, Se
 
 	public SparkOutput() {}
 
-	protected SparkOutput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	protected SparkOutput(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 	}
 }

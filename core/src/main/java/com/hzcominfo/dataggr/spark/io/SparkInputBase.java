@@ -35,8 +35,8 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, 
 		super();
 	}
 
-	protected SparkInputBase(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	protected SparkInputBase(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 		open();
 	}
 
@@ -58,23 +58,25 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, 
 	}
 
 	<E> void start(Consumer<V> using) {
-		if (dataset.isStreaming()) streaming = dataset.writeStream().outputMode(OutputMode.Update()).foreach(new ForeachWriter<V>() {
-			private static final long serialVersionUID = 3602739322755312373L;
+		if (dataset.isStreaming()) {
+			ForeachWriter<V> w = new ForeachWriter<V>() {
+				private static final long serialVersionUID = 3602739322755312373L;
 
-			@Override
-			public void process(V r) {
-				using.accept(r);
-			}
+				@Override
+				public void process(V r) {
+					using.accept(r);
+				}
 
-			@Override
-			public boolean open(long partitionId, long version) {
-				return true;
-			}
+				@Override
+				public boolean open(long partitionId, long version) {
+					return true;
+				}
 
-			@Override
-			public void close(Throwable err) {}
-		}).start();
-		else dataset.foreach(using::accept);
+				@Override
+				public void close(Throwable err) {}
+			};
+			streaming = dataset.writeStream().outputMode(OutputMode.Update()).foreach(w).start();
+		} else dataset.foreach(using::accept);
 	}
 
 	void await() {

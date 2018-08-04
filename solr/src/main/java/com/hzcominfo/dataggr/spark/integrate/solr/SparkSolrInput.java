@@ -16,8 +16,8 @@ public class SparkSolrInput extends SparkInput {
 		super();
 	}
 
-	public SparkSolrInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	public SparkSolrInput(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 	}
 
 	@Override

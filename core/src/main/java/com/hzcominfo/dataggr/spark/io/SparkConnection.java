@@ -67,7 +67,6 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 	}
 
 	@Override
-	@Deprecated
 	public <M extends R> Input<M> input(String... table) throws IOException {
 		if (table.length == 0) throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
 		String[] ts = Colls.list(table).subList(1, table.length - 1).toArray(new String[0]);
@@ -85,9 +84,10 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 		return SparkIO.output(spark, uri);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <V, I extends Input<V>> I input(URISpec uri, String... table) {
-		return SparkIO.input(spark, uri);
+		return (I) SparkIO.input(spark, uri, table);
 	}
 
 	public <V> SparkJoinInput innerJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {

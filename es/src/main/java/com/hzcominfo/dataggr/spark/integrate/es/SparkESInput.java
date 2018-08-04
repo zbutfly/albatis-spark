@@ -2,7 +2,6 @@ package com.hzcominfo.dataggr.spark.integrate.es;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.apache.spark.sql.SparkSession;
 
@@ -10,7 +9,6 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.io.R;
 
 public class SparkESInput extends SparkInput {
 	private static final long serialVersionUID = 5472880102313131224L;
@@ -21,7 +19,7 @@ public class SparkESInput extends SparkInput {
 	}
 
 	public SparkESInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+		super(spark, targetUri, targetUri.getPath());
 	}
 
 	@Override
@@ -43,10 +41,5 @@ public class SparkESInput extends SparkInput {
 	@Override
 	protected String schema() {
 		return "es,elasticsearch";
-	}
-
-	@Override
-	protected String table() {
-		return targetUri.getPath();
 	}
 }

@@ -10,7 +10,7 @@ import org.apache.spark.sql.SparkSession;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.Reflections;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.io.Input;
+import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.Output;
 
 public abstract class SparkIO {
@@ -22,14 +22,17 @@ public abstract class SparkIO {
 	protected SparkSession spark;
 	protected JavaSparkContext jsc;
 	protected URISpec targetUri;
+	private String[] tables;
 
 	public SparkIO() {}
 
-	protected SparkIO(SparkSession spark, URISpec targetUri) {
+	protected SparkIO(SparkSession spark, URISpec targetUri, String... table) {
 		super();
 		this.spark = spark;
 		this.jsc = new JavaSparkContext(spark.sparkContext());
 		this.targetUri = targetUri;
+		if (table.length > 0) tables = table;
+		else if (null != targetUri.getFile()) tables = new String[] { targetUri.getFile() };
 	}
 
 	protected abstract Map<String, String> options();
@@ -40,14 +43,14 @@ public abstract class SparkIO {
 
 	protected abstract String schema();
 
-	public static <V, O extends Output<V>> O output(SparkSession spark, URISpec uri) {
+	public static <V, O extends Output<V>> O output(SparkSession spark, URISpec uri, String... table) {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<O> c = (Class<O>) ADAPTER_OUTPUT.get(s);
 			if (null == c) break;
 			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
+				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri, table);
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
 				throw new RuntimeException(e);
@@ -56,14 +59,14 @@ public abstract class SparkIO {
 		return null;
 	}
 
-	public static <V, I extends Input<V>> I input(SparkSession spark, URISpec uri) {
+	public static <V, I extends SparkInput> I input(SparkSession spark, URISpec uri, String... table) {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<I> c = (Class<I>) ADAPTER_INPUT.get(s);
 			if (null == c) break;
 			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri);
+				return c.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 					| IllegalArgumentException e) {
 				throw new RuntimeException(e);
@@ -85,5 +88,12 @@ public abstract class SparkIO {
 				throw new RuntimeException(e);
 			}
 		return map;
+	}
+
+	protected String table() {
+		if (tables.length == 0) throw new RuntimeException("No table defined for spark i/o.");
+		if (tables.length > 1) Logger.getLogger(this.getClass()).warn("Multiple tables defined [" + tables
+				+ "] for spark i/o, now only support the first: [" + tables[0] + "].");
+		return tables[0];
 	}
 }

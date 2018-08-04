@@ -22,8 +22,8 @@ public class SparkKafkaInput extends SparkInput {
 		conv = null;
 	}
 
-	public SparkKafkaInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	public SparkKafkaInput(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 		conv = Connection.urider(targetUri);
 	}
 

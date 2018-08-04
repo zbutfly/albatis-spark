@@ -26,8 +26,8 @@ public class SparkKafkaEtlInput extends SparkKafkaInput {
 		super();
 	}
 
-	public SparkKafkaEtlInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	public SparkKafkaEtlInput(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 	}
 
 	@Override

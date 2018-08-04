@@ -10,8 +10,8 @@ import net.butfly.albacore.utils.collection.Maps;
 public class SparkMongoInput extends SparkInput {
 	private static final long serialVersionUID = 2110132305482403155L;
 
-	public SparkMongoInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	public SparkMongoInput(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 	}
 
 	public SparkMongoInput() {

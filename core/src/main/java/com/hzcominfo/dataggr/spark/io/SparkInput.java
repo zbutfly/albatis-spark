@@ -1,5 +1,7 @@
 package com.hzcominfo.dataggr.spark.io;
 
+import java.util.Map;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -14,22 +16,21 @@ import net.butfly.albatis.io.R;
  */
 public abstract class SparkInput extends SparkInputBase<R> {
 	private static final long serialVersionUID = 8309576584660953676L;
+	protected String[] tables;
 
 	public SparkInput() {
 		super();
 	}
 
-	public SparkInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	public SparkInput(SparkSession spark, URISpec targetUri, String... table) {
+		super(spark, targetUri, table);
 	}
 
 	@Override
 	protected Dataset<R> load() {
-		return spark.readStream().format(format()).options(options()).load().map(this::conv, FuncUtil.ENC_R);
-	}
-
-	protected String table() {
-		return targetUri.getFile();
+		Map<String, String> opts = options();
+		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
+		return spark.readStream().format(format()).options(opts).load().map(this::conv, FuncUtil.ENC_R);
 	}
 
 	protected R conv(Row row) {
