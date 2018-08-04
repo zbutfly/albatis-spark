@@ -12,7 +12,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import com.hzcominfo.dataggr.spark.io.SparkIOLess;
-import com.hzcominfo.dataggr.spark.io.SparkInput;
+import com.hzcominfo.dataggr.spark.io.SparkInputBase;
 
 /**
  * for feature
@@ -20,15 +20,15 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
  * @author chenw
  *
  */
-public class SparkPluginInput extends SparkInput<Row> implements SparkIOLess {
+public class SparkPluginInput extends SparkInputBase<Row> implements SparkIOLess {
 	private static final long serialVersionUID = -3514105763334222049L;
-	protected final SparkInput<Row> input;
+	protected final SparkInputBase<Row> input;
 	protected final PluginConfig pc;
 	protected final static String PLUGIN_KEY = PluginElement.zjhm.name();
 	protected final static String COUNT = PluginElement.count.name();
 	protected final static String MAX_SCORE = PluginElement.max_score.name();
 
-	public SparkPluginInput(SparkInput<Row> input, PluginConfig pc) {
+	public SparkPluginInput(SparkInputBase<Row> input, PluginConfig pc) {
 		this.input = input;
 		this.pc = pc;
 	}

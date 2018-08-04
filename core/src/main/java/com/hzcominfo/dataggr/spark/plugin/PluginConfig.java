@@ -6,20 +6,20 @@ import java.util.Map;
 
 import org.apache.spark.sql.Row;
 
-import com.hzcominfo.dataggr.spark.io.SparkInput;
+import com.hzcominfo.dataggr.spark.io.SparkInputBase;
 
 public class PluginConfig implements Serializable {
 	private static final long serialVersionUID = -4804424398805110003L;
 	private final List<String> keys;
 	private final String maxScore;
-	private Map<SparkInput<Row>, String> collisionInputs;
+	private Map<SparkInputBase<Row>, String> collisionInputs;
 
 	public PluginConfig(List<String> keys, String maxScore) {
 		this.keys = keys;
 		this.maxScore = maxScore;
 	}
 
-	public PluginConfig(List<String> keys, String maxScore, Map<SparkInput<Row>, String> collisionInputs) {
+	public PluginConfig(List<String> keys, String maxScore, Map<SparkInputBase<Row>, String> collisionInputs) {
 		this(keys, maxScore);
 		this.collisionInputs = collisionInputs;
 	}
@@ -32,11 +32,11 @@ public class PluginConfig implements Serializable {
 		return keys;
 	}
 
-	public Map<SparkInput<Row>, String> getCollisionInputs() {
+	public Map<SparkInputBase<Row>, String> getCollisionInputs() {
 		return collisionInputs;
 	}
 
-	public void setCollisionInputs(Map<SparkInput<Row>, String> collisionInputs) {
+	public void setCollisionInputs(Map<SparkInputBase<Row>, String> collisionInputs) {
 		this.collisionInputs = collisionInputs;
 	}
 }

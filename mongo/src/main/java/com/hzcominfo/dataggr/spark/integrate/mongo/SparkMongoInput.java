@@ -2,12 +2,12 @@ package com.hzcominfo.dataggr.spark.integrate.mongo;
 
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.dataggr.spark.io.SparkInput.SparkRmapInput;
+import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 
-public class SparkMongoInput extends SparkRmapInput {
+public class SparkMongoInput extends SparkInput {
 	private static final long serialVersionUID = 2110132305482403155L;
 
 	public SparkMongoInput(SparkSession spark, URISpec targetUri) {

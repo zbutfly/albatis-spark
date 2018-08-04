@@ -90,23 +90,23 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 		return SparkIO.input(spark, uri);
 	}
 
-	public <V> SparkJoinInput innerJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
+	public <V> SparkJoinInput innerJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
 		return new SparkInnerJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput orJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
+	public SparkJoinInput orJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
 		return new SparkOrJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput nonJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
+	public SparkJoinInput nonJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
 		return new SparkNonJoinInput(input, col, joinInputs);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkPluginInput plugin(String className, SparkInput<R> input, PluginConfig pc) {
+	public SparkPluginInput plugin(String className, SparkInputBase<R> input, PluginConfig pc) {
 		try {
 			Class<? extends SparkPluginInput> c = (Class<? extends SparkPluginInput>) Class.forName(className);
-			return c.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
+			return c.getConstructor(SparkInputBase.class, PluginConfig.class).newInstance(input, pc);
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 				| IllegalArgumentException e) {
 			throw new RuntimeException(e);

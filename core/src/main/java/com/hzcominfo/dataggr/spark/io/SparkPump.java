@@ -10,10 +10,10 @@ import net.butfly.albatis.io.pump.Pump;
 
 class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 	private static final long serialVersionUID = -6842560101323305087L;
-	private final SparkInput<V> input;
+	private final SparkInputBase<V> input;
 	private final Output<V> output;
 
-	SparkPump(SparkInput<V> input, Output<V> dest) {
+	SparkPump(SparkInputBase<V> input, Output<V> dest) {
 		super(input.name() + ">" + dest.name());
 		this.input = input;
 		this.output = dest;

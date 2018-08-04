@@ -7,13 +7,13 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.albatis.nosql.Connection;
-import com.hzcominfo.dataggr.spark.io.SparkInput.SparkRmapInput;
+import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.R;
 
-public class SparkKafkaInput extends SparkRmapInput {
+public class SparkKafkaInput extends SparkInput {
 	private static final long serialVersionUID = 9003837433163351306L;
 	private final Function<byte[], Map<String, Object>> conv;
 

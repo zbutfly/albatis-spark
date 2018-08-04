@@ -4,12 +4,12 @@ import java.util.Map;
 
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.dataggr.spark.io.SparkInput.SparkRmapInput;
+import com.hzcominfo.dataggr.spark.io.SparkInput;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 
-public class SparkSolrInput extends SparkRmapInput {
+public class SparkSolrInput extends SparkInput {
 	private static final long serialVersionUID = -5201381842972371471L;
 
 	public SparkSolrInput() {

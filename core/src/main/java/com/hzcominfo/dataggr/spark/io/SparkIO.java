@@ -15,7 +15,7 @@ import net.butfly.albatis.io.Output;
 
 public abstract class SparkIO {
 	@SuppressWarnings("rawtypes")
-	private static final Map<String, Class<? extends SparkInput>> ADAPTER_INPUT = scan(SparkInput.class);
+	private static final Map<String, Class<? extends SparkInputBase>> ADAPTER_INPUT = scan(SparkInputBase.class);
 	@SuppressWarnings("rawtypes")
 	private static final Map<String, Class<? extends SparkOutput>> ADAPTER_OUTPUT = scan(SparkOutput.class);
 
