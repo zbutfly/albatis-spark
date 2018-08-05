@@ -26,7 +26,7 @@ import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.R;
 
-public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V>, Serializable {
+public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
 	private static final Logger logger = Logger.getLogger(SparkInputBase.class);
 
