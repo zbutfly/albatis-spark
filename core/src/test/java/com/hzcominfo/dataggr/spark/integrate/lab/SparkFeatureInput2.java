@@ -3,12 +3,12 @@
 //import java.io.Serializable;
 //import java.util.HashMap;
 //import java.util.List;
-//import net.butfly.albatis.io.R;
+//import net.butfly.albatis.io.Rmap;
 //import net.butfly.albacore.io.lambda.Consumer;
 //
 //import org.apache.spark.sql.Dataset;
 //import org.apache.spark.sql.ForeachWriter;
-//import net.butfly.albatis.io.R;
+//import net.butfly.albatis.io.Rmap;
 //import org.apache.spark.sql.streaming.DataStreamWriter;
 //import org.apache.spark.sql.types.StructType;
 //
@@ -26,7 +26,7 @@
 // * @author chenw
 // *
 // */
-//public class SparkFeatureInput2 implements Input<R>, Serializable {
+//public class SparkFeatureInput2 implements Input<Rmap>, Serializable {
 //	private static final long serialVersionUID = -4742008582795468309L;
 //	private final SparkConnection client;
 //	private final Dataset<R> dataset;

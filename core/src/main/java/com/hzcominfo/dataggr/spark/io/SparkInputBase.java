@@ -1,12 +1,8 @@
 package com.hzcominfo.dataggr.spark.io;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import net.butfly.albacore.io.lambda.Consumer;
-import net.butfly.albacore.io.lambda.Function;
-import net.butfly.albacore.io.lambda.Predicate;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.ForeachWriter;
@@ -20,11 +16,14 @@ import org.apache.spark.sql.streaming.Trigger;
 import com.hzcominfo.dataggr.spark.util.FuncUtil;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.io.lambda.Consumer;
+import net.butfly.albacore.io.lambda.Function;
+import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 
 public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -121,12 +120,12 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	}
 
 	/*
-	 * destination class should be R or Row only....
+	 * destination class should be Rmap or Row only....
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInputBase<V1> then(Function<V, V1> conv) {
-		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (R) conv.apply(r), FuncUtil.ENC_R));
+		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (Rmap) conv.apply(r), FuncUtil.ENC_R));
 	}
 
 	@Override
@@ -141,12 +140,12 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	}
 
 	/*
-	 * destination class should be R or Row only....
+	 * destination class should be Rmap or Row only....
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInputBase<V1> thenFlat(Function<V, Sdream<V1>> conv) {
-		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.flatMap(v -> ((List<R>) conv.apply(v).list()).iterator(),
+		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(),
 				FuncUtil.ENC_R));
 	}
 

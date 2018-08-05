@@ -14,7 +14,7 @@ import com.hzcominfo.dataggr.spark.io.SparkIO.Schema;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 
 @Schema("kafka:msg")
 public class SparkKafkaFieldInput extends SparkKafkaInput {
@@ -26,7 +26,7 @@ public class SparkKafkaFieldInput extends SparkKafkaInput {
 	}
 
 	@Override
-	protected R conv(Row row) {
+	protected Rmap conv(Row row) {
 		return filter(super.conv(row));
 	}
 
@@ -37,7 +37,7 @@ public class SparkKafkaFieldInput extends SparkKafkaInput {
 		return (I) this;
 	}
 
-	protected R filter(R r) {
+	protected Rmap filter(Rmap r) {
 		if (!struct.isEmpty()) for (Enumeration<String> keys = r.keys(); keys.hasMoreElements();) {
 			String f = keys.nextElement();
 			StructField s = struct.get(f);

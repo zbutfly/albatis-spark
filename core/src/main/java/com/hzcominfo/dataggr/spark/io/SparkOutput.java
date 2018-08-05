@@ -1,7 +1,5 @@
 package com.hzcominfo.dataggr.spark.io;
 
-import java.io.Serializable;
-
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;

@@ -2,10 +2,10 @@
 //
 //import java.util.HashMap;
 //import java.util.List;
-//import net.butfly.albatis.io.R;
+//import net.butfly.albatis.io.Rmap;
 //
 //import org.apache.spark.sql.ForeachWriter;
-//import net.butfly.albatis.io.R;
+//import net.butfly.albatis.io.Rmap;
 //import org.apache.spark.sql.types.StructType;
 //
 //import net.butfly.albacore.utils.collection.Colls;

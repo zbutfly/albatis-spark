@@ -8,10 +8,10 @@ import com.hzcominfo.dataggr.spark.io.SparkIO.Schema;
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 
 @Schema({ "es", "elasticsearch" })
-public class SparkESOutput extends SparkOutput<R> {
+public class SparkESOutput extends SparkOutput<Rmap> {
 	private static final long serialVersionUID = 2840201452393061853L;
 
 	protected SparkESOutput(SparkSession spark, URISpec targetUri, String[] table) {
@@ -19,7 +19,7 @@ public class SparkESOutput extends SparkOutput<R> {
 	}
 
 	@Override
-	public boolean enqueue(R row) {
+	public boolean enqueue(Rmap row) {
 		// TODO Auto-generated method stub
 		return false;
 	}

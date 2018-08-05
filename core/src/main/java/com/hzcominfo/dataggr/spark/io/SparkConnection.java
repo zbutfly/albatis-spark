@@ -31,7 +31,7 @@ import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
@@ -67,7 +67,7 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 	}
 
 	@Override
-	public <M extends R> Input<M> input(String... table) throws IOException {
+	public <M extends Rmap> Input<M> input(String... table) throws IOException {
 		if (table.length == 0) throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
 		String[] ts = Colls.list(table).subList(1, table.length - 1).toArray(new String[0]);
 		return input(new URISpec(table[0]), ts);
@@ -75,7 +75,7 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 
 	@Override
 	@Deprecated
-	public <M extends R> Output<M> output() throws IOException {
+	public <M extends Rmap> Output<M> output() throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -103,7 +103,7 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkPluginInput plugin(String className, SparkInputBase<R> input, PluginConfig pc) {
+	public SparkPluginInput plugin(String className, SparkInputBase<Rmap> input, PluginConfig pc) {
 		try {
 			Class<? extends SparkPluginInput> c = (Class<? extends SparkPluginInput>) Class.forName(className);
 			return c.getConstructor(SparkInputBase.class, PluginConfig.class).newInstance(input, pc);

@@ -1,6 +1,6 @@
 //package com.hzcominfo.dataggr.spark.integrate.lab;
 //
-//import net.butfly.albatis.io.R;
+//import net.butfly.albatis.io.Rmap;
 //
 //public class SessionConfig {
 //

@@ -9,10 +9,10 @@ import com.hzcominfo.dataggr.spark.io.SparkIOLess;
 import com.hzcominfo.dataggr.spark.io.SparkInputBase;
 import com.hzcominfo.dataggr.spark.util.FuncUtil;
 
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 
 @SuppressWarnings("rawtypes")
-public class SparkJoinInput extends SparkInputBase<R> implements SparkIOLess {
+public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess {
 	private static final long serialVersionUID = -1813416909589214047L;
 	protected final SparkInputBase<Row> input;
 	protected final String col;
@@ -37,7 +37,7 @@ public class SparkJoinInput extends SparkInputBase<R> implements SparkIOLess {
 	}
 
 	@Override
-	protected Dataset<R> load() {
+	protected Dataset<Rmap> load() {
 		Dataset<Row> ds0 = input.dataset();
 		for (SparkInputBase<?> in : joinInputs.keySet()) {
 			String key = joinInputs.get(in);

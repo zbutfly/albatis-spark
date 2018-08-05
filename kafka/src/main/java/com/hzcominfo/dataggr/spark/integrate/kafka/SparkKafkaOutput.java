@@ -1,6 +1,6 @@
 package com.hzcominfo.dataggr.spark.integrate.kafka;
 
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 import org.apache.spark.sql.SparkSession;
 
 import com.hzcominfo.dataggr.spark.io.SparkOutput;
@@ -10,7 +10,7 @@ import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 
 @Schema("kafka")
-public class SparkKafkaOutput extends SparkOutput<R> {
+public class SparkKafkaOutput extends SparkOutput<Rmap> {
 	private static final long serialVersionUID = 9003837433163351306L;
 
 	SparkKafkaOutput(SparkSession spark, URISpec targetUri, String... table) {
@@ -27,7 +27,7 @@ public class SparkKafkaOutput extends SparkOutput<R> {
 	}
 
 	@Override
-	public boolean enqueue(R row) {
+	public boolean enqueue(Rmap row) {
 		// TODO Auto-generated method stub
 		return false;
 	}

@@ -20,7 +20,7 @@ import com.google.common.base.Supplier;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 import scala.Function0;
 import scala.collection.JavaConversions;
 import scala.collection.JavaConverters;
@@ -32,7 +32,7 @@ public class FuncUtil implements Serializable {
 
 	@SuppressWarnings("rawtypes")
 	public static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);
-	public static final Encoder<R> ENC_R = Encoders.javaSerialization(R.class);
+	public static final Encoder<Rmap> ENC_R = Encoders.javaSerialization(Rmap.class);
 
 	public static String defaultColl(URISpec u) {
 		String file = u.getFile();
@@ -48,7 +48,7 @@ public class FuncUtil implements Serializable {
 		return new GenericRowWithSchema(map.values().toArray(), DataTypes.createStructType(fields));
 	}
 
-	public static Row mapRow(R map) {
+	public static Row mapRow(Rmap map) {
 		List<StructField> fields = Colls.list();
 		map.put("___table", map.table());
 		map.forEach((k, v) -> fields.add(DataTypes.createStructField(k, classType(v), null == v)));
@@ -59,16 +59,16 @@ public class FuncUtil implements Serializable {
 		Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala().toSeq();
 		Map<String, Object> map = JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
 		String t = (String) map.remove("___table");
-		if (null != t) return new R(t, map);
+		if (null != t) return new Rmap(t, map);
 		else return map;
 	}
 
-	public static R rMap(Row row) {
+	public static Rmap rMap(Row row) {
 		Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala().toSeq();
 		Map<String, Object> map = JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
 		String t = (String) map.remove("___table");
-		if (null != t) return new R(t, map);
-		else return new R(map);
+		if (null != t) return new Rmap(t, map);
+		else return new Rmap(map);
 	}
 
 	public static final DataType classType(Object v) {
@@ -119,15 +119,15 @@ public class FuncUtil implements Serializable {
 		return scala.collection.JavaConversions.mapAsJavaMap(vs);
 	}
 
-	// public static final Encoder<R> enc = (Encoder<R>) null;
-	// public static Dataset<R> mapize(Dataset<R> ds) {
-	// Encoder<R> enc = ds.sparkSession().implicits().newMapEncoder(TYPETAG_MAP);
+	// public static final Encoder<Rmap> enc = (Encoder<Rmap>) null;
+	// public static Dataset<Rmap> mapize(Dataset<Rmap> ds) {
+	// Encoder<Rmap> enc = ds.sparkSession().implicits().newMapEncoder(TYPETAG_MAP);
 	// return ds.map(FuncUtil::rowMap, enc);
 	// }
 
-	// public static final TypeTag<R> TYPETAG_MAP = mapenc();
+	// public static final TypeTag<Rmap> TYPETAG_MAP = mapenc();
 	//
-	// private static TypeTag<R> mapenc() {
+	// private static TypeTag<Rmap> mapenc() {
 	// JavaUniverse ru = scala.reflect.runtime.package$.MODULE$.universe();
 	// Universe u = (Universe) ru;
 	// JavaMirror rm = ru.runtimeMirror(SparkIO.class.getClassLoader());
@@ -139,7 +139,7 @@ public class FuncUtil implements Serializable {
 	// rm.classSymbol(Object.class).toType()//
 	// ).iterator()).asScala().toSeq());
 	// @SuppressWarnings("unchecked")
-	// TypeTags.TypeTag<R> ct = ((Universe) ru).TypeTag().apply(m, new TypeCr(t));
+	// TypeTags.TypeTag<Rmap> ct = ((Universe) ru).TypeTag().apply(m, new TypeCr(t));
 	// // new PredefTypeTag(u, t, null);
 	// return ct;
 	// }

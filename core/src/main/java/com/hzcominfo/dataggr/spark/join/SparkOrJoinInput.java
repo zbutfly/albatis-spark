@@ -10,7 +10,7 @@ import org.apache.spark.sql.Row;
 import com.hzcominfo.dataggr.spark.io.SparkInputBase;
 import com.hzcominfo.dataggr.spark.util.FuncUtil;
 
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 
 public class SparkOrJoinInput extends SparkJoinInput {
 	private static final long serialVersionUID = 377289278732441635L;
@@ -20,7 +20,7 @@ public class SparkOrJoinInput extends SparkJoinInput {
 	}
 
 	@Override
-	protected Dataset<R> load() {
+	protected Dataset<Rmap> load() {
 		Dataset<Row> ds0 = input.dataset();
 		List<Dataset<Row>> dsAll = new ArrayList<>();
 		for (SparkInputBase<?> in : joinInputs.keySet()) {

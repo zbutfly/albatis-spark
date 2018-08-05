@@ -14,7 +14,7 @@ import com.hzcominfo.dataggr.spark.io.SparkInput;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.io.R;
+import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
 
 /**
@@ -59,14 +59,14 @@ public class SparkKafkaInput extends SparkInput {
 	}
 
 	@Override
-	protected R conv(Row row) {
+	protected Rmap conv(Row row) {
 		Map<String, Object> kafka = super.conv(row);
 		byte[] rowkey = (byte[]) kafka.remove("key");
 		byte[] bytes = (byte[]) kafka.remove("value");
 		String topic = (String) kafka.remove("topic");
 		Map<String, Object> values = null == bytes || bytes.length == 0 ? Maps.of() : conv.apply(bytes);
-		if (!kafka.isEmpty()) logger().warn("Kafka raw message contains other fields: " + kafka.toString());
-		R r = new R(topic, values);
+		if (!kafka.isEmpty()) logger().trace("Kafka raw message contains other fields: " + kafka.toString());
+		Rmap r = new Rmap(topic, values);
 		if (null != rowkey) r = r.key(new String(rowkey, StandardCharsets.UTF_8));
 		return r;
 	}

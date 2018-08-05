@@ -7,8 +7,8 @@ import org.apache.spark.sql.SparkSession;
 import com.hzcominfo.dataggr.spark.io.SparkIO.Schema;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albatis.io.R;
-import net.butfly.albatis.io.R.Op;
+import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.io.Rmap.Op;
 
 @Deprecated
 @Schema("kafka:etl")
@@ -22,12 +22,12 @@ public class SparkKafkaEtlInput extends SparkKafkaFieldInput {
 	}
 
 	@Override
-	protected R filter(R etl) {
+	protected Rmap filter(Rmap etl) {
 		@SuppressWarnings("unchecked")
 		Map<String, Object> value = (Map<String, Object>) etl.get("value");
 		String key = keys.get(etl.table());
 		key = null == key ? null : (String) value.get(key);
-		R r = new R(etl.table(), key, value);
+		Rmap r = new Rmap(etl.table(), key, value);
 		String op = (String) etl.get("oper_type");
 		int opv = null == op ? Integer.parseInt(op) : Op.DEFAULT;
 		r.op(opv);
