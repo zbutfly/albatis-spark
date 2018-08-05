@@ -8,7 +8,7 @@ import org.apache.spark.sql.Row;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.io.SparkIOLess;
 import net.butfly.albatis.spark.io.SparkInputBase;
-import net.butfly.albatis.spark.util.FuncUtil;
+import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 @SuppressWarnings("rawtypes")
 public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess {
@@ -43,7 +43,7 @@ public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess 
 			Dataset<?> ds = in.dataset();
 			ds0 = ds0.join(ds, ds0.col(col).equalTo(ds.col(key)), joinType).distinct();
 		}
-		return ds0.map(FuncUtil::rMap, FuncUtil.ENC_R);
+		return ds0.map($utils$::rMap, $utils$.ENC_R);
 	}
 
 	@Override

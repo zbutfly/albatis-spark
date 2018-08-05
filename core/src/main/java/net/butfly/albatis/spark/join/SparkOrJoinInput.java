@@ -9,7 +9,7 @@ import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.io.SparkInputBase;
-import net.butfly.albatis.spark.util.FuncUtil;
+import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 public class SparkOrJoinInput extends SparkJoinInput {
 	private static final long serialVersionUID = 377289278732441635L;
@@ -30,6 +30,6 @@ public class SparkOrJoinInput extends SparkJoinInput {
 
 		for (Dataset<Row> ds : dsAll)
 			ds0 = ds0.union(ds);
-		return ds0.map(FuncUtil::rMap, FuncUtil.ENC_R);
+		return ds0.map($utils$::rMap, $utils$.ENC_R);
 	}
 }

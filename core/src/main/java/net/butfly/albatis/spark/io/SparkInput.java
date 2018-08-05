@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.util.FuncUtil;
+import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 /**
  * generally, any kafka with value of a serialized map should come from here
@@ -26,11 +26,11 @@ public abstract class SparkInput extends SparkInputBase<Rmap> {
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
 		Dataset<Row> ds = spark.readStream().format(format()).options(opts).load();
 		// dds.printSchema();
-		Dataset<Rmap> dds = ds.map(this::conv, FuncUtil.ENC_R);
+		Dataset<Rmap> dds = ds.map(this::conv, $utils$.ENC_R);
 		return dds;
 	}
 
 	protected Rmap conv(Row row) {
-		return new Rmap(table(), FuncUtil.rowMap(row));
+		return new Rmap(table(), $utils$.rowMap(row));
 	}
 }

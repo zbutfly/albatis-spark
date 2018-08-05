@@ -30,6 +30,7 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 		input.open();
 		Pump.super.open();
 
+		
 		input.deq(output.odd()::enqueue);
 		input.await();
 

@@ -22,7 +22,7 @@ import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.util.FuncUtil;
+import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -124,7 +124,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInputBase<V1> then(Function<V, V1> conv) {
-		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (Rmap) conv.apply(r), FuncUtil.ENC_R));
+		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (Rmap) conv.apply(r), $utils$.ENC_R));
 	}
 
 	@Override
@@ -145,7 +145,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInputBase<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(),
-				FuncUtil.ENC_R));
+				$utils$.ENC_R));
 	}
 
 	@Override

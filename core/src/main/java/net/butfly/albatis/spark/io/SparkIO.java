@@ -57,7 +57,7 @@ public abstract class SparkIO implements Serializable {
 			Class<O> c = (Class<O>) ADAPTER_OUTPUT.get(s);
 			if (null == c) break;
 			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class).newInstance(spark, uri, table);
+				return c.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
 				throw new RuntimeException(e);
