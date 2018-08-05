@@ -1,13 +1,12 @@
-package com.hzcominfo.dataggr.spark.integrate.solr.test;
+package net.butfly.albatis.elastic;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.spark.io.SparkConnection;
 import net.butfly.albatis.spark.io.SparkInput;
 
 public class AppTest {
-
 	public static void main(String[] args) {
-		URISpec uri = new URISpec("solr://data01:7181,data02:7181,data03:7181/ORACLE_MONGO_CZRK_DUMP");
-		try (SparkConnection client = new SparkConnection("solr-apptest", uri); SparkInput in = client.input(uri);) {
+		URISpec uri = new URISpec("es://hzcominfo@172.30.10.31:39200/test_phga_search/M2ES_PH_ZHK_CZRK");
+		try (SparkConnection client = new SparkConnection("es-apptest", uri); SparkInput in = client.input(uri);) {
 			in.open();
 //			in.dataset().foreach(System.out::println);
 		}

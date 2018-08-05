@@ -1,9 +1,8 @@
 package com.hzcominfo.dataggr.spark.integrate.mongo.test;
 
-import com.hzcominfo.dataggr.spark.io.SparkConnection;
-import com.hzcominfo.dataggr.spark.io.SparkInput;
-
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albatis.spark.io.SparkConnection;
+import net.butfly.albatis.spark.io.SparkInput;
 
 public class AppTest {
 	public static void main(String[] args) {
