@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 public class SparkSchedule {
-
 	private static Map<String, Integer> jobs = new HashMap<>();
 	private static Map<String, Object> stages = new HashMap<>();
 	private static Map<Object, Integer> taskNums = new HashMap<>();
@@ -45,10 +44,8 @@ public class SparkSchedule {
 
 	@SuppressWarnings("unchecked")
 	public static int calcPercent(String sessionId) {
-		if (stages.isEmpty())
-			return 0;
-		if (percents.isEmpty())
-			return 5;
+		if (stages.isEmpty()) return 0;
+		if (percents.isEmpty()) return 5;
 		Object obj = stages.get(sessionId);
 		if (obj instanceof List) {
 			NumberFormat nf = NumberFormat.getInstance();
@@ -56,13 +53,11 @@ public class SparkSchedule {
 			float f = 0;
 			List<Object> stageIds = (List<Object>) obj;
 			for (Object stageId : stageIds) {
-				if (percents.containsKey(stageId))
-					f += percents.get(stageId);
+				if (percents.containsKey(stageId)) f += percents.get(stageId);
 			}
 			if (f != 0) {
 				return Integer.valueOf(nf.format(f / stageIds.size()));
-			} else
-				return 10;
+			} else return 10;
 		}
 		return 0;
 	}

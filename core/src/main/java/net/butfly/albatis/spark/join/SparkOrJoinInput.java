@@ -30,6 +30,6 @@ public class SparkOrJoinInput extends SparkJoinInput {
 
 		for (Dataset<Row> ds : dsAll)
 			ds0 = ds0.union(ds);
-		return ds0.map($utils$::rMap, $utils$.ENC_R);
+		return ds0.map(row -> $utils$.rmap(input.table(), row), $utils$.ENC_R);
 	}
 }

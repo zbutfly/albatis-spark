@@ -6,7 +6,6 @@ import static org.apache.spark.sql.functions.max;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -45,11 +44,6 @@ public class SparkPluginInput extends SparkInputBase<Row> implements SparkIOLess
 		for (int i = 1; i < dsList.size(); i++)
 			ds0.union(dsList.get(i));
 		return ds0;
-	}
-
-	@Override
-	protected Map<String, String> options() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

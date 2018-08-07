@@ -31,7 +31,7 @@ public class SparkESInput extends SparkInput {
 	}
 
 	@Override
-	protected String format() {
+	public String format() {
 		return "es";
 	}
 }

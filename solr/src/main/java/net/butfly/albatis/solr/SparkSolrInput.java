@@ -29,7 +29,7 @@ public class SparkSolrInput extends SparkInput {
 	}
 
 	@Override
-	protected String format() {
+	public String format() {
 		return "solr";
 	}
 }

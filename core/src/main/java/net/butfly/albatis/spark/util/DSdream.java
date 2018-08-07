@@ -9,17 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.ForeachWriter;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.OutputMode;
@@ -33,96 +28,112 @@ import org.apache.spark.sql.types.StructField;
 import com.google.common.base.Supplier;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.io.lambda.BiConsumer;
+import net.butfly.albacore.io.lambda.BinaryOperator;
+import net.butfly.albacore.io.lambda.Consumer;
+import net.butfly.albacore.io.lambda.Function;
+import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Exeter;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Pair;
 import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.io.SparkOutputWriter;
 import scala.Function0;
 import scala.collection.JavaConversions;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 import scala.runtime.AbstractFunction0;
 
-public final class DSdream implements Sdream<Rmap>/* , Dataset<Rmap> */ {
+@SuppressWarnings("unchecked")
+public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
 	private static final long serialVersionUID = 4996999561898013014L;
-	protected final Dataset<Rmap> ds;
+	public final Dataset<T> ds;
 
-	public DSdream(Dataset<Rmap> impl) {
+	private DSdream(Dataset<T> impl) {
 		ds = impl;
 	}
 
+	public static <T> DSdream<T> of(Dataset<T> impl) {
+		return new DSdream<>(impl);
+	}
+
+	public static DSdream<Rmap> of(String table, Dataset<Row> impl) {
+		return new DSdream<>(impl.map(row -> $utils$.rmap(table, row), $utils$.ENC_R));
+	}
+
+	public static DSdream<Rmap> of(SQLContext ctx, Sdream<Rmap> s) {
+		return s instanceof DSdream ? (DSdream<Rmap>) s : of(ctx.createDataset(s.list(), $utils$.ENC_R));
+	}
+
 	@Override
-	public Spliterator<Rmap> spliterator() {
+	public Spliterator<T> spliterator() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Sdream<Rmap> ex(Exeter ex) {
+	public Sdream<T> ex(Exeter ex) {
 		return this;
 	}
 
 	// =======================================
 
 	@Override
-	public Rmap reduce(BinaryOperator<Rmap> accumulator) {
+	public T reduce(BinaryOperator<T> accumulator) {
 		return ds.reduce(accumulator::apply);
 	}
 
 	// conving =======================================
 	@Override
-	public Sdream<Rmap> filter(Predicate<Rmap> checking) {
-		return new DSdream(ds.filter(checking::test));
+	public Sdream<T> filter(Predicate<T> checking) {
+		return new DSdream<>(ds.filter(checking::test));
 	}
 
 	@Override
 	@Deprecated
-	public Sdream<Sdream<Rmap>> batch(int maxBatchSize) {
-		// List<Sdream<Rmap>> dss = Colls.list();
-		// double[] weights = new double[] {};
-		// for (Dataset<Rmap> d : ds.randomSplit(weights)) {
-		// dss.add(new DSdream(d));
-		// }
-		// return Sdream.of(dss);
+	public Sdream<Sdream<T>> batch(int maxBatchSize) {
 		throw new UnsupportedOperationException();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Sdream<R> map(Function<Rmap, R> conv) {
-		return (Sdream<R>) new DSdream(ds.map(m -> (Rmap) conv.apply(m), $utils$.ENC_R));
+	public <R> Sdream<R> map(Function<T, R> conv) {
+		return (Sdream<R>) new DSdream<>(ds.map(m -> (Rmap) conv.apply(m), $utils$.ENC_R));
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("deprecation")
 	@Override
 	@Deprecated
-	public <R> Sdream<R> map(Function<Sdream<Rmap>, Sdream<R>> conv, int maxBatchSize) {
-		return (Sdream<R>) new DSdream(ds.flatMap(m -> (Iterator<Rmap>) conv.apply(Sdream.of(Colls.list(m))).list().iterator(),
+	public <R> Sdream<R> map(Function<Sdream<T>, Sdream<R>> conv, int maxBatchSize) {
+		return (Sdream<R>) new DSdream<>(ds.flatMap(m -> (Iterator<Rmap>) conv.apply(Sdream.of(Colls.list(m))).list().iterator(),
 				$utils$.ENC_R));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Sdream<R> mapFlat(Function<Rmap, Sdream<R>> flat) {
-		return (Sdream<R>) new DSdream(ds.flatMap(m -> (Iterator<Rmap>) flat.apply(m).list().iterator(), $utils$.ENC_R));
+	public <R> Sdream<R> mapFlat(Function<T, Sdream<R>> flat) {
+		return (Sdream<R>) new DSdream<>(ds.flatMap(m -> (Iterator<Rmap>) flat.apply(m).list().iterator(), $utils$.ENC_R));
 	}
 
 	@Override
-	public Sdream<Rmap> union(Sdream<Rmap> another) {
-		return another instanceof DSdream ? new DSdream(ds.union(((DSdream) another).ds))
-				: new DSdream(ds.union(ds.sqlContext().createDataset(another.list(), $utils$.ENC_R)));
+	public Sdream<T> union(Sdream<T> another) {
+		if (another instanceof DSdream) return new DSdream<>(ds.union(((DSdream<T>) another).ds));
+		List<Rmap> l = (List<Rmap>) another.list();
+		Dataset<Rmap> ads = ds.sqlContext().createDataset(l, $utils$.ENC_R);
+		Dataset<Rmap> uds = ((Dataset<Rmap>) ds).union(ads);
+		return (Sdream<T>) new DSdream<>(uds);
 	}
 
 	@Override
-	public <E1> Sdream<Pair<Rmap, E1>> join(Function<Sdream<Rmap>, Sdream<E1>> joining, int maxBatchSize) {
+	public <E1> Sdream<Pair<T, E1>> join(Function<Sdream<T>, Sdream<E1>> joining, int maxBatchSize) {
 		throw new UnsupportedOperationException();
 	}
 
 	// using ==================
 	/** Using spliterator sequencially */
 	@Override
-	public void eachs(Consumer<Rmap> using) {
-		StreamingQuery s = $utils$.foreach(ds, using);
+	public void eachs(Consumer<T> using) {
+		StreamingQuery s = saving(using::accept, null, Maps.of());
 		if (null != s) try {
 			s.awaitTermination();
 		} catch (StreamingQueryException e) {
@@ -136,86 +147,57 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<Rmap> */ {
 	 * @return
 	 */
 	@Override
-	public void each(Consumer<Rmap> using) {
+	public void each(Consumer<T> using) {
 		eachs(using);
 	}
 
 	@Override
-	public void batch(Consumer<Sdream<Rmap>> using, int maxBatchSize) {
+	public void batch(Consumer<Sdream<T>> using, int maxBatchSize) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void partition(Consumer<Sdream<Rmap>> using, int minPartNum) {
+	public void partition(Consumer<Sdream<T>> using, int minPartNum) {
 		partition(minPartNum).forEach(using::accept);
 	}
 
 	@Override
-	public <K> void partition(BiConsumer<K, Sdream<Rmap>> using, Function<Rmap, K> keying, int maxBatchSize) {
+	public <K> void partition(BiConsumer<K, Sdream<T>> using, Function<T, K> keying, int maxBatchSize) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public List<Sdream<Rmap>> partition(int minPartNum) {
-		List<Sdream<Rmap>> dss = Colls.list();
+	public List<Sdream<T>> partition(int minPartNum) {
+		List<Sdream<T>> dss = Colls.list();
 		double[] weights = new double[] {};
-		for (Dataset<Rmap> d : ds.randomSplit(weights))
-			dss.add(new DSdream(d));
+		for (Dataset<T> d : ds.randomSplit(weights))
+			dss.add(new DSdream<>(d));
 		return dss;
 	}
 
 	@Override
-	public <K> void partition(BiConsumer<K, Rmap> using, Function<Rmap, K> keying) {
+	public <K> void partition(BiConsumer<K, T> using, Function<T, K> keying) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <K, V> Map<K, List<V>> partition(Function<Rmap, K> keying, Function<Rmap, V> valuing) {
+	public <K, V> Map<K, List<V>> partition(Function<T, K> keying, Function<T, V> valuing) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <K, V> Map<K, V> partition(Function<Rmap, K> keying, Function<Rmap, V> valuing, BinaryOperator<V> reducing) {
+	public <K, V> Map<K, V> partition(Function<T, K> keying, Function<T, V> valuing, BinaryOperator<V> reducing) {
 		throw new UnsupportedOperationException();
 	}
 
 	// internal =============================
 
 	@Override
-	public Optional<Rmap> next() {
+	public Optional<T> next() {
 		throw new UnsupportedOperationException();
 	}
 
 	public static interface $utils$ extends Serializable {
-		static <V> StreamingQuery foreach(Dataset<V> ds, Consumer<V> using) {
-			if (ds.isStreaming()) {
-				ForeachWriter<V> w = new ForeachWriter<V>() {
-					private static final long serialVersionUID = 3602739322755312373L;
-
-					@Override
-					public void process(V r) {
-						using.accept(r);
-					}
-
-					@Override
-					public boolean open(long partitionId, long version) {
-						return true;
-					}
-
-					@Override
-					public void close(Throwable err) {}
-				};
-				DataStreamWriter<V> s = ds.writeStream();
-				s = s.foreach(w);
-				s = s.outputMode(OutputMode.Update());
-				s = s.trigger(Trigger.ProcessingTime(500));
-				return s.start();
-			} else {
-				ds.foreach(using::accept);
-				return null;
-			}
-		}
-
 		@SuppressWarnings("rawtypes")
 		public static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);
 		public static final Encoder<Rmap> ENC_R = Encoders.javaSerialization(Rmap.class);
@@ -250,13 +232,8 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<Rmap> */ {
 			else return map;
 		}
 
-		public static Rmap rMap(Row row) {
-			Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala()
-					.toSeq();
-			Map<String, Object> map = JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
-			String t = (String) map.remove("___table");
-			if (null != t) return new Rmap(t, map);
-			else return new Rmap(map);
+		public static Rmap rmap(String table, Row row) {
+			return new Rmap(table, $utils$.rowMap(row));
 		}
 
 		public static DataType classType(Object v) {
@@ -299,12 +276,26 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<Rmap> */ {
 			};
 		}
 
-		public static scala.collection.Map<String, Object> mapizeScala(java.util.Map<String, Object> value) {
+		public static <T> scala.collection.Map<String, T> mapizeScala(java.util.Map<String, T> value) {
 			return scala.collection.JavaConversions.mapAsScalaMap(value);
 		}
 
-		public static java.util.Map<String, Object> mapizeJava(scala.collection.Map<String, Object> vs) {
+		public static <T> java.util.Map<String, T> mapizeJava(scala.collection.Map<String, T> vs) {
 			return scala.collection.JavaConversions.mapAsJavaMap(vs);
+		}
+	}
+
+	public StreamingQuery saving(SparkOutputWriter<T> writer, String format, Map<String, String> opts) {
+		Logger.getLogger(DSdream.class).info("Dataset writing: " + ds.toString());
+		if (ds.isStreaming()) {
+			DataStreamWriter<T> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500));
+			if (null != format) ss = ss.format(format);
+			ss = null != writer ? ss.foreach(writer.w()) : ss.option("checkpointLocation", "/tmp");// TODO
+			if (!opts.isEmpty()) ss.options(opts);
+			return ss.start();
+		} else {
+			ds.foreach(writer::process);
+			return null;
 		}
 	}
 }

@@ -5,8 +5,11 @@ import java.io.Serializable;
 import net.butfly.albacore.base.Namedly;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.Reflections;
+import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Output;
+import net.butfly.albatis.io.Wrapper;
 import net.butfly.albatis.io.pump.Pump;
+import net.butfly.albatis.spark.util.DSdream;
 
 class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 	private static final long serialVersionUID = -6842560101323305087L;
@@ -29,10 +32,15 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 		output.open();
 		input.open();
 		Pump.super.open();
-
-		
-		input.deq(output.odd()::enqueue);
-		input.await();
+		if (output.hasFeature(IO.Feature.SPARK)) {
+			output.enqueue(DSdream.of(input.dataset));
+			@SuppressWarnings({ "resource", "rawtypes" })
+			SparkOutput o = ((SparkOutput) (output instanceof Wrapper ? ((Wrapper) output).bases() : output));
+			o.await();
+		} else {
+			input.dequeue(output);
+			input.await();
+		}
 
 		boolean b = true;
 		while (b && opened())

@@ -25,12 +25,11 @@ public abstract class SparkInput extends SparkInputBase<Rmap> {
 		Map<String, String> opts = options();
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
 		Dataset<Row> ds = spark.readStream().format(format()).options(opts).load();
-		// dds.printSchema();
 		Dataset<Rmap> dds = ds.map(this::conv, $utils$.ENC_R);
 		return dds;
 	}
 
 	protected Rmap conv(Row row) {
-		return new Rmap(table(), $utils$.rowMap(row));
+		return $utils$.rmap(table(), row);
 	}
 }

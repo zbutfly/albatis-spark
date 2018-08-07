@@ -37,11 +37,6 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	}
 
 	@Override
-	protected Map<String, String> options() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void close() {
 		super.close();
 		for (SparkInputBase<Row> in : cInputs.keySet())

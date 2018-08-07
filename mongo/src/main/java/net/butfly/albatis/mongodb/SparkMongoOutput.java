@@ -1,5 +1,6 @@
 package net.butfly.albatis.mongodb;
 
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
@@ -13,12 +14,12 @@ import net.butfly.albatis.spark.io.SparkIO.Schema;
 import net.butfly.albatis.spark.io.SparkOutput;
 
 @Schema("mongodb")
-public class SparkMongoOutput extends SparkOutput<Rmap> {
+public class SparkMongoOutput extends SparkOutput {
 	private static final long serialVersionUID = -887072515139730517L;
 
 	private static final String writeconcern = "majority";
 	private MongoSpark mongo;
-	private String dbName;
+	private String dbname;
 
 	private transient MongoDatabase db;
 
@@ -26,8 +27,8 @@ public class SparkMongoOutput extends SparkOutput<Rmap> {
 		super(spark, targetUri, table);
 		java.util.Map<String, String> opts = options();
 		logger().info("Spark output [" + getClass().toString() + "] constructing: " + opts.toString());
-		mongo = MongoSpark.builder().javaSparkContext(jsc()).options(opts).build();
-		this.dbName = opts.get("database");
+		mongo = MongoSpark.builder().javaSparkContext(new JavaSparkContext(spark.sparkContext())).options(opts).build();
+		this.dbname = opts.get("database");
 	}
 
 	@Override
@@ -51,12 +52,16 @@ public class SparkMongoOutput extends SparkOutput<Rmap> {
 	}
 
 	@Override
-	public boolean enqueue(Rmap row) {
-		if (null == db) db = mongo.connector().mongoClientFactory().create().getDatabase(dbName);
-		Document doc = new Document(row);
-		if (doc.containsKey("_id")) doc.remove("_id");
-		db.getCollection(row.table()).insertOne(doc);
-		logger().trace("inserted: " + row.toString());
+	public boolean writing(long partitionId, long version) {
+		if (null == db) db = mongo.connector().mongoClientFactory().create().getDatabase(dbname);
 		return true;
+	}
+
+	@Override
+	public void process(Rmap r) {
+		Document doc = new Document(r);
+		if (doc.containsKey("_id")) doc.remove("_id");
+		db.getCollection(r.table()).insertOne(doc);
+		logger().trace("inserted: " + r.toString());
 	}
 }

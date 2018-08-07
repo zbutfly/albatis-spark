@@ -9,7 +9,7 @@ import net.butfly.albatis.spark.io.SparkIO.Schema;
 import net.butfly.albatis.spark.io.SparkOutput;
 
 @Schema("kafka")
-public class SparkKafkaOutput extends SparkOutput<Rmap> {
+public class SparkKafkaOutput extends SparkOutput {
 	private static final long serialVersionUID = 9003837433163351306L;
 
 	SparkKafkaOutput(SparkSession spark, URISpec targetUri, String... table) {
@@ -26,8 +26,7 @@ public class SparkKafkaOutput extends SparkOutput<Rmap> {
 	}
 
 	@Override
-	public boolean enqueue(Rmap row) {
+	public void process(Rmap v) {
 		// TODO Auto-generated method stub
-		return false;
 	}
 }

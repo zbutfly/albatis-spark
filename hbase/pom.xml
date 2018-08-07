@@ -25,6 +25,11 @@
 			<version>1.1.1-2.1-s_2.11</version>
 		</dependency>
 		<dependency>
+			<groupId>net.butfly.albatis</groupId>
+			<artifactId>albatis-hbase-io</artifactId>
+			<version>1.5.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>jdk.tools</groupId>
 			<artifactId>jdk.tools</artifactId>
 			<version>1.7</version>
@@ -32,6 +37,15 @@
 			<systemPath>${project.basedir}/lib/tools.jar</systemPath><!-- ${java.home}/lib/tools.jar -->
 		</dependency>
 	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.apache.phoenix</groupId>
+				<artifactId>phoenix-core</artifactId>
+				<version>4.14.0-HBase-1.2</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<repositories>
 		<repository>
 			<id>hortonworks</id>
