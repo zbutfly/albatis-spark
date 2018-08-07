@@ -3,11 +3,9 @@ package com.hzcominfo.dataggr.uniquery.mongo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import net.butfly.albacore.utils.Pair;
+import net.butfly.albacore.utils.logger.Loggable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class MongoQuery {
+public class MongoQuery implements Loggable {
     private DBObject query;
     private DBObject fields;
     private DBObject sort;
@@ -97,7 +95,7 @@ public class MongoQuery {
         groupFields.forEach(gs -> project.append(gs, "$_id." + gs));
         pipelineGroupAggItem.forEach(pair -> project.append(pair.v1(), "$" + pair.v1()));
         pipeline.add(new BasicDBObject("$project", project));
-        logger.debug("pipeline: " + pipeline);
+        logger().debug("pipeline: " + pipeline);
         return pipeline;
     }
 
