@@ -97,7 +97,7 @@ public class MongoQuery {
         groupFields.forEach(gs -> project.append(gs, "$_id." + gs));
         pipelineGroupAggItem.forEach(pair -> project.append(pair.v1(), "$" + pair.v1()));
         pipeline.add(new BasicDBObject("$project", project));
-        System.out.println("pipeline: " + pipeline);
+        logger.debug("pipeline: " + pipeline);
         return pipeline;
     }
 
