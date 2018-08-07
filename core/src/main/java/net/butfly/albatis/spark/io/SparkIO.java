@@ -21,6 +21,7 @@ import net.butfly.albacore.utils.Reflections;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.IO;
+import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.util.DSdream;
@@ -28,9 +29,11 @@ import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 public abstract class SparkIO implements IO, Serializable {
 	private static final long serialVersionUID = 3265459356239387878L;
-	@SuppressWarnings("rawtypes")
-	private static final Map<String, Class<? extends SparkInputBase>> ADAPTER_INPUT = scan(SparkInputBase.class);
-	private static final Map<String, Class<? extends SparkOutput>> ADAPTER_OUTPUT = scan(SparkOutput.class);
+	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS //
+			= Maps.of(Input.class, Maps.of(), Output.class, Maps.of());
+	static {
+		scan();
+	}
 
 	public final SparkSession spark;
 	public final URISpec targetUri;
@@ -69,7 +72,7 @@ public abstract class SparkIO implements IO, Serializable {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
-			Class<O> c = (Class<O>) ADAPTER_OUTPUT.get(s);
+			Class<O> c = (Class<O>) ADAPTERS.get(Output.class).get(s);
 			if (null == c) break;
 			else try {
 				return c.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
@@ -85,7 +88,7 @@ public abstract class SparkIO implements IO, Serializable {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
-			Class<I> c = (Class<I>) ADAPTER_INPUT.get(s);
+			Class<I> c = (Class<I>) ADAPTERS.get(Input.class).get(s);
 			if (null == c) break;
 			else try {
 				return c.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
@@ -99,20 +102,45 @@ public abstract class SparkIO implements IO, Serializable {
 		throw new RuntimeException("No matched adapter with scheme: " + s);
 	}
 
-	private static <C extends SparkIO> Map<String, Class<? extends C>> scan(Class<C> parentClass) {
-		Map<String, Class<? extends C>> map = Maps.of();
-		for (Class<? extends C> c : Reflections.getSubClasses(parentClass)) {
-			Schema a = c.getAnnotation(Schema.class);
-			if (null != a) for (String s : c.getAnnotation(Schema.class).value())
-				map.put(s, c);
+	private static void scan() {
+		for (Class<? extends SparkIO> cls : Reflections.getSubClasses(SparkIO.class)) {
+			Schema schema = cls.getAnnotation(Schema.class);
+			if (null != schema) {
+				if (Input.class.isAssignableFrom(cls)) reg(Input.class, schema, cls);
+				else if (Output.class.isAssignableFrom(cls)) reg(Output.class, schema, cls);
+			}
 		}
-		return map;
+		Logger.getLogger(SparkIO.class).debug("Spark adaptors scanned.");
+	}
+
+	private static void reg(Class<? extends IO> io, Schema schema, Class<? extends SparkIO> cls) {
+		Logger l = Logger.getLogger(cls);
+		for (String s : schema.value())
+			ADAPTERS.get(io).compute(s, (ss, existed) -> {
+				if (null == existed) {
+					l.debug("Spark[Output] schema [" + ss + "] register for class:  " + cls.getName());
+					return cls;
+				} else {
+					Schema s0 = existed.getAnnotation(Schema.class);
+					if (s0.priority() > schema.priority()) {
+						l.warn("Spark[Output] schema [" + ss + "] conflicted and ingored for class:  " + cls.toString() //
+								+ "\n\t(existed: " + existed.getName() + ")");
+						return existed;
+					} else {
+						l.warn("Spark[Output] schema [" + ss + "] conflicted and ingored for class:  " + existed.toString() //
+								+ "\n\t(priority: " + cls.getName() + ")");
+						return cls;
+					}
+				}
+			});
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
 	public static @interface Schema {
 		String[] value();
+
+		int priority() default 0;
 	}
 
 	public String table() {

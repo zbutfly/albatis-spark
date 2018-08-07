@@ -3,20 +3,18 @@ package net.butfly.albatis.hbase;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.serder.BsonSerder;
+import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.io.SparkIO.Schema;
 import net.butfly.albatis.spark.io.SparkOutput;
 
 @Schema("hbase")
-public class SparkHbaseRawOutput extends SparkOutput {
+public class SparkHbaseOutput extends SparkOutput {
 	private static final long serialVersionUID = -8410386041741975726L;
 	private transient HbaseConnection hc;
 	/**
@@ -33,7 +31,7 @@ public class SparkHbaseRawOutput extends SparkOutput {
 	 */
 	private final String jsonCatalog;
 
-	public SparkHbaseRawOutput(SparkSession spark, URISpec targetUri, String... table) {
+	public SparkHbaseOutput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		jsonCatalog = "";
 	}
@@ -45,26 +43,12 @@ public class SparkHbaseRawOutput extends SparkOutput {
 
 	@Override
 	public void process(Rmap r) {
-		Table tt = hc.table(r.table());
-		Put put = new Put(Bytes.toBytes((String) r.key()));
-		r.forEach((k, v) -> {
-			byte[] cf, qf, val = (byte[]) v;
-			String[] ks = k.split(":", 2);
-			cf = Bytes.toBytes(ks.length == 2 ? ks[0] : "cf1");
-			if (ks.length == 2) {
-				cf = Bytes.toBytes(ks[0]);
-				qf = Bytes.toBytes(ks[1]);
-			} else {
-				cf = Bytes.toBytes("cf1");
-				qf = Bytes.toBytes(ks[0]);
-			}
-			logger().trace(() -> BsonSerder.map(val).toString());
-			put.addColumn(cf, qf, val);
-		});
+		Mutation op = Hbases.Results.op(r, hc.conv::apply);
 		try {
-			tt.put(put);
+			hc.put(r.table(), op);
+			succeeded(1);
 		} catch (IOException e) {
-			logger().error("Put error", e);
+			failed(Sdream.of1(r));
 		}
 	}
 
@@ -72,6 +56,7 @@ public class SparkHbaseRawOutput extends SparkOutput {
 	public boolean writing(long partitionId, long version) {
 		try {
 			hc = new HbaseConnection(targetUri);
+			logger().info("Hbase native connection constructed by worker...HEAVILY!!");
 			return true;
 		} catch (IOException e) {
 			return false;

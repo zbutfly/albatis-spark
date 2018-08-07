@@ -40,6 +40,7 @@ import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.io.SparkOutput;
 import net.butfly.albatis.spark.io.SparkOutputWriter;
 import scala.Function0;
 import scala.collection.JavaConversions;
@@ -290,7 +291,8 @@ public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
 		if (ds.isStreaming()) {
 			DataStreamWriter<T> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500));
 			if (null != format) ss = ss.format(format);
-			ss = null != writer ? ss.foreach(writer.w()) : ss.option("checkpointLocation", "/tmp");// TODO
+			ss = null != writer ? ss.foreach(new SparkOutputWriter.Writer<>((SparkOutput) writer))
+					: ss.option("checkpointLocation", "/tmp");// TODO
 			if (!opts.isEmpty()) ss.options(opts);
 			return ss.start();
 		} else {

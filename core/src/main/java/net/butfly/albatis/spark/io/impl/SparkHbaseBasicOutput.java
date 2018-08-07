@@ -12,8 +12,8 @@ import net.butfly.albatis.spark.io.SparkIO.Schema;
 import net.butfly.albatis.spark.io.SparkOutput;
 import net.butfly.albatis.spark.util.DSdream.$utils$;
 
-//@Schema("hbase")
-public class SparkHbaseOutput extends SparkOutput {
+@Schema(value = "hbase", priority = Integer.MIN_VALUE)
+public class SparkHbaseBasicOutput extends SparkOutput {
 	private static final long serialVersionUID = -8410386041741975726L;
 	/**
 	 * <pre>
@@ -29,7 +29,7 @@ public class SparkHbaseOutput extends SparkOutput {
 	 */
 	private final String jsonCatalog;
 
-	public SparkHbaseOutput(SparkSession spark, URISpec targetUri, String... table) {
+	public SparkHbaseBasicOutput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		jsonCatalog = "";
 	}
