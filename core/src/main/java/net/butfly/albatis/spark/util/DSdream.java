@@ -287,7 +287,7 @@ public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
 	}
 
 	public StreamingQuery saving(SparkOutputWriter<T> writer, String format, Map<String, String> opts) {
-		Logger.getLogger(DSdream.class).info("Dataset writing: " + ds.toString());
+		Logger.getLogger(DSdream.class).info("Dataset writing [" + (null == format ? "no format" : format) + "]: " + ds.toString());
 		if (ds.isStreaming()) {
 			DataStreamWriter<T> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500));
 			if (null != format) ss = ss.format(format);

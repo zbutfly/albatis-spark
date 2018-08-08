@@ -19,23 +19,23 @@
 			<groupId>org.apache.spark</groupId>
 			<version>${version.spark}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.hortonworks</groupId>
-			<artifactId>shc-core</artifactId>
-			<version>1.1.1-2.1-s_2.11</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.hortonworks</groupId> -->
+<!-- 			<artifactId>shc-core</artifactId> -->
+<!-- 			<version>1.1.1-2.1-s_2.11</version> -->
+<!-- 		</dependency> -->
 		<dependency>
 			<groupId>net.butfly.albatis</groupId>
 			<artifactId>albatis-hbase-io</artifactId>
 			<version>1.5.2-SNAPSHOT</version>
 		</dependency>
-		<dependency>
-			<groupId>jdk.tools</groupId>
-			<artifactId>jdk.tools</artifactId>
-			<version>1.7</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/tools.jar</systemPath><!-- ${java.home}/lib/tools.jar -->
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>jdk.tools</groupId> -->
+<!-- 			<artifactId>jdk.tools</artifactId> -->
+<!-- 			<version>1.7</version> -->
+<!-- 			<scope>system</scope> -->
+<!-- 			<systemPath>${project.basedir}/lib/tools.jar</systemPath>${java.home}/lib/tools.jar -->
+<!-- 		</dependency> -->
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
