@@ -1,8 +1,11 @@
 package net.butfly.albatis.spark.io.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
@@ -15,7 +18,7 @@ import org.apache.spark.sql.streaming.OutputMode;
 import com.hzcominfo.albatis.nosql.Connection.DriverManager;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
@@ -40,14 +43,23 @@ public class OutputSink implements Sink {
 
 	@Override
 	public void addBatch(long batchId, Dataset<Row> batch) {
+		long t = System.currentTimeMillis();
 		List<Row> rows = batch.collectAsList();
 		logger.debug("Sink[" + batchId + ", streaming: " + batch.isStreaming() + "]: " + rows.size());
-		List<String> l = Colls.list();
-		for (Row row : rows) {
-			byte[] data = row.getAs("value");
+		Dataset<Row> ds;
+		try (JavaSparkContext jsc = new JavaSparkContext(batch.sparkSession().sparkContext());) {
+			ds = batch.sparkSession().createDataFrame(jsc.parallelize(rows), batch.schema());
 		}
-		logger.trace(String.join("\n", l));
-		logger.debug("Sink[" + batchId + "] finished!");
+		ds.map(row -> {
+			byte[] data = row.getAs("value");
+			try (ObjectInputStream oss = new ObjectInputStream(new ByteArrayInputStream(data));) {
+				return (Rmap) oss.readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				logger.error("Sinked row data [" + data.length + "] corrupted.");
+				throw new RuntimeException(e);
+			}
+		}, $utils$.ENC_R).foreachPartition(itor -> output.enqueue(Sdream.of(() -> itor)));
+		logger.debug("Sink[" + batchId + "] finished in: " + (System.currentTimeMillis() - t) + " ms.");
 	}
 
 	public static class OutputSinkProvider implements DataSourceV2, StreamSinkProvider, DataSourceRegister {
