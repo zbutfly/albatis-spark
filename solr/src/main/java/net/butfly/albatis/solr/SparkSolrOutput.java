@@ -5,10 +5,10 @@ import org.apache.spark.sql.SparkSession;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.io.SparkIO.Schema;
-import net.butfly.albatis.spark.io.SparkOutput;
+import net.butfly.albatis.spark.io.SparkRmapOutput;
 
 @Schema("solr")
-public class SparkSolrOutput extends SparkOutput {
+public class SparkSolrOutput extends SparkRmapOutput {
 	private static final long serialVersionUID = 1598463842099800246L;
 
 	protected SparkSolrOutput(SparkSession spark, URISpec targetUri, String[] table) {
@@ -16,5 +16,8 @@ public class SparkSolrOutput extends SparkOutput {
 	}
 
 	@Override
-	public void process(Rmap v) {}
+	public boolean enqueue(Rmap r) {
+		// TODO
+		return true;
+	}
 }

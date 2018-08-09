@@ -8,7 +8,6 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 /**
  * generally, any kafka with value of a serialized map should come from here

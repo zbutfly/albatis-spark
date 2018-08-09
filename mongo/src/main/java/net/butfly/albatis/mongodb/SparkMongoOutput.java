@@ -10,11 +10,11 @@ import com.mongodb.spark.MongoSpark;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.io.SparkRmapOutput;
 import net.butfly.albatis.spark.io.SparkIO.Schema;
-import net.butfly.albatis.spark.io.SparkOutput;
 
 @Schema("mongodb")
-public class SparkMongoOutput extends SparkOutput {
+public class SparkMongoOutput extends SparkRmapOutput {
 	private static final long serialVersionUID = -887072515139730517L;
 
 	private static final String writeconcern = "majority";
@@ -58,10 +58,11 @@ public class SparkMongoOutput extends SparkOutput {
 	}
 
 	@Override
-	public void process(Rmap r) {
+	public boolean enqueue(Rmap r) {
 		Document doc = new Document(r);
 		if (doc.containsKey("_id")) doc.remove("_id");
 		db.getCollection(r.table()).insertOne(doc);
 		logger().trace("inserted: " + r.toString());
+		return true;
 	}
 }

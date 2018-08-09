@@ -4,8 +4,9 @@ import java.io.Serializable;
 
 import org.apache.spark.sql.ForeachWriter;
 
+import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.utils.logger.Logger;
-import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.io.Output;
 import net.butfly.albatis.spark.util.DSdream;
 
 public interface SparkOutputWriter<T> extends Serializable {
@@ -13,28 +14,32 @@ public interface SparkOutputWriter<T> extends Serializable {
 		return true;
 	}
 
-	void process(T t);
-
-	default String format() {
+	default Output<T> output() {
 		return null;
 	}
 
-	class Writer<T> extends ForeachWriter<T> {
-		private static final long serialVersionUID = 3602739322755312373L;
-		private final SparkOutput o;
+	void process(T t);
 
-		public Writer(SparkOutput o) {
+	class Writer<T> extends ForeachWriter<T> implements Consumer<T> {
+		private static final long serialVersionUID = 3602739322755312373L;
+		private final SparkOutputWriter<T> o;
+
+		public Writer(SparkOutputWriter<T> o) {
 			super();
 			this.o = o;
 		}
 
-		private void using(T r) {
-			o.process((Rmap) r);
+		@Override
+		public void accept(T r) {
+			o.process(r);
 		}
 
 		@Override
 		public void process(T r) {
-			if (null != r) o.s().statsOut(r, this::using);
+			if (null == r) return;
+			Output<T> out = o.output();
+			if (null == out) o.process(r);
+			else o.output().s().statsOut(r, this);
 		}
 
 		@Override

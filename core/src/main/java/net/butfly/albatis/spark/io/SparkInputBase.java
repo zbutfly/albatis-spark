@@ -15,7 +15,6 @@ import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.util.DSdream.$utils$;
 
 public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -26,6 +25,10 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 		open();
 	}
 
+	public String format() {
+		return null;
+	}
+
 	@Override
 	public final V dequeue() {
 		throw new UnsupportedOperationException();
@@ -33,12 +36,16 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 
 	@Override
 	public void deq(Consumer<V> using) {
-		streaming = saving(dataset, using::accept);
+		throw new UnsupportedOperationException("SparkInput can be pump to output only");
+		// if (dataset.isStreaming()) sink(dataset, rmaps -> rmaps.eachs(using));
+		// else each(dataset, using::accept);
 	}
 
 	@Override
 	public final void dequeue(Consumer<Sdream<V>> using) {
-		deq(s -> using.accept(Sdream.of(s)));
+		throw new UnsupportedOperationException("SparkInput can be pump to output only");
+		// if (dataset.isStreaming()) sink(dataset, using);
+		// else each(dataset, r -> using.accept(Sdream.of1(r)));
 	}
 
 	@Override
@@ -98,7 +105,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 
 	@Override
 	public <V1> SparkInputBase<V1> thens(Function<Sdream<V>, Sdream<V1>> conv) {
-		return thenFlat(v -> conv.apply(Sdream.of(v)));
+		return thenFlat(v -> conv.apply(Sdream.of1(v)));
 	}
 
 	@Override
