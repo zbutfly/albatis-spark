@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>net.butfly.albatis</groupId>
 	<artifactId>albatis-spark-io</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.5.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
 		<version.scala>2.11</version.scala>
