@@ -5,16 +5,24 @@ import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.DataStreamWriter;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import org.apache.spark.sql.streaming.StreamingQueryException;
+import org.apache.spark.sql.streaming.Trigger;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.io.Wrapper;
+import net.butfly.albatis.spark.io.impl.OutputSink;
 
 public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -23,6 +31,10 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	protected SparkInputBase(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		open();
+	}
+
+	public Dataset<V> dataset() {
+		return dataset;
 	}
 
 	public String format() {
@@ -62,7 +74,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	}
 
 	// ---------------------------------------------------------------------
-	private static class SparkInputWrapper<VV> extends SparkInputBase<VV> implements SparkIOLess {
+	private static class SparkInputWrapper<VV> extends SparkInputBase<VV> implements SparkIOLess, Wrapper<SparkInputBase<VV>> {
 		private static final long serialVersionUID = 5957738224117308018L;
 		private final SparkInputBase<?> base;
 
@@ -80,6 +92,16 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 		@Override
 		protected Map<String, String> options() {
 			return base.options();
+		}
+
+		@Override
+		protected <T> void sink(Dataset<T> ds, Output<?> output) {
+			base.sink(ds, output);
+		}
+
+		@Override
+		public <BB extends IO> BB bases() {
+			return Wrapper.bases(base);
 		}
 	}
 
@@ -140,7 +162,19 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 		return f;
 	}
 
-	public Dataset<V> dataset() {
-		return dataset;
+	protected Trigger trigger() {
+		return Trigger.ProcessingTime(0);
+	}
+
+	protected <T> void sink(Dataset<T> ds, Output<?> output) {
+		DataStreamWriter<T> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500))//
+				.format(OutputSink.FORMAT).trigger(trigger())//
+				.options(Maps.of("checkpointLocation", "/tmp/" + ds.sparkSession().sparkContext().appName(), "output", output.ser()));
+		StreamingQuery s = ss.start();
+		try {
+			s.awaitTermination();
+		} catch (StreamingQueryException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

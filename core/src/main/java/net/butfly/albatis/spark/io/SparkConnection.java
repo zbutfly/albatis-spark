@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
@@ -21,6 +22,8 @@ import org.apache.spark.sql.SparkSession;
 import com.hzcominfo.albatis.nosql.EnvironmentConnection;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.IOs;
+import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Input;
@@ -41,22 +44,37 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 
 	public final SparkSession spark;
 	private final URISpec uriSpec;
-	private final Map<String, String> parameters = Maps.of();
 
-	public SparkConnection(String name) {
-		this(name, null);
+	public SparkConnection() {
+		this(null);
 	}
 
-	public SparkConnection(String name, URISpec uriSpec) {
+	public SparkConnection(URISpec uriSpec) {
 		this.uriSpec = uriSpec;
 		SparkConf sparkConf = new SparkConf();
-		parameters.put("spark.sql.shuffle.partitions", "2001");
-		// parameters.put("spark.mongodb.input.uri", "mongodb://user:pwd@localhost:80/db.tbl");
-		// parameters.put("spark.mongodb.output.uri", "mongodb://user:pwd@localhost:80/db.tbl");
-		parameters.forEach((key, value) -> sparkConf.set(key, value));
+		params().forEach(sparkConf::set);
 		String host = uriSpec.getHost();
 		if (host.isEmpty()) host = DEFAULT_HOST;
-		this.spark = SparkSession.builder().master(host).appName(name == null ? "Simulation" : name).config(sparkConf).getOrCreate();
+		String name = Systems.getMainClass().getSimpleName();
+		logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString());
+		this.spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
+	}
+
+	private Map<String, String> params() {
+		Properties props = new Properties();
+		try {
+			props.load(IOs.open("spark.properties"));
+		} catch (IOException e) {
+			logger.warn("Default spark configuration file [classpath:spark.properties] loading failed.");
+		}
+
+		Map<String, String> params = Maps.of();
+		props.forEach((k, v) -> {
+			String vv = v.toString().trim();
+			if (!vv.isEmpty()) params.put(k.toString().trim(), vv);
+		});
+		params.putIfAbsent("spark.sql.shuffle.partitions", "2001");
+		return params;
 	}
 
 	@Override
@@ -189,7 +207,7 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 
 		@Override
 		public SparkConnection connect(URISpec uriSpec) throws IOException {
-			return new SparkConnection("SparkConnection", uriSpec);
+			return new SparkConnection(uriSpec);
 		}
 
 		@Override

@@ -18,11 +18,6 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.Trigger;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
@@ -38,10 +33,8 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Input;
-import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.io.impl.OutputSink;
 import net.butfly.albatis.spark.util.DSdream;
 import scala.Function0;
 import scala.collection.JavaConversions;
@@ -266,46 +259,11 @@ public abstract class SparkIO implements IO, Serializable {
 			return scala.collection.JavaConversions.mapAsJavaMap(vs);
 		}
 
-		/**
-		 * Foreach writing (streaming by sink or stocking)
-		 */
-		public static <T> void each(Dataset<T> ds, Output<T> writer) {
-			Logger.getLogger(DSdream.class).info("Dataset writing: " + ds.toString());
-			if (ds.isStreaming()) sink(ds, writer.target());
-			else if (writer instanceof OddOutput) ds.foreach(((OddOutput<T>) writer)::enqueue);
-			else ds.foreach(r -> writer.enqueue(Sdream.of1(r)));
+		public static String debug(Row row) {
+			String s = row.schema().simpleString() + "==>";
+			for (int i = 0; i < row.schema().fields().length; i++)
+				s += row.schema().fields()[i].name() + ":" + row.get(i);
+			return s;
 		}
-
-		/**
-		 * Sink writing by <code>OutputSink</code>, <code>uri</code> in <code>options()</code> is required.
-		 */
-		public static <V> void sink(Dataset<V> ds, URISpec uri) {
-			Logger.getLogger(DSdream.class).info("Dataset sink writing: " + ds.toString());
-			if (!ds.isStreaming()) throw new UnsupportedOperationException("Non-stremaing can't sink");
-			DataStreamWriter<V> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500));
-			ss = ss.format(OutputSink.FORMAT);
-			ss.options(Maps.of("checkpointLocation", "/tmp", "uri", uri.toString()));
-			StreamingQuery s = ss.start();
-			try {
-				s.awaitTermination();
-			} catch (StreamingQueryException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		// public static <V> void sink(Dataset<V> ds, Consumer<Sdream<V>> using) {
-		// Logger.getLogger(DSdream.class).info("Dataset sink writing: " + ds.toString());
-		// if (ds.isStreaming()) throw new UnsupportedOperationException("Non-stremaing can't sink");
-		// DataStreamWriter<V> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500));
-		// ss = ss.format(OutputSink.FORMAT);
-		//
-		// ss.options(Maps.of("checkpointLocation", "/tmp", "uri", targetUri.toString()));
-		// StreamingQuery s = ss.start();
-		// try {
-		// s.awaitTermination();
-		// } catch (StreamingQueryException e) {
-		// throw new RuntimeException(e);
-		// }
-		// }
 	}
 }

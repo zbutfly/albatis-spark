@@ -1,12 +1,13 @@
 package net.butfly.albatis.spark.io;
 
-import static net.butfly.albatis.spark.io.SparkIO.$utils$.each;
-import static net.butfly.albatis.spark.io.SparkIO.$utils$.sink;
-
 import java.io.Serializable;
 
+import org.apache.spark.sql.Dataset;
+
 import net.butfly.albacore.base.Namedly;
+import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Reflections;
+import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.pump.Pump;
 
@@ -28,8 +29,19 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 		input.open();
 		Pump.super.open();
 
-		if (input.dataset.isStreaming()) sink(input.dataset, output.target());
-		else each(input.dataset, output);
+		/**
+		 * Foreach writing (streaming by sink or stocking)<br>
+		 * Sink writing by <code>OutputSink</code>, <code>uri</code> in <code>options()</code> is required.
+		 */
+		Dataset<V> ds = input.dataset;
+		if (ds.isStreaming()) {
+			logger().info("Dataset sink writing: " + ds.toString());
+			input.sink(ds, output);
+		} else {
+			logger().info("Dataset foreach writing: " + ds.toString());
+			if (output instanceof OddOutput) ds.foreach(((OddOutput<V>) output)::enqueue);
+			else ds.foreach(r -> output.enqueue(Sdream.of1(r)));
+		}
 
 		boolean b = true;
 		while (b && opened())

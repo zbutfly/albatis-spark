@@ -53,8 +53,9 @@ public class SparkKafkaInput extends SparkInput {
 			throw new RuntimeException(e);
 		}
 		options.put("kafka.bootstrap.servers", String.join(",", brokers));// "data01:9092,data02:9092,data03:9092"
-		options.put("subscribe", table());
-		options.put("startingOffsets", "earliest");
+		options.put("subscribe", String.join(",", tables));
+		options.put("startingOffsets", "latest");// "earliest"
+		options.put("maxOffsetsPerTrigger", "10000");
 		return options;
 	}
 

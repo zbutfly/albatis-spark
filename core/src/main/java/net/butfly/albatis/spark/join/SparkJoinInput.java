@@ -8,7 +8,6 @@ import org.apache.spark.sql.Row;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.io.SparkIOLess;
 import net.butfly.albatis.spark.io.SparkInputBase;
-import net.butfly.albatis.spark.io.SparkIO.$utils$;
 
 @SuppressWarnings("rawtypes")
 public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess {

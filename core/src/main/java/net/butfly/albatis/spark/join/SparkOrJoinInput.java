@@ -9,7 +9,6 @@ import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.io.SparkInputBase;
-import net.butfly.albatis.spark.io.SparkIO.$utils$;
 
 public class SparkOrJoinInput extends SparkJoinInput {
 	private static final long serialVersionUID = 377289278732441635L;
