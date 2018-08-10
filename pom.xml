@@ -25,7 +25,6 @@
 		<module>mongo</module>
 		<module>solr</module>
 		<module>es</module>
-		<module>hbase</module>
 		<!-- <module>hdfs</module> -->
 	</modules>
 	<dependencies>
