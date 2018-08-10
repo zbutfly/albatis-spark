@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -16,6 +17,7 @@ import org.apache.spark.sql.sources.DataSourceRegister;
 import org.apache.spark.sql.sources.StreamSinkProvider;
 import org.apache.spark.sql.sources.v2.DataSourceV2;
 import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.util.LongAccumulator;
 
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.logger.Logger;
@@ -31,21 +33,25 @@ public class OutputSink implements Sink, Serializable {
 	private static final Logger logger = Logger.getLogger(OutputSink.class);
 	public static final String FORMAT = OutputSinkProvider.class.getName();
 	protected final Output<Rmap> output;
+	private final LongAccumulator acc;
 
-	public OutputSink(Output<Rmap> output) {
+	public OutputSink(Output<Rmap> output, LongAccumulator acc) {
 		this.output = output;
+		this.acc = acc;
 	}
 
 	@Override
 	public void addBatch(long batchId, Dataset<Row> batch) {
+		SparkContext sc = batch.sparkSession().sparkContext();
 		logger.debug("Sink [" + batchId + ", streaming: " + batch.isStreaming() + "] started.");
 		long t = System.currentTimeMillis();
 		List<Row> rows = batch.collectAsList();
-		logger.trace("Sink [" + batchId + ", streaming: " + batch.isStreaming() + "] collected: " + rows.size());
+		acc.add(rows.size());
+		logger.trace("Sink [" + batchId + ", streaming: " + batch.isStreaming() + "] collected: "//
+				+ rows.size() + ", total: " + acc.value());
 		if (rows.isEmpty()) return;
 		@SuppressWarnings("resource")
-		Dataset<Row> ds = batch.sparkSession().createDataFrame(new JavaSparkContext(batch.sparkSession().sparkContext()).parallelize(rows),
-				batch.schema());
+		Dataset<Row> ds = batch.sparkSession().createDataFrame(new JavaSparkContext(sc).parallelize(rows), batch.schema());
 		AtomicLong c = new AtomicLong();
 		ds.map(r -> this.rawToRmap(r, batchId, c.incrementAndGet()), $utils$.ENC_R).foreachPartition(itor -> {
 			output.connect();
@@ -79,9 +85,10 @@ public class OutputSink implements Sink, Serializable {
 				OutputMode outputMode) {
 			String code = $utils$.mapizeJava(options).get("output");
 			Output<Rmap> o = IO.der(code);
-			logger.info("Native output [" + (o instanceof Wrapper ? ("Wrapper of " + ((Wrapper<?>) o).bases().getClass().getName())
-					: o.getClass().getName()) + "] constructed on worker...HEAVILY!!");
-			return new OutputSink(o);
+			Output<?> b = Wrapper.bases(o);
+			logger.info("Native output [" + (b.equals(o) ? o.getClass().getName()
+					: ("WrapperOf: " + ((Wrapper<?>) o).bases().getClass().getName())) + "] constructed on worker...HEAVILY!!");
+			return new OutputSink(o, ctx.sparkContext().longAccumulator(ctx.sparkContext().appName()));
 		}
 	}
 }

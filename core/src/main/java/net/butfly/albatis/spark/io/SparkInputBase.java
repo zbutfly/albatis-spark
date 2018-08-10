@@ -30,7 +30,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 
 	protected SparkInputBase(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
-		open();
+		dataset = load();
 	}
 
 	public Dataset<V> dataset() {
@@ -58,12 +58,6 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 		throw new UnsupportedOperationException("SparkInput can be pump to output only");
 		// if (dataset.isStreaming()) sink(dataset, using);
 		// else each(dataset, r -> using.accept(Sdream.of1(r)));
-	}
-
-	@Override
-	public void open() {
-		OddInput.super.open();
-		dataset = load();
 	}
 
 	protected abstract Dataset<V> load();
