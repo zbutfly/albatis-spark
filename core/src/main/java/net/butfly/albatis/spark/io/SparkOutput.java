@@ -21,15 +21,6 @@ public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V> {
 		return targetUri;
 	}
 
-	// @Override
-	// public String format() {
-	// return OutputSink.FORMAT;
-	// }
-
-	protected boolean writing(long partitionId, long version) {
-		return true;
-	}
-
 	// ============================
 	@Override
 	public <V0> Output<V0> prior(Function<V0, V> conv) {

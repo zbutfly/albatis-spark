@@ -98,8 +98,8 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 	}
 
 	@Override
-	public <V, O extends Output<V>> O output(URISpec uri) {
-		return SparkIO.output(spark, uri);
+	public <V, O extends Output<V>> O output(URISpec uri, String... table) {
+		return SparkIO.output(spark, uri, table);
 	}
 
 	@SuppressWarnings("unchecked")

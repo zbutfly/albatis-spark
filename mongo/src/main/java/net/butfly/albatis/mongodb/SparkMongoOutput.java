@@ -1,5 +1,7 @@
 package net.butfly.albatis.mongodb;
 
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
@@ -37,13 +39,13 @@ public class SparkMongoOutput extends SparkRmapOutput {
 	}
 
 	@Override
-	protected java.util.Map<String, String> options() {
+	public Map<String, String> options() {
 		String[] path = targetUri.getPaths();
 		if (path.length != 1) throw new RuntimeException("Mongodb URI is incorrect");
 		String database = path[0];
 		String uri = targetUri.getScheme() + "://" + targetUri.getAuthority() + "/" + database;
 
-		java.util.Map<String, String> options = Maps.of();
+		Map<String, String> options = Maps.of();
 		options.put("uri", uri);
 		options.put("database", database);
 		options.put("collection", table());

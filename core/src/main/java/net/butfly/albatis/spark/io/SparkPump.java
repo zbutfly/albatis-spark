@@ -2,21 +2,19 @@ package net.butfly.albatis.spark.io;
 
 import java.io.Serializable;
 
-import org.apache.spark.sql.Dataset;
-
 import net.butfly.albacore.base.Namedly;
-import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Reflections;
-import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Output;
+import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
+import net.butfly.albatis.spark.io.impl.WriteHandler;
 
-class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
+class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 	private static final long serialVersionUID = -6842560101323305087L;
-	private final SparkInputBase<V> input;
-	private final Output<V> output;
+	private final SparkInputBase<Rmap> input;
+	private final Output<Rmap> output;
 
-	SparkPump(SparkInputBase<V> input, Output<V> dest) {
+	SparkPump(SparkInputBase<Rmap> input, Output<Rmap> dest) {
 		super(input.name() + ">" + dest.name());
 		this.input = input;
 		this.output = dest;
@@ -29,19 +27,7 @@ class SparkPump<V> extends Namedly implements Pump<V>, Serializable {
 		input.open();
 		Pump.super.open();
 
-		/**
-		 * Foreach writing (streaming by sink or stocking)<br>
-		 * Sink writing by <code>OutputSink</code>, <code>uri</code> in <code>options()</code> is required.
-		 */
-		Dataset<V> ds = input.dataset;
-		if (ds.isStreaming()) {
-			logger().info("Dataset sink writing: " + ds.toString());
-			input.sink(ds, output);
-		} else {
-			logger().info("Dataset foreach writing: " + ds.toString());
-			if (output instanceof OddOutput) ds.foreach(((OddOutput<V>) output)::enqueue);
-			else ds.foreach(r -> output.enqueue(Sdream.of1(r)));
-		}
+		WriteHandler.save(input.dataset, output);
 
 		boolean b = true;
 		while (b && opened())

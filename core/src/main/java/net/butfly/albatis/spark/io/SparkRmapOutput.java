@@ -11,4 +11,8 @@ public abstract class SparkRmapOutput extends SparkOutput<Rmap> {
 	protected SparkRmapOutput(SparkSession spark, URISpec targetUri, String[] table) {
 		super(spark, targetUri, table);
 	}
+
+	protected boolean writing(long partitionId, long version) {
+		return true;
+	}
 }

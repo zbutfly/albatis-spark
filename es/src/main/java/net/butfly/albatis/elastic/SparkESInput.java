@@ -20,7 +20,7 @@ public class SparkESInput extends SparkInput {
 	}
 
 	@Override
-	protected Map<String, String> options() {
+	public Map<String, String> options() {
 		Map<String, String> options = Maps.of();
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());

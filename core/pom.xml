@@ -30,14 +30,9 @@
 			<version>1.5.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>de.undercouch</groupId>
-			<artifactId>bson4jackson</artifactId>
-			<version>2.7.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>1.2.7</version>
+			<groupId>net.butfly.albacore</groupId>
+			<artifactId>albacore-expr-fel</artifactId>
+			<version>${version.albacore}</version>
 		</dependency>
 	</dependencies>
 </project>

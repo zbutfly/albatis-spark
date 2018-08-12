@@ -5,24 +5,18 @@ import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.Trigger;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
-import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Wrapper;
-import net.butfly.albatis.spark.io.impl.OutputSink;
+import net.butfly.albatis.io.pump.Pump;
 
 public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -35,10 +29,6 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 
 	public Dataset<V> dataset() {
 		return dataset;
-	}
-
-	public String format() {
-		return null;
 	}
 
 	@Override
@@ -84,13 +74,8 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 		}
 
 		@Override
-		protected Map<String, String> options() {
+		public Map<String, String> options() {
 			return base.options();
-		}
-
-		@Override
-		protected <T> void sink(Dataset<T> ds, Output<?> output) {
-			base.sink(ds, output);
 		}
 
 		@Override
@@ -140,13 +125,15 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 				$utils$.ENC_R));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public SparkPump<V> pump(int parallelism, Output<V> dest) {
-		return new SparkPump<V>(this, dest);
+	public Pump<V> pump(int parallelism, Output<V> dest) {
+		return (Pump<V>) pump((Output<Rmap>) dest);
 	}
 
-	public SparkPump<V> pump(Output<V> output) {
-		return pump(-1, output);
+	@SuppressWarnings("unchecked")
+	public SparkPump pump(Output<Rmap> output) {
+		return new SparkPump((SparkInputBase<Rmap>) this, output);
 	}
 
 	@Override
@@ -154,21 +141,5 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 		int f = super.features();
 		if (dataset.isStreaming()) f |= IO.Feature.STREAMING;
 		return f;
-	}
-
-	protected Trigger trigger() {
-		return Trigger.ProcessingTime(0);
-	}
-
-	protected <T> void sink(Dataset<T> ds, Output<?> output) {
-		DataStreamWriter<T> ss = ds.writeStream().outputMode(OutputMode.Update()).trigger(Trigger.ProcessingTime(500))//
-				.format(OutputSink.FORMAT).trigger(trigger())//
-				.options(Maps.of("checkpointLocation", "/tmp/" + ds.sparkSession().sparkContext().appName(), "output", output.ser()));
-		StreamingQuery s = ss.start();
-		try {
-			s.awaitTermination();
-		} catch (StreamingQueryException e) {
-			throw new RuntimeException(e);
-		}
 	}
 }

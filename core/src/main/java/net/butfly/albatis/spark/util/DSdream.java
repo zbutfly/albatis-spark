@@ -21,7 +21,9 @@ import net.butfly.albacore.paral.Exeter;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Pair;
 import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.io.impl.WriteHandler;
 
 @SuppressWarnings("unchecked")
 public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
@@ -109,8 +111,14 @@ public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
 	/** Using spliterator sequencially */
 	@Override
 	public void eachs(Consumer<T> using) {
-		if (ds.isStreaming()) throw new UnsupportedOperationException("Streaming can only sink (pump to output), no eachs");
-		ds.foreach(using::accept);
+		WriteHandler.save((Dataset<Rmap>) ds, (OddOutput<Rmap>) v -> {
+			try {
+				using.accept((T) v);
+				return true;
+			} catch (Throwable t) {
+				return false;
+			}
+		});
 	}
 
 	/**

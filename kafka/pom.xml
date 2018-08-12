@@ -16,7 +16,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka_2.11</artifactId>
+			<artifactId>kafka_${version.scala.main}</artifactId>
 			<version>${version.kafka}</version>
 		</dependency>
 		<dependency>

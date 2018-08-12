@@ -44,7 +44,7 @@ public class SparkKafkaInput extends SparkInput {
 	}
 
 	@Override
-	protected java.util.Map<String, String> options() {
+	public java.util.Map<String, String> options() {
 		java.util.Map<String, String> options = Maps.of();
 		String[] brokers;
 		try (KafkaZkParser k = new KafkaZkParser(targetUri.getHost() + targetUri.getPath())) {

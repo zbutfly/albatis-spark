@@ -16,7 +16,7 @@ public class SparkMongoInput extends SparkInput {
 	}
 
 	@Override
-	protected java.util.Map<String, String> options() {
+	public java.util.Map<String, String> options() {
 		String[] path = targetUri.getPaths();
 		if (path.length != 1) throw new RuntimeException("Mongodb uriSpec is incorrect");
 		String database = path[0];

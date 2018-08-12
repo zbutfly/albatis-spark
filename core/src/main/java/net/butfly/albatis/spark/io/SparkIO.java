@@ -65,7 +65,11 @@ public abstract class SparkIO implements IO, Serializable {
 		tables = t;
 	}
 
-	protected Map<String, String> options() {
+	public Map<String, String> options() {
+		return Maps.of();
+	}
+
+	public String format() {
 		return null;
 	}
 

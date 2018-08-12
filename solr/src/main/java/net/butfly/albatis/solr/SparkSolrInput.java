@@ -18,7 +18,7 @@ public class SparkSolrInput extends SparkInput {
 	}
 
 	@Override
-	protected Map<String, String> options() {
+	public Map<String, String> options() {
 		Map<String, String> options = Maps.of();
 		options.put("collection", table());
 		options.put("zkhost", targetUri.getHost());

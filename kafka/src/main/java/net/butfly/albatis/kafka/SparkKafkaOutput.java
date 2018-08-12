@@ -17,7 +17,7 @@ public class SparkKafkaOutput extends SparkRmapOutput {
 	}
 
 	@Override
-	protected java.util.Map<String, String> options() {
+	public java.util.Map<String, String> options() {
 		java.util.Map<String, String> options = Maps.of();
 		options.put("kafka.bootstrap.servers", targetUri.getHost());
 		options.put("subscribe", table());
