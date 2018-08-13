@@ -1,5 +1,7 @@
 package net.butfly.albatis.spark.io;
 
+import java.util.Map;
+
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
@@ -33,6 +35,16 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 			public void enqueue(Sdream<Rmap> s) {
 				SparkSaveOutput.this.enqueue((DSdream<Rmap>) s.map(r -> conv.apply((V0) r)));
 			}
+
+			@Override
+			public String format() {
+				return SparkSaveOutput.this.format();
+			}
+
+			@Override
+			public Map<String, String> options() {
+				return SparkSaveOutput.this.options();
+			}
 		};
 	}
 
@@ -52,6 +64,16 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 			@Override
 			public void enqueue(Sdream<Rmap> s) {
 				SparkSaveOutput.this.enqueue(conv.apply((Sdream<V0>) s));
+			}
+
+			@Override
+			public String format() {
+				return SparkSaveOutput.this.format();
+			}
+
+			@Override
+			public Map<String, String> options() {
+				return SparkSaveOutput.this.options();
 			}
 		};
 	}
@@ -80,7 +102,16 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 			public void enqueue(Sdream<Rmap> s) {
 				SparkSaveOutput.this.enqueue(s.mapFlat(r -> conv.apply((V0) r)));
 			}
+
+			@Override
+			public String format() {
+				return SparkSaveOutput.this.format();
+			}
+
+			@Override
+			public Map<String, String> options() {
+				return SparkSaveOutput.this.options();
+			}
 		};
 	}
-
 }

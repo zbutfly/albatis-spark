@@ -15,7 +15,7 @@
 		<version.scala>2.11</version.scala>
 		<version.spark>2.3.1</version.spark>
 		<version.kafka>0.10.2.2</version.kafka>
-		<version.gson>2.8.2</version.gson>
+		<version.avro>1.8.2</version.avro>
 		<maven.compiler.source>8</maven.compiler.source>
 		<maven.compiler.target>8</maven.compiler.target>
 	</properties>
@@ -27,11 +27,24 @@
 		<module>es</module>
 		<!-- <module>hdfs</module> -->
 	</modules>
-	<dependencies>
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>${version.gson}</version>
-		</dependency>
-	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro</artifactId>
+				<version>${version.avro}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro-mapred</artifactId>
+				<version>${version.avro}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro-mapred</artifactId>
+				<version>${version.avro}</version>
+				<classifier>hadoop2</classifier>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>
