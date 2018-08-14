@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark.impl;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,10 +29,11 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.join.SparkInnerJoinInput;
-import net.butfly.albatis.spark.join.SparkJoinInput;
-import net.butfly.albatis.spark.join.SparkNonJoinInput;
-import net.butfly.albatis.spark.join.SparkOrJoinInput;
+import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.input.SparkInnerJoinInput;
+import net.butfly.albatis.spark.input.SparkJoinInput;
+import net.butfly.albatis.spark.input.SparkNonJoinInput;
+import net.butfly.albatis.spark.input.SparkOrJoinInput;
 import net.butfly.albatis.spark.plugin.PluginConfig;
 import net.butfly.albatis.spark.plugin.SparkPluginInput;
 import scala.collection.JavaConverters;
@@ -108,23 +109,23 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 		return (I) SparkIO.input(spark, uri, table);
 	}
 
-	public <V> SparkJoinInput innerJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
+	public <V> SparkJoinInput innerJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkInnerJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput orJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
+	public SparkJoinInput orJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkOrJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput nonJoin(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
+	public SparkJoinInput nonJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkNonJoinInput(input, col, joinInputs);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkPluginInput plugin(String className, SparkInputBase<Rmap> input, PluginConfig pc) {
+	public SparkPluginInput plugin(String className, SparkInput<Rmap> input, PluginConfig pc) {
 		try {
 			Class<? extends SparkPluginInput> c = (Class<? extends SparkPluginInput>) Class.forName(className);
-			return c.getConstructor(SparkInputBase.class, PluginConfig.class).newInstance(input, pc);
+			return c.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 				| IllegalArgumentException e) {
 			throw new RuntimeException(e);

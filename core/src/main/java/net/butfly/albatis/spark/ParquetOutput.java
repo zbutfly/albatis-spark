@@ -1,12 +1,12 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark;
 
 import java.util.Map;
 
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.io.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.output.SparkSaveOutput;
 
 @Schema("parquet")
 public class ParquetOutput extends SparkSaveOutput {
@@ -21,11 +21,6 @@ public class ParquetOutput extends SparkSaveOutput {
 	@Override
 	public String format() {
 		return "parquet";
-	}
-
-	@Override
-	public boolean enqueue(Rmap v) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

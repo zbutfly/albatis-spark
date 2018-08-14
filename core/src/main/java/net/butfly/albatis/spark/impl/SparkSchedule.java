@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark.impl;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;

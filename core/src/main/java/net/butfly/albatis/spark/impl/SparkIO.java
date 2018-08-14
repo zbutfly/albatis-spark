@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark.impl;
 
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
@@ -35,6 +35,7 @@ import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.input.SparkDataInput;
 import net.butfly.albatis.spark.util.DSdream;
 import scala.Function0;
 import scala.collection.JavaConversions;
@@ -60,7 +61,7 @@ public abstract class SparkIO implements IO, Serializable {
 		this.targetUri = targetUri;
 		String[] t;
 		if (table.length > 0) t = table;
-		else if (null != targetUri.getFile()) t = new String[] { targetUri.getFile() };
+		else if (null != targetUri && null != targetUri.getFile()) t = new String[] { targetUri.getFile() };
 		else t = new String[0];
 		tables = t;
 	}
@@ -89,7 +90,7 @@ public abstract class SparkIO implements IO, Serializable {
 		return null;
 	}
 
-	public static <V, I extends SparkInput> I input(SparkSession spark, URISpec uri, String... table) {
+	public static <V, I extends SparkDataInput> I input(SparkSession spark, URISpec uri, String... table) {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")

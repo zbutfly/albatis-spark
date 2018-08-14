@@ -10,18 +10,17 @@ import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import net.butfly.albatis.spark.io.SparkIOLess;
-import net.butfly.albatis.spark.io.SparkInputBase;
+import net.butfly.albatis.spark.SparkInput;
 
-public class SparkPluginInput extends SparkInputBase<Row> implements SparkIOLess {
+public class SparkPluginInput extends SparkInput<Row> {
 	private static final long serialVersionUID = -3514105763334222049L;
-	protected final SparkInputBase<Row> input;
+	protected final SparkInput<Row> input;
 	protected final PluginConfig pc;
 	protected final static String PLUGIN_KEY = PluginElement.zjhm.name();
 	protected final static String COUNT = PluginElement.count.name();
 	protected final static String MAX_SCORE = PluginElement.max_score.name();
 
-	public SparkPluginInput(SparkInputBase<Row> input, PluginConfig pc) {
+	public SparkPluginInput(SparkInput<Row> input, PluginConfig pc) {
 		super(input.spark, input.targetUri);
 		this.input = input;
 		this.pc = pc;

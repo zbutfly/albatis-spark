@@ -1,7 +1,7 @@
 package net.butfly.albatis.spark.util;
 
-import static net.butfly.albatis.spark.io.SparkIO.$utils$.ENC_R;
-import static net.butfly.albatis.spark.io.SparkIO.$utils$.rmap;
+import static net.butfly.albatis.spark.impl.SparkIO.$utils$.ENC_R;
+import static net.butfly.albatis.spark.impl.SparkIO.$utils$.rmap;
 
 import java.util.Iterator;
 import java.util.List;
@@ -21,9 +21,8 @@ import net.butfly.albacore.paral.Exeter;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Pair;
 import net.butfly.albacore.utils.collection.Colls;
-import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.io.impl.WriteHandler;
+import net.butfly.albatis.spark.output.SparkSinkOutput;
 
 @SuppressWarnings("unchecked")
 public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
@@ -111,14 +110,9 @@ public final class DSdream<T> implements Sdream<T>/* , Dataset<T> */ {
 	/** Using spliterator sequencially */
 	@Override
 	public void eachs(Consumer<T> using) {
-		WriteHandler.save((Dataset<Rmap>) ds, (OddOutput<Rmap>) v -> {
-			try {
-				using.accept((T) v);
-				return true;
-			} catch (Throwable t) {
-				return false;
-			}
-		});
+		try (SparkSinkOutput o = new SparkSinkOutput(ds.sparkSession(), (Consumer<Rmap>) using);) {
+			o.save((Dataset<Rmap>) ds);
+		}
 	}
 
 	/**

@@ -7,11 +7,11 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.spark.io.SparkIO.Schema;
-import net.butfly.albatis.spark.io.SparkInput;
+import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.input.SparkDataInput;
 
 @Schema({ "es", "elasticsearch" })
-public class SparkESInput extends SparkInput {
+public class SparkESInput extends SparkDataInput {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
 

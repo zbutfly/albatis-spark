@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark.output;
 
 import java.io.Serializable;
 

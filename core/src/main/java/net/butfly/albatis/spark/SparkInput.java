@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark;
 
 import java.util.List;
 import java.util.Map;
@@ -17,12 +17,13 @@ import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Wrapper;
 import net.butfly.albatis.io.pump.Pump;
+import net.butfly.albatis.spark.impl.SparkIO;
 
-public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
+public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
 	protected Dataset<V> dataset;
 
-	protected SparkInputBase(SparkSession spark, URISpec targetUri, String... table) {
+	protected SparkInput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		dataset = load();
 	}
@@ -58,11 +59,11 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	}
 
 	// ---------------------------------------------------------------------
-	private static class SparkInputWrapper<VV> extends SparkInputBase<VV> implements SparkIOLess, Wrapper<SparkInputBase<VV>> {
+	private static class SparkInputWrapper<VV> extends SparkInput<VV> implements Wrapper<SparkInput<VV>> {
 		private static final long serialVersionUID = 5957738224117308018L;
-		private final SparkInputBase<?> base;
+		private final SparkInput<?> base;
 
-		protected SparkInputWrapper(SparkInputBase<?> s, Dataset<VV> ds) {
+		protected SparkInputWrapper(SparkInput<?> s, Dataset<VV> ds) {
 			super(s.spark, s.targetUri);
 			this.base = s;
 			dataset = ds;
@@ -85,13 +86,13 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	}
 
 	@Override
-	public SparkInputBase<V> filter(Predicate<V> predicater) {
+	public SparkInput<V> filter(Predicate<V> predicater) {
 		return new SparkInputWrapper<>(this, dataset.filter(predicater::test));
 	}
 
 	@Override
 	@Deprecated
-	public SparkInputBase<V> filter(Map<String, Object> criteria) {
+	public SparkInput<V> filter(Map<String, Object> criteria) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -100,18 +101,18 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <V1> SparkInputBase<V1> then(Function<V, V1> conv) {
+	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
 		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (Rmap) conv.apply(r), $utils$.ENC_R));
 	}
 
 	@Override
-	public <V1> SparkInputBase<V1> thens(Function<Sdream<V>, Sdream<V1>> conv) {
+	public <V1> SparkInput<V1> thens(Function<Sdream<V>, Sdream<V1>> conv) {
 		return thenFlat(v -> conv.apply(Sdream.of1(v)));
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public <V1> SparkInputBase<V1> thens(Function<Sdream<V>, Sdream<V1>> conv, int parallelism) {
+	public <V1> SparkInput<V1> thens(Function<Sdream<V>, Sdream<V1>> conv, int parallelism) {
 		return thens(conv);
 	}
 
@@ -120,7 +121,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <V1> SparkInputBase<V1> thenFlat(Function<V, Sdream<V1>> conv) {
+	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(),
 				$utils$.ENC_R));
 	}
@@ -133,7 +134,7 @@ public abstract class SparkInputBase<V> extends SparkIO implements OddInput<V> {
 
 	@SuppressWarnings("unchecked")
 	public SparkPump pump(Output<Rmap> output) {
-		return new SparkPump((SparkInputBase<Rmap>) this, output);
+		return new SparkPump((SparkInput<Rmap>) this, output);
 	}
 
 	@Override

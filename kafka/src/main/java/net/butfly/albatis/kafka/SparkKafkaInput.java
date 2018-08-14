@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
@@ -14,8 +16,8 @@ import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
-import net.butfly.albatis.spark.io.SparkIO.Schema;
-import net.butfly.albatis.spark.io.SparkInput;
+import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.input.SparkDataInput;
 
 /**
  * <pre>
@@ -29,13 +31,19 @@ import net.butfly.albatis.spark.io.SparkInput;
  * </pre>
  */
 @Schema("kafka")
-public class SparkKafkaInput extends SparkInput {
+public class SparkKafkaInput extends SparkDataInput {
 	private static final long serialVersionUID = 9003837433163351306L;
 	private final Function<byte[], Map<String, Object>> conv;
 
 	public SparkKafkaInput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		conv = Connection.urider(targetUri);
+	}
+
+	@Override
+	protected Dataset<Rmap> load() {
+		Dataset<Rmap> ds = super.load();
+		return ds.map(this::kafka, $utils$.ENC_R);
 	}
 
 	@Override
@@ -59,9 +67,7 @@ public class SparkKafkaInput extends SparkInput {
 		return options;
 	}
 
-	@Override
-	protected Rmap conv(Row row) {
-		Rmap kafka = super.conv(row);
+	private Rmap kafka(Rmap kafka) {
 		byte[] rowkey = (byte[]) kafka.remove("key");
 		byte[] bytes = (byte[]) kafka.remove("value");
 		String topic = (String) kafka.remove("topic");
@@ -70,5 +76,12 @@ public class SparkKafkaInput extends SparkInput {
 		Rmap r = new Rmap(topic, values);
 		if (null != rowkey) r = r.key(new String(rowkey, StandardCharsets.UTF_8));
 		return r;
+	}
+
+	private static final StructType schema = new StructType();
+	static {
+		schema.add("table", DataTypes.StringType);
+		schema.add("key", DataTypes.StringType);
+		schema.add("data", DataTypes.BinaryType);
 	}
 }

@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.join;
+package net.butfly.albatis.spark.input;
 
 import java.util.Map;
 
@@ -6,18 +6,17 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.io.SparkIOLess;
-import net.butfly.albatis.spark.io.SparkInputBase;
+import net.butfly.albatis.spark.SparkInput;
 
 @SuppressWarnings("rawtypes")
-public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess {
+public class SparkJoinInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = -1813416909589214047L;
-	protected final SparkInputBase<Row> input;
+	protected final SparkInput<Row> input;
 	protected final String col;
-	protected final Map<SparkInputBase<?>, String> joinInputs;
+	protected final Map<SparkInput<?>, String> joinInputs;
 	protected final String joinType;
 
-	public SparkJoinInput(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs, String joinType) {
+	public SparkJoinInput(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs, String joinType) {
 		super(input.spark, input.targetUri);
 		if (joinInputs == null || joinInputs.size() < 1) throw new RuntimeException("Not conforming to the conditions of join");
 		this.input = input;
@@ -28,7 +27,7 @@ public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess 
 
 	@Override
 	public void open() {
-		for (SparkInputBase<?> in : joinInputs.keySet())
+		for (SparkInput<?> in : joinInputs.keySet())
 			in.open();
 		input.open();
 		super.open();
@@ -37,7 +36,7 @@ public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess 
 	@Override
 	protected Dataset<Rmap> load() {
 		Dataset<Row> ds0 = input.dataset();
-		for (SparkInputBase<?> in : joinInputs.keySet()) {
+		for (SparkInput<?> in : joinInputs.keySet()) {
 			String key = joinInputs.get(in);
 			Dataset<?> ds = in.dataset();
 			ds0 = ds0.join(ds, ds0.col(col).equalTo(ds.col(key)), joinType).distinct();
@@ -49,7 +48,7 @@ public class SparkJoinInput extends SparkInputBase<Rmap> implements SparkIOLess 
 	public void close() {
 		super.close();
 		input.close();
-		for (SparkInputBase in : joinInputs.keySet())
+		for (SparkInput in : joinInputs.keySet())
 			in.close();
 	}
 }

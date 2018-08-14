@@ -3,7 +3,7 @@ package net.butfly.albatis.kafka;
 import java.util.Enumeration;
 import java.util.Map;
 
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DateType;
 import org.apache.spark.sql.types.StructField;
@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.TimestampType;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.io.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.SparkIO.Schema;
 
 @Schema("kafka:msg")
 public class SparkKafkaFieldInput extends SparkKafkaInput {
@@ -25,8 +25,9 @@ public class SparkKafkaFieldInput extends SparkKafkaInput {
 	}
 
 	@Override
-	protected Rmap conv(Row row) {
-		return filter(super.conv(row));
+	protected Dataset<Rmap> load() {
+		Dataset<Rmap> ds = super.load();
+		return ds.map(this::filter, $utils$.ENC_R);
 	}
 
 	@SuppressWarnings("unchecked")

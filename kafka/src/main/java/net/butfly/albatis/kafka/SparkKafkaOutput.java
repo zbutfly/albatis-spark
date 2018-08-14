@@ -4,12 +4,11 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.io.SparkRmapOutput;
-import net.butfly.albatis.spark.io.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.output.SparkSaveOutput;
 
 @Schema("kafka")
-public class SparkKafkaOutput extends SparkRmapOutput {
+public class SparkKafkaOutput extends SparkSaveOutput {
 	private static final long serialVersionUID = 9003837433163351306L;
 
 	SparkKafkaOutput(SparkSession spark, URISpec targetUri, String... table) {
@@ -26,8 +25,7 @@ public class SparkKafkaOutput extends SparkRmapOutput {
 	}
 
 	@Override
-	public boolean enqueue(Rmap r) {
-		// TODO Auto-generated method stub
-		return true;
+	public String format() {
+		return "kafka";
 	}
 }

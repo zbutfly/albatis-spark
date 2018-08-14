@@ -1,15 +1,15 @@
-package net.butfly.albatis.spark.join;
+package net.butfly.albatis.spark.input;
 
 import java.util.Map;
 
 import org.apache.spark.sql.Row;
 
-import net.butfly.albatis.spark.io.SparkInputBase;
+import net.butfly.albatis.spark.SparkInput;
 
 public class SparkInnerJoinInput extends SparkJoinInput {
 	private static final long serialVersionUID = 377289278732441635L;
 
-	public SparkInnerJoinInput(SparkInputBase<Row> input, String col, Map<SparkInputBase<?>, String> joinInputs) {
+	public SparkInnerJoinInput(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		super(input, col, joinInputs, "inner");
 	}
 }

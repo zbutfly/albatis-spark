@@ -15,11 +15,6 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka_${version.scala.main}</artifactId>
-			<version>${version.kafka}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
 			<version>${version.spark}</version>
@@ -33,6 +28,13 @@
 			<groupId>net.butfly.albatis</groupId>
 			<artifactId>albatis-kafka-io</artifactId>
 			<version>1.5.2-SNAPSHOT</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka_${version.scala.main}</artifactId>
+			<version>${version.kafka}</version>
+			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
 </project>

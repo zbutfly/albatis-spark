@@ -1,15 +1,16 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark;
 
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.paral.Sdream;
-import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Output;
-import net.butfly.albatis.spark.util.DSdream;
+import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.impl.SparkIO;
 
-public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V> {
+public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 	private static final long serialVersionUID = 7339834746933783020L;
 
 	protected SparkOutput(SparkSession spark, URISpec targetUri, String... table) {
@@ -21,6 +22,13 @@ public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V> {
 		return targetUri;
 	}
 
+	public abstract void save(Dataset<V> ds);
+
+	@Override
+	public void enqueue(Sdream<V> r) {
+		throw new UnsupportedOperationException();
+	}
+
 	// ============================
 	@Override
 	public <V0> Output<V0> prior(Function<V0, V> conv) {
@@ -28,14 +36,10 @@ public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V> {
 			private static final long serialVersionUID = -1680036215116179632L;
 
 			@Override
-			public boolean enqueue(V0 r) {
-				if (null == r) return false;
-				return SparkOutput.this.enqueue(conv.apply((V0) r));
-			}
-
-			@Override
-			public void enqueue(Sdream<V0> s) {
-				SparkOutput.this.enqueue((DSdream<V>) s.map(r -> conv.apply((V0) r)));
+			public void save(Dataset<V0> ds0) {
+				@SuppressWarnings("unchecked")
+				Dataset<V> ds = (Dataset<V>) ds0.map(v0 -> (Rmap) conv.apply(v0), $utils$.ENC_R);
+				SparkOutput.this.save(ds);
 			}
 		};
 	}
@@ -46,15 +50,10 @@ public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V> {
 			private static final long serialVersionUID = 5079963400315523098L;
 
 			@Override
-			public boolean enqueue(V0 r) {
-				if (null == r) return false;
-				enqueue(Sdream.of1(r));
-				return true;
-			}
-
-			@Override
-			public void enqueue(Sdream<V0> s) {
-				SparkOutput.this.enqueue(conv.apply(s));
+			public void save(Dataset<V0> ds0) {
+				@SuppressWarnings("unchecked")
+				Dataset<V> ds = (Dataset<V>) ds0.flatMap(v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of(v0))).list().iterator(), $utils$.ENC_R);
+				SparkOutput.this.save(ds);
 			}
 		};
 	}
@@ -72,15 +71,10 @@ public abstract class SparkOutput<V> extends SparkIO implements OddOutput<V> {
 			private static final long serialVersionUID = -2887496205884721038L;
 
 			@Override
-			public boolean enqueue(V0 r) {
-				if (null == r) return false;
-				SparkOutput.this.enqueue(conv.apply(r));
-				return true;
-			}
-
-			@Override
-			public void enqueue(Sdream<V0> s) {
-				SparkOutput.this.enqueue(s.mapFlat(r -> conv.apply((V0) r)));
+			public void save(Dataset<V0> ds0) {
+				@SuppressWarnings("unchecked")
+				Dataset<V> ds = (Dataset<V>) ds0.flatMap(v0 -> ((Sdream<Rmap>) conv.apply(v0)).list().iterator(), $utils$.ENC_R);
+				SparkOutput.this.save(ds);
 			}
 		};
 	}

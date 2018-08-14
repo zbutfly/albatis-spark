@@ -6,11 +6,11 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.spark.io.SparkIO.Schema;
-import net.butfly.albatis.spark.io.SparkInput;
+import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.input.SparkDataInput;
 
 @Schema("solr")
-public class SparkSolrInput extends SparkInput {
+public class SparkSolrInput extends SparkDataInput {
 	private static final long serialVersionUID = -5201381842972371471L;
 
 	public SparkSolrInput(SparkSession spark, URISpec targetUri, String... table) {

@@ -1,4 +1,4 @@
-package net.butfly.albatis.spark.io;
+package net.butfly.albatis.spark;
 
 import java.io.Serializable;
 
@@ -7,17 +7,17 @@ import net.butfly.albacore.utils.Reflections;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
-import net.butfly.albatis.spark.io.impl.WriteHandler;
+import net.butfly.albatis.spark.output.SparkSinkOutput;
 
 class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 	private static final long serialVersionUID = -6842560101323305087L;
-	private final SparkInputBase<Rmap> input;
-	private final Output<Rmap> output;
+	private final SparkInput<Rmap> input;
+	private final SparkOutput<Rmap> output;
 
-	SparkPump(SparkInputBase<Rmap> input, Output<Rmap> dest) {
+	SparkPump(SparkInput<Rmap> input, Output<Rmap> dest) {
 		super(input.name() + ">" + dest.name());
 		this.input = input;
-		this.output = dest;
+		this.output = dest instanceof SparkOutput ? (SparkSinkOutput) dest : new SparkSinkOutput(input.spark, dest);
 		Reflections.noneNull("Pump source/destination should not be null", input, dest);
 	}
 
@@ -27,7 +27,7 @@ class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 		input.open();
 		Pump.super.open();
 
-		WriteHandler.save(input.dataset, output);
+		output.save(input.dataset);
 
 		boolean b = true;
 		while (b && opened())
