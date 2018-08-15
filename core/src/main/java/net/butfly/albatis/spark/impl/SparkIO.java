@@ -31,6 +31,7 @@ import net.butfly.albacore.utils.Reflections;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
+import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
@@ -175,8 +176,26 @@ public abstract class SparkIO implements IO, Serializable {
 		return DSdream.of(ss);
 	}
 
-	// ====
+	// ==========
+	private final List<FieldDesc> schema = Colls.list();
 
+	@Override
+	public List<FieldDesc> schema() {
+		return null;
+	}
+
+	@Override
+	public void schema(FieldDesc... field) {
+		schema.clear();
+		schema.addAll(Arrays.asList(field));
+	}
+
+	@Override
+	public void schemaless() {
+		schema.clear();
+	}
+
+	// ====
 	public static interface $utils$ extends Serializable {
 		@SuppressWarnings("rawtypes")
 		public static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);

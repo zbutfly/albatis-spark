@@ -1,7 +1,6 @@
 package net.butfly.albatis.spark.impl;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,7 @@ import net.butfly.albatis.spark.plugin.SparkPluginInput;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
-public class SparkConnection implements EnvironmentConnection, Serializable {
+public class SparkConnection implements EnvironmentConnection {
 	private static final long serialVersionUID = 5093686615279489589L;
 	private final static String DEFAULT_HOST = "local[*]";
 
@@ -87,14 +86,12 @@ public class SparkConnection implements EnvironmentConnection, Serializable {
 
 	@Override
 	public <M extends Rmap> Input<M> input(String... table) throws IOException {
-		if (table.length == 0) throw new IllegalArgumentException("Spark connection open input with first argument as target db uri");
-		String[] ts = Colls.list(table).subList(1, table.length - 1).toArray(new String[0]);
-		return input(new URISpec(table[0]), ts);
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	@Deprecated
-	public <M extends Rmap> Output<M> output() throws IOException {
+	public <M extends Rmap> Output<M> output(String... table) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
