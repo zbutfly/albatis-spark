@@ -3,15 +3,15 @@ package net.butfly.albatis.spark.output;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albatis.io.Output;
-import net.butfly.albatis.io.Rmap;
 
-class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame, Rmap> {
-	protected WriteHandlerFrame(Dataset<Rmap> ds) {
+class WriteHandlerFrameRow extends WriteHandlerBase<WriteHandlerFrameRow, Row> {
+	protected WriteHandlerFrameRow(Dataset<Row> ds) {
 		super(ds);
 	}
 
@@ -22,7 +22,7 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame, Rmap> {
 	}
 
 	@Override
-	public void save(Output<Rmap> output) {
+	public void save(Output<Row> output) {
 		// try (Connection cc = output.connect();) {
 		// output.enqueue(DSdream.of(ds));
 		// } catch (Exception e) {

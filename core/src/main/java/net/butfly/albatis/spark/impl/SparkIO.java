@@ -1,5 +1,21 @@
 package net.butfly.albatis.spark.impl;
 
+import static net.butfly.albatis.ddl.vals.ValType.Flags.BINARY;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.BOOL;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.BYTE;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.CHAR;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.DATE;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.DOUBLE;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.FLOAT;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.GEO;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.INT;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.LONG;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.SHORT;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.STR;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.STRL;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.UNKNOWN;
+import static net.butfly.albatis.ddl.vals.ValType.Flags.VOID;
+
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -17,9 +33,11 @@ import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
@@ -33,6 +51,7 @@ import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.ddl.FieldDesc;
+import net.butfly.albatis.ddl.vals.ValType;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
@@ -80,12 +99,15 @@ public abstract class SparkIO implements IO, Serializable {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
-			Class<O> c = (Class<O>) ADAPTERS.get(Output.class).get(s);
-			if (null == c) break;
-			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
-			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException e) {
+			Class<O> cls = (Class<O>) ADAPTERS.get(Output.class).get(s);
+			if (null == cls) {
+				int c = s.lastIndexOf(":");
+				if (c >= 0) s = s.substring(0, c);
+				else break;
+			} else try {
+				return cls.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
+			} catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -96,10 +118,13 @@ public abstract class SparkIO implements IO, Serializable {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
-			Class<I> c = (Class<I>) ADAPTERS.get(Input.class).get(s);
-			if (null == c) break;
-			else try {
-				return c.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
+			Class<I> cls = (Class<I>) ADAPTERS.get(Input.class).get(s);
+			if (null == cls) {
+				int c = s.lastIndexOf(":");
+				if (c >= 0) s = s.substring(0, c);
+				else break;
+			} else try {
+				return cls.getConstructor(SparkSession.class, URISpec.class, String[].class).newInstance(spark, uri, table);
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 					| IllegalArgumentException e) {
 				throw new RuntimeException(e);
@@ -165,6 +190,12 @@ public abstract class SparkIO implements IO, Serializable {
 		return IO.super.features() | IO.Feature.SPARK;
 	}
 
+	@SuppressWarnings("unchecked")
+	@Deprecated
+	protected final DSdream<Rmap> dsd(Sdream<?> s) {
+		return DSdream.of(spark.sqlContext(), (Sdream<Rmap>) s);
+	}
+
 	protected final <T> DSdream<Rmap> dsd(Sdream<T> s, Function<T, Rmap> conv) {
 		if (s instanceof DSdream) return (DSdream<Rmap>) s.map(conv);
 		List<Rmap> l = s.map(conv).list();
@@ -177,11 +208,13 @@ public abstract class SparkIO implements IO, Serializable {
 
 	@Override
 	public List<FieldDesc> schema() {
-		return null;
+		return schema;
 	}
 
 	public StructType schemaSpark() {
-		return null;
+		if (schema.isEmpty()) return null;
+		return new StructType(Colls.list(schema, //
+				f -> new StructField(f.name, $utils$.fieldType(f.type), true, new Metadata())).toArray(new StructField[0]));
 	}
 
 	@Override
@@ -195,13 +228,62 @@ public abstract class SparkIO implements IO, Serializable {
 		schema.clear();
 	}
 
+	private static String ROW_TABLE_NAME_FIELD = "___table";
+	private static String ROW_KEY_VALUE_FIELD = "___key_value";
+	private static String ROW_KEY_FIELD_FIELD = "___key_field";
+
+	protected final Rmap conv(Row row) {
+		Map<String, Object> m = Maps.of();
+		$utils$.mapizeJava(row.getValuesMap($utils$.listScala(Arrays.asList(row.schema().fieldNames())))).forEach((k, v) -> {
+			if (null != v) m.put(k, v);
+		});
+		String t = (String) m.remove(ROW_TABLE_NAME_FIELD);
+		String k = (String) m.remove(ROW_KEY_VALUE_FIELD);
+		String kf = (String) m.remove(ROW_KEY_FIELD_FIELD);
+		return new Rmap(t, k, m).keyField(kf);
+	}
+
+	protected final Dataset<Row> rowDS(Dataset<Rmap> ds) {
+		if (schema.isEmpty()) throw new UnsupportedOperationException("No schema io could not map back to row.");
+		StructField[] sfs = new StructField[schema.size() + 3];
+		for (int i = 0; i < schema.size(); i++)
+			sfs[i] = new StructField(schema.get(i).name, $utils$.fieldType(schema.get(i).type), true, new Metadata());
+		sfs[sfs.length - 3] = new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, new Metadata());
+		sfs[sfs.length - 2] = new StructField(ROW_KEY_VALUE_FIELD, DataTypes.StringType, true, new Metadata());
+		sfs[sfs.length - 1] = new StructField(ROW_KEY_FIELD_FIELD, DataTypes.StringType, true, new Metadata());
+		StructType s = new StructType(sfs);
+		return ds.map(r -> {
+			Object[] vs = new Object[sfs.length];
+			for (int i = 0; i < sfs.length - 1; i++)
+				vs[i] = r.get(sfs[i].name());
+			vs[sfs.length - 3] = r.table();
+			vs[sfs.length - 2] = r.key();
+			vs[sfs.length - 1] = r.keyField();
+			return new GenericRowWithSchema(vs, s);
+		}, RowEncoder.apply(s));
+	}
+
+	protected final Dataset<Row> rowDSWithoutRmap(Dataset<Rmap> ds) {
+		if (schema.isEmpty()) throw new UnsupportedOperationException("No schema io could not map back to row.");
+		StructField[] sfs = new StructField[schema.size()];
+		for (int i = 0; i < schema.size(); i++)
+			sfs[i] = new StructField(schema.get(i).name, $utils$.fieldType(schema.get(i).type), true, new Metadata());
+		StructType s = new StructType(sfs);
+		return ds.map(r -> {
+			Object[] vs = new Object[sfs.length];
+			for (int i = 0; i < sfs.length - 1; i++)
+				vs[i] = r.get(sfs[i].name());
+			return new GenericRowWithSchema(vs, s);
+		}, RowEncoder.apply(s));
+	}
+
 	// ====
 	public static interface $utils$ extends Serializable {
 		@SuppressWarnings("rawtypes")
-		public static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);
-		public static final Encoder<Rmap> ENC_R = Encoders.javaSerialization(Rmap.class);
+		static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);
+		static final Encoder<Rmap> ENC_R = Encoders.javaSerialization(Rmap.class);
 
-		public static String defaultColl(URISpec u) {
+		static String defaultColl(URISpec u) {
 			String file = u.getFile();
 			String[] path = u.getPaths();
 			String tbl = null;
@@ -209,20 +291,13 @@ public abstract class SparkIO implements IO, Serializable {
 			return tbl;
 		};
 
-		public static Row mapRow(java.util.Map<String, Object> map) {
+		static Row mapRow(java.util.Map<String, Object> map) {
 			List<StructField> fields = Colls.list();
 			map.forEach((k, v) -> fields.add(DataTypes.createStructField(k, classType(v), null == v)));
 			return new GenericRowWithSchema(map.values().toArray(), DataTypes.createStructType(fields));
 		}
 
-		public static Row mapRow(Rmap map) {
-			List<StructField> fields = Colls.list();
-			map.put("___table", map.table());
-			map.forEach((k, v) -> fields.add(DataTypes.createStructField(k, classType(v), null == v)));
-			return new GenericRowWithSchema(map.values().toArray(), DataTypes.createStructType(fields));
-		}
-
-		public static Map<String, Object> rowMap(Row row) {
+		static Map<String, Object> rowMap(Row row) {
 			Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala()
 					.toSeq();
 			Map<String, Object> map = JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
@@ -231,15 +306,57 @@ public abstract class SparkIO implements IO, Serializable {
 			else return map;
 		}
 
-		public static Rmap rmap(String table, Row row) {
+		static Rmap rmap(String table, Row row) {
 			return new Rmap(table, $utils$.rowMap(row));
 		}
 
-		public static DataType classType(Object v) {
+		static DataType classType(Object v) {
 			return classType(null == v ? Void.class : v.getClass());
 		}
 
-		public static DataType classType(Class<?> c) {
+		static DataType fieldType(ValType t) {
+			if (null == t) return DataTypes.StringType;
+			switch (t.flag) {
+			case VOID:
+				return DataTypes.NullType;
+			case UNKNOWN:
+				return DataTypes.StringType;
+			// basic type: primitive
+			case BOOL:
+				return DataTypes.BooleanType;
+			case CHAR:
+				return DataTypes.StringType;
+			case BYTE:
+				return DataTypes.ByteType;
+			case SHORT:
+				return DataTypes.ShortType;
+			case INT:
+				return DataTypes.IntegerType;
+			case LONG:
+				return DataTypes.LongType;
+			case FLOAT:
+				return DataTypes.FloatType;
+			case DOUBLE:
+				return DataTypes.DoubleType;
+			// basic type: extended
+			case STR:
+				return DataTypes.StringType;
+			case STRL:
+				return DataTypes.StringType;
+			case BINARY:
+				return DataTypes.BinaryType;
+			case DATE:
+				return DataTypes.TimestampType;
+			// assembly type
+			case GEO:
+				return DataTypes.StringType;
+			default:
+				Logger.getLogger(SparkIO.class).warn(t.toString() + " not support for spark sql data type");
+				return DataTypes.StringType;
+			}
+		}
+
+		static DataType classType(Class<?> c) {
 			if (CharSequence.class.isAssignableFrom(c)) return DataTypes.StringType;
 			if (int.class.isAssignableFrom(c) || Integer.class.isAssignableFrom(c)) return DataTypes.IntegerType;
 			if (long.class.isAssignableFrom(c) || Long.class.isAssignableFrom(c)) return DataTypes.LongType;
@@ -287,7 +404,7 @@ public abstract class SparkIO implements IO, Serializable {
 			return scala.collection.JavaConversions.seqAsJavaList(scalaSeq);
 		}
 
-		public static Seq<Rmap> listScala(List<Rmap> javaList) {
+		public static <T> Seq<T> listScala(List<T> javaList) {
 			return scala.collection.JavaConversions.asScalaBuffer(javaList);
 		}
 

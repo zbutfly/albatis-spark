@@ -9,12 +9,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
@@ -35,7 +35,7 @@ import net.butfly.albatis.spark.util.DSdream;
 @Schema("mongodb")
 public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWriting, SparkMongo {
 	private static final long serialVersionUID = -887072515139730517L;
-	private static final int BATCH_SIZE = 1000;
+	private static final int BATCH_SIZE = 250;
 	private final String mongodbn;
 	private final MongoSpark mongo;
 
@@ -71,37 +71,63 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 		else {
 			Map<String, BlockingQueue<Rmap>> parts = Maps.of();
 			s.eachs(r -> parts.computeIfAbsent(r.table(), t -> new LinkedBlockingQueue<>()).add(r));
-			parts.forEach(this::enq);
+			parts.forEach(this::write);
 		}
 	}
 
 	private void write(Dataset<Rmap> ds) {
-		// JavaRDD<Rmap> rdd = .javaRDD();
-		// rdd.JavaPairRDD<String, Iterable<Rmap>> tdd = rdd.groupBy(Rmap::table);
+		if (schema().isEmpty()) ds.foreachPartition(it -> enqueue(Sdream.of(it)));
+		else {
+			// Dataset<Row> rds =
+			rowDS(ds).foreachPartition(rs -> Maps.ofQ(Colls.list(rs, this::conv), Rmap::table).forEach(this::write));
+			/**
+			 * FUCK stupid groupby->agg need to join back origin dataset to get full list of rows
+			 * 
+			 * <pre>
+			 * Encoder<Row> s = RowEncoder.apply(new StructType(new StructField[] { //
+			 * 		new StructField($utils$.ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, new Metadata()) //
+			 * 		, new StructField("records", DataTypes.createArrayType(rds.schema()), false, new Metadata())//
+			 * }));
+			 * RelationalGroupedDataset dss = rds.groupBy($utils$.ROW_TABLE_NAME_FIELD);
+			 * Dataset<Row> lds = dss.agg(collect_list($utils$.ROW_TABLE_NAME_FIELD).as("records"));
+			 * lds.schema();
+			 * lds.foreach(r -> {
+			 * 	String t = r.getAs($utils$.ROW_TABLE_NAME_FIELD);
+			 * 	Object l = r.get(2);
+			 * 	logger().error("Table [" + t + "]: " + String.valueOf(l));
+			 * });
+			 * </pre>
+			 */
+		}
 	}
 
-	private void enq(String t, BlockingQueue<Rmap> docs) {
+
+	protected void write(Row row) {
+		Rmap r = conv(row);
+		long rr = write(mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(r.table()), r);
+		if (rr > 0) succeeded(rr);
+		else failed(Sdream.of());
+	}
+
+	private void write(String t, BlockingQueue<Rmap> docs) {
 		Map<String, String> opts = options();
 		opts.put("collection", t);
-
-		MongoDatabase db = mongo.connector().acquireClient().getDatabase(mongodbn);
-		MongoCollection<Document> col = db.getCollection(t);
+		long total = docs.size();
+		logger().trace("MongoSpark upsert [" + total + "] to [" + t + "] with batch [" + BATCH_SIZE + "] starting.");
+		long now = System.currentTimeMillis();
+		MongoCollection<Document> col = mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(t);
 		AtomicLong succ = new AtomicLong();
 		List<Rmap> fails = Colls.list();
-		long total = docs.size();
 		while (!docs.isEmpty()) {
-			List<Rmap> c = Colls.list();
-			docs.drainTo(c, BATCH_SIZE);
-			if (!c.isEmpty()) succ.addAndGet(write(c, col));
-			// docs.forEach(r -> write(r, col, succ, fails));
+			List<Rmap> batch = Colls.list();
+			docs.drainTo(batch, BATCH_SIZE);
+			if (!batch.isEmpty()) succ.addAndGet(write(col, batch));
 		}
-		// if (succ.get() > 0) succeeded(succ.get());
-		// if (!fails.isEmpty()) failed(Sdream.of(fails));
-		logger().trace("MongoSpark upsert [" + total + "] with batch [" + BATCH_SIZE + "] finished, successed [" + succ.get()
-				+ "], failed [" + fails.size() + "].");
+		logger().trace("MongoSpark upsert [" + total + "] to [" + t + "] with batch [" + BATCH_SIZE + "] finished, successed [" + succ.get()
+				+ "], failed [" + fails.size() + "], spent: " + now / 1000 + " ms.");
 	}
 
-	private int write(List<Rmap> l, MongoCollection<Document> col) {
+	private int write(MongoCollection<Document> col, List<Rmap> l) {
 		AtomicInteger c = new AtomicInteger();
 		s().statsOuts(l, rs -> {
 			List<WriteModel<Document>> ws = Colls.list(rs, this::write);
@@ -121,24 +147,27 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 		return new ReplaceOneModel<>(q, d, new ReplaceOptions().upsert(true));
 	}
 
-	protected void write(Rmap r, MongoCollection<Document> col, AtomicLong succ, List<Rmap> fails) {
+	protected long write(MongoCollection<Document> col, Rmap r) {
 		Document d = new Document(r);
 		Document q = null;
 		if (null != r.keyField()) q = new Document(r.keyField(), r.key());
 		else if (r.containsKey("_id")) q = new Document("_id", r.get("_id"));
-		try {
-			if (null != q) {
-				UpdateResult u = col.replaceOne(new Document("_id", r.get("_id")), d, new ReplaceOptions().upsert(true));
-				// logger().trace("Upserted: " + u.toString());
-				succ.addAndGet(u.getModifiedCount());
-			} else {
-				col.insertOne(d);
-				// logger().trace("Inserted: " + r);
-				succ.addAndGet(1);
+		Document qq = q;
+		AtomicLong l = new AtomicLong();
+		s().statsOut(r, rr -> {
+			try {
+				if (null != qq) {
+					UpdateResult u = col.replaceOne(qq, d, new ReplaceOptions().upsert(true));
+					l.set(u.getModifiedCount());
+				} else {
+					col.insertOne(d);
+					l.set(1);
+				}
+			} catch (Exception ex) {
+				logger().debug("MongoSpark fail: " + r, ex);
+				l.set(-1);
 			}
-		} catch (Exception ex) {
-			fails.add(r);
-			logger().debug("MongoSpark fail: " + r, ex);
-		}
+		});
+		return l.get();
 	}
 }

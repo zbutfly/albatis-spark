@@ -3,6 +3,7 @@ package net.butfly.albatis.spark.output;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
@@ -28,8 +29,11 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 	@Override
 	public final void save(Dataset<Rmap> ds) {
 		logger().info("Dataset [" + ds.toString() + "] native save with format: " + format());
-		try (WriteHandler w = WriteHandler.of(ds)) {
-			w.save(format(), options());
+		if (!schema().isEmpty()) {
+			Dataset<Row> d = rowDSWithoutRmap(ds);
+			try (WriteHandler<Row> w = WriteHandler.ofRow(d)) {
+				w.save(format(), options());
+			}
 		}
 	}
 }
