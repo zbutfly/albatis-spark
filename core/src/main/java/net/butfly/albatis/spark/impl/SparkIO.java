@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 
 import com.google.common.base.Supplier;
 
@@ -164,11 +165,6 @@ public abstract class SparkIO implements IO, Serializable {
 		return IO.super.features() | IO.Feature.SPARK;
 	}
 
-	@SuppressWarnings("unchecked")
-	protected final DSdream<Rmap> dsd(Sdream<?> s) {
-		return DSdream.of(spark.sqlContext(), (Sdream<Rmap>) s);
-	}
-
 	protected final <T> DSdream<Rmap> dsd(Sdream<T> s, Function<T, Rmap> conv) {
 		if (s instanceof DSdream) return (DSdream<Rmap>) s.map(conv);
 		List<Rmap> l = s.map(conv).list();
@@ -181,6 +177,10 @@ public abstract class SparkIO implements IO, Serializable {
 
 	@Override
 	public List<FieldDesc> schema() {
+		return null;
+	}
+
+	public StructType schemaSpark() {
 		return null;
 	}
 
@@ -275,12 +275,20 @@ public abstract class SparkIO implements IO, Serializable {
 			};
 		}
 
-		public static <T> scala.collection.Map<String, T> mapizeScala(java.util.Map<String, T> value) {
-			return scala.collection.JavaConversions.mapAsScalaMap(value);
+		public static <T> scala.collection.Map<String, T> mapizeScala(java.util.Map<String, T> javaMap) {
+			return scala.collection.JavaConversions.mapAsScalaMap(javaMap);
 		}
 
-		public static <T> java.util.Map<String, T> mapizeJava(scala.collection.Map<String, T> vs) {
-			return scala.collection.JavaConversions.mapAsJavaMap(vs);
+		public static <T> java.util.Map<String, T> mapizeJava(scala.collection.Map<String, T> scalaMap) {
+			return scala.collection.JavaConversions.mapAsJavaMap(scalaMap);
+		}
+
+		public static <T> java.util.List<T> listJava(scala.collection.Seq<T> scalaSeq) {
+			return scala.collection.JavaConversions.seqAsJavaList(scalaSeq);
+		}
+
+		public static Seq<Rmap> listScala(List<Rmap> javaList) {
+			return scala.collection.JavaConversions.asScalaBuffer(javaList);
 		}
 
 		public static String debug(Row row) {

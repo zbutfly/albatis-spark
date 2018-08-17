@@ -16,7 +16,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
-			<artifactId>elasticsearch-spark-20_${version.scala}</artifactId>
+			<artifactId>elasticsearch-spark-20_${version.scala.main}</artifactId>
 			<version>${version.elastic}</version>
 		</dependency>
 	</dependencies>

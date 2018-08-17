@@ -13,8 +13,8 @@ import net.butfly.albatis.spark.output.SparkSaveOutput;
 public class SparkHbaseOutput extends SparkSaveOutput {
 	private static final long serialVersionUID = 5602542871208124774L;
 
-	protected SparkHbaseOutput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri);
+	protected SparkHbaseOutput(SparkSession spark, URISpec targetUri, String table) {
+		super(spark, targetUri, table);
 	}
 
 	@Override

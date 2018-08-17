@@ -16,7 +16,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb.spark</groupId>
-			<artifactId>mongo-spark-connector_${version.scala}</artifactId>
+			<artifactId>mongo-spark-connector_${version.scala.main}</artifactId>
 			<version>2.3.0</version>
 		</dependency>
 		<dependency>

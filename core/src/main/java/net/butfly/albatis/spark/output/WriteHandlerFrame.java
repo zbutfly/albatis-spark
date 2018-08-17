@@ -23,6 +23,11 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 
 	@Override
 	public void save(Output<Rmap> output) {
+		// try (Connection cc = output.connect();) {
+		// output.enqueue(DSdream.of(ds));
+		// } catch (Exception e) {
+		// throw new RuntimeException(e);
+		// }
 		ds.foreachPartition(it -> {
 			try (Connection cc = output.connect();) {
 				output.enqueue(Sdream.of(it));

@@ -17,7 +17,7 @@ class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 	SparkPump(SparkInput<Rmap> input, Output<Rmap> dest) {
 		super(input.name() + ">" + dest.name());
 		this.input = input;
-		this.output = dest instanceof SparkOutput ? (SparkSinkOutput) dest : new SparkSinkOutput(input.spark, dest);
+		this.output = dest instanceof SparkOutput ? (SparkOutput<Rmap>) dest : new SparkSinkOutput(input.spark, dest);
 		Reflections.noneNull("Pump source/destination should not be null", input, dest);
 	}
 

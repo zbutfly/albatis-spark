@@ -11,17 +11,17 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-core_${version.scala}</artifactId>
+			<artifactId>spark-core_${version.scala.main}</artifactId>
 			<version>${version.spark}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-sql_${version.scala}</artifactId>
+			<artifactId>spark-sql_${version.scala.main}</artifactId>
 			<version>${version.spark}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-streaming_${version.scala}</artifactId>
+			<artifactId>spark-streaming_${version.scala.main}</artifactId>
 			<version>${version.spark}</version>
 		</dependency>
 		<dependency>
