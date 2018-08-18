@@ -6,9 +6,9 @@ import org.apache.spark.sql.Dataset;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
-import net.butfly.albacore.paral.Sdream;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.util.DSdream;
 
 class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame, Rmap> {
 	protected WriteHandlerFrame(Dataset<Rmap> ds) {
@@ -23,15 +23,10 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame, Rmap> {
 
 	@Override
 	public void save(Output<Rmap> output) {
-		// try (Connection cc = output.connect();) {
-		// output.enqueue(DSdream.of(ds));
-		// } catch (Exception e) {
-		// throw new RuntimeException(e);
-		// }
-		ds.foreachPartition(it -> {
-			try (Connection cc = output.connect();) {
-				output.enqueue(Sdream.of(it));
-			}
-		});
+		try (Connection cc = output.connect();) {
+			output.enqueue(DSdream.of(ds));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

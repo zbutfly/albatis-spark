@@ -64,6 +64,7 @@ public class SparkConnection implements EnvironmentConnection {
 	private String host(Map<String, String> params) {
 		String host = params.remove("spark.host");
 		String paral = params.remove("spark.parallelism");
+		if (null == paral) paral = "*";
 		if (null != host) host = host + "[" + paral + "]";
 		else host = uriSpec.getHost();
 		if (null == host || host.isEmpty()) host = DEFAULT_HOST;

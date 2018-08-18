@@ -214,7 +214,7 @@ public abstract class SparkIO implements IO, Serializable {
 	public StructType schemaSpark() {
 		if (schema.isEmpty()) return null;
 		return new StructType(Colls.list(schema, //
-				f -> new StructField(f.name, $utils$.fieldType(f.type), true, new Metadata())).toArray(new StructField[0]));
+				f -> new StructField(f.name, $utils$.fieldType(f.type), true, Metadata.empty())).toArray(new StructField[0]));
 	}
 
 	@Override
@@ -228,11 +228,11 @@ public abstract class SparkIO implements IO, Serializable {
 		schema.clear();
 	}
 
-	private static String ROW_TABLE_NAME_FIELD = "___table";
-	private static String ROW_KEY_VALUE_FIELD = "___key_value";
-	private static String ROW_KEY_FIELD_FIELD = "___key_field";
+	protected final static String ROW_TABLE_NAME_FIELD = "___table";
+	protected final static String ROW_KEY_VALUE_FIELD = "___key_value";
+	protected final static String ROW_KEY_FIELD_FIELD = "___key_field";
 
-	protected final Rmap conv(Row row) {
+	protected final Rmap row2rmap(Row row) {
 		Map<String, Object> m = Maps.of();
 		$utils$.mapizeJava(row.getValuesMap($utils$.listScala(Arrays.asList(row.schema().fieldNames())))).forEach((k, v) -> {
 			if (null != v) m.put(k, v);
@@ -243,38 +243,52 @@ public abstract class SparkIO implements IO, Serializable {
 		return new Rmap(t, k, m).keyField(kf);
 	}
 
-	protected final Dataset<Row> rowDS(Dataset<Rmap> ds) {
+	protected final Row rmap2row0(Rmap r) {
+		StructType s = sparkSchema();
+		int l = s.fields().length;
+		Object[] vs = new Object[l];
+		for (int i = 0; i < l - 1; i++)
+			vs[i] = r.get(s.fields()[i].name());
+		return new GenericRowWithSchema(vs, s);
+	}
+
+	protected final Dataset<Row> rmap2rowDs(Dataset<Rmap> ds) {
 		if (schema.isEmpty()) throw new UnsupportedOperationException("No schema io could not map back to row.");
-		StructField[] sfs = new StructField[schema.size() + 3];
-		for (int i = 0; i < schema.size(); i++)
-			sfs[i] = new StructField(schema.get(i).name, $utils$.fieldType(schema.get(i).type), true, new Metadata());
-		sfs[sfs.length - 3] = new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, new Metadata());
-		sfs[sfs.length - 2] = new StructField(ROW_KEY_VALUE_FIELD, DataTypes.StringType, true, new Metadata());
-		sfs[sfs.length - 1] = new StructField(ROW_KEY_FIELD_FIELD, DataTypes.StringType, true, new Metadata());
-		StructType s = new StructType(sfs);
+		StructType s = sparkSchema(//
+				new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, Metadata.empty()), //
+				new StructField(ROW_KEY_VALUE_FIELD, DataTypes.StringType, true, Metadata.empty()), //
+				new StructField(ROW_KEY_FIELD_FIELD, DataTypes.StringType, true, Metadata.empty()));
+		int l = s.fields().length;
 		return ds.map(r -> {
-			Object[] vs = new Object[sfs.length];
-			for (int i = 0; i < sfs.length - 1; i++)
-				vs[i] = r.get(sfs[i].name());
-			vs[sfs.length - 3] = r.table();
-			vs[sfs.length - 2] = r.key();
-			vs[sfs.length - 1] = r.keyField();
+			Object[] vs = new Object[l];
+			for (int i = 0; i < l - 1; i++)
+				vs[i] = r.get(s.fields()[i].name());
+			vs[l - 3] = r.table();
+			vs[l - 2] = r.key();
+			vs[l - 1] = r.keyField();
 			return new GenericRowWithSchema(vs, s);
 		}, RowEncoder.apply(s));
 	}
 
-	protected final Dataset<Row> rowDSWithoutRmap(Dataset<Rmap> ds) {
+	protected final Dataset<Row> rmap2rowDs0(Dataset<Rmap> ds) {
 		if (schema.isEmpty()) throw new UnsupportedOperationException("No schema io could not map back to row.");
-		StructField[] sfs = new StructField[schema.size()];
-		for (int i = 0; i < schema.size(); i++)
-			sfs[i] = new StructField(schema.get(i).name, $utils$.fieldType(schema.get(i).type), true, new Metadata());
-		StructType s = new StructType(sfs);
+		StructType s = sparkSchema();
+		int l = s.fields().length;
 		return ds.map(r -> {
-			Object[] vs = new Object[sfs.length];
-			for (int i = 0; i < sfs.length - 1; i++)
-				vs[i] = r.get(sfs[i].name());
+			Object[] vs = new Object[l];
+			for (int i = 0; i < l - 1; i++)
+				vs[i] = r.get(s.fields()[i].name());
 			return new GenericRowWithSchema(vs, s);
 		}, RowEncoder.apply(s));
+	}
+
+	protected final StructType sparkSchema(StructField... extras) {
+		StructField[] sfs = new StructField[schema.size() + extras.length];
+		for (int i = 0; i < schema.size(); i++)
+			sfs[i] = new StructField(schema.get(i).name, $utils$.fieldType(schema.get(i).type), true, Metadata.empty());
+		for (int i = 0; i < extras.length; i++)
+			sfs[schema.size() + i] = extras[i];
+		return new StructType(sfs);
 	}
 
 	// ====

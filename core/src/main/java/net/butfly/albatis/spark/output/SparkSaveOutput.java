@@ -30,9 +30,11 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 	public final void save(Dataset<Rmap> ds) {
 		logger().info("Dataset [" + ds.toString() + "] native save with format: " + format());
 		if (!schema().isEmpty()) {
-			Dataset<Row> d = rowDSWithoutRmap(ds);
+			Dataset<Row> d = rmap2rowDs0(ds);
 			try (WriteHandler<Row> w = WriteHandler.ofRow(d)) {
 				w.save(format(), options());
+			} finally {
+				logger().info("Spark saving finished.");
 			}
 		}
 	}

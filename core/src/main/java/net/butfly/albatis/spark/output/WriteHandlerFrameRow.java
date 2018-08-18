@@ -7,8 +7,8 @@ import org.apache.spark.sql.Row;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
-import net.butfly.albacore.paral.Sdream;
 import net.butfly.albatis.io.Output;
+import net.butfly.albatis.spark.util.DSdream;
 
 class WriteHandlerFrameRow extends WriteHandlerBase<WriteHandlerFrameRow, Row> {
 	protected WriteHandlerFrameRow(Dataset<Row> ds) {
@@ -23,15 +23,10 @@ class WriteHandlerFrameRow extends WriteHandlerBase<WriteHandlerFrameRow, Row> {
 
 	@Override
 	public void save(Output<Row> output) {
-		// try (Connection cc = output.connect();) {
-		// output.enqueue(DSdream.of(ds));
-		// } catch (Exception e) {
-		// throw new RuntimeException(e);
-		// }
-		ds.foreachPartition(it -> {
-			try (Connection cc = output.connect();) {
-				output.enqueue(Sdream.of(it));
-			}
-		});
+		try (Connection cc = output.connect();) {
+			output.enqueue(DSdream.of(ds));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

@@ -3,7 +3,6 @@ package net.butfly.albatis.mongodb;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -46,11 +45,6 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	}
 
 	@Override
-	public void close() {
-		super.close();
-	}
-
-	@Override
 	public Map<String, String> options() {
 		Map<String, String> opts = mongoOpts(targetUri);
 		opts.put("replaceDocument", "true");
@@ -62,37 +56,34 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 
 	@Override
 	public boolean writing(long partitionId, long version) {
+		logger().error("MongoDB writing, should init res here");
 		return true;
 	}
 
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
 		if (s instanceof DSdream) write(((DSdream<Rmap>) s).ds);
-		else {
-			Map<String, BlockingQueue<Rmap>> parts = Maps.of();
-			s.eachs(r -> parts.computeIfAbsent(r.table(), t -> new LinkedBlockingQueue<>()).add(r));
-			parts.forEach(this::write);
-		}
+		else Maps.ofQ(s, Rmap::table).forEach(this::write);
 	}
 
 	private void write(Dataset<Rmap> ds) {
 		if (schema().isEmpty()) ds.foreachPartition(it -> enqueue(Sdream.of(it)));
 		else {
 			// Dataset<Row> rds =
-			rowDS(ds).foreachPartition(rs -> Maps.ofQ(Colls.list(rs, this::conv), Rmap::table).forEach(this::write));
+			rmap2rowDs(ds).foreachPartition(rs -> Maps.ofQ(Colls.list(rs, this::row2rmap), Rmap::table).forEach(this::write));
 			/**
 			 * FUCK stupid groupby->agg need to join back origin dataset to get full list of rows
 			 * 
 			 * <pre>
 			 * Encoder<Row> s = RowEncoder.apply(new StructType(new StructField[] { //
-			 * 		new StructField($utils$.ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, new Metadata()) //
+			 * 		new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, new Metadata()) //
 			 * 		, new StructField("records", DataTypes.createArrayType(rds.schema()), false, new Metadata())//
 			 * }));
-			 * RelationalGroupedDataset dss = rds.groupBy($utils$.ROW_TABLE_NAME_FIELD);
-			 * Dataset<Row> lds = dss.agg(collect_list($utils$.ROW_TABLE_NAME_FIELD).as("records"));
+			 * RelationalGroupedDataset dss = rds.groupBy(ROW_TABLE_NAME_FIELD);
+			 * Dataset<Row> lds = dss.agg(collect_list(ROW_TABLE_NAME_FIELD).as("records"));
 			 * lds.schema();
 			 * lds.foreach(r -> {
-			 * 	String t = r.getAs($utils$.ROW_TABLE_NAME_FIELD);
+			 * 	String t = r.getAs(ROW_TABLE_NAME_FIELD);
 			 * 	Object l = r.get(2);
 			 * 	logger().error("Table [" + t + "]: " + String.valueOf(l));
 			 * });
@@ -101,9 +92,8 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 		}
 	}
 
-
 	protected void write(Row row) {
-		Rmap r = conv(row);
+		Rmap r = row2rmap(row);
 		long rr = write(mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(r.table()), r);
 		if (rr > 0) succeeded(rr);
 		else failed(Sdream.of());
