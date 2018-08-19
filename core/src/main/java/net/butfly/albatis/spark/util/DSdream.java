@@ -1,7 +1,7 @@
 package net.butfly.albatis.spark.util;
 
-import static net.butfly.albatis.spark.impl.SparkIO.$utils$.ENC_R;
-import static net.butfly.albatis.spark.impl.SparkIO.$utils$.rmap;
+import static net.butfly.albatis.spark.impl.Sparks.ENC_R;
+import static net.butfly.albatis.spark.impl.Sparks.rmap;
 
 import java.util.Iterator;
 import java.util.List;

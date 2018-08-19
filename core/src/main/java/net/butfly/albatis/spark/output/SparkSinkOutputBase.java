@@ -28,6 +28,7 @@ import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkOutput;
+import net.butfly.albatis.spark.impl.Sparks;
 import scala.collection.Seq;
 
 /**
@@ -88,8 +89,8 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 			AtomicLong c = new AtomicLong();
 			@SuppressWarnings("resource")
 			Dataset<Rmap> ds = batch.sparkSession().createDataFrame(new JavaSparkContext(sc).parallelize(rows), batch.schema())//
-					.map(r -> rawToRmap(r, batchId, c.incrementAndGet()), $utils$.ENC_R);
-			try (WriteHandler w = WriteHandler.of(ds);) {
+					.map(r -> rawToRmap(r, batchId, c.incrementAndGet()), Sparks.ENC_R);
+			try (WriteHandler<Rmap> w = WriteHandler.of(ds);) {
 				w.save(output);
 			}
 			long tt = System.currentTimeMillis() - t;
@@ -107,7 +108,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 				throw new RuntimeException(e);
 			} finally {
 				if (null != r && num % 30000 == 0) logger.trace("[" + Thread.currentThread().getName() + //
-						"][" + num + "]\n\tRmap<=== " + r.toString() + "\n\t Row<=== " + $utils$.debug(row));
+						"][" + num + "]\n\tRmap<=== " + r.toString() + "\n\t Row<=== " + Sparks.debug(row));
 			}
 		}
 	}
@@ -121,7 +122,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 		@Override
 		public Sink createSink(SQLContext ctx, scala.collection.immutable.Map<String, String> options, Seq<String> partitionColumns,
 				OutputMode outputMode) {
-			String code = $utils$.mapizeJava(options).get("output");
+			String code = Sparks.mapizeJava(options).get("output");
 			Output<Rmap> o = IO.der(code);
 			return new OutputSink(o, ctx.sparkContext().longAccumulator(ctx.sparkContext().appName() + ":COUNT"), //
 					ctx.sparkContext().longAccumulator(ctx.sparkContext().appName() + ":TIME"));

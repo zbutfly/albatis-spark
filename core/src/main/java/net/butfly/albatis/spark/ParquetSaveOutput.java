@@ -50,7 +50,7 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 			logger().debug("Tables grouped and ready to write: " + keys);
 			for (String t : keys) {
 				Dataset<Row> tds = ds.filter(ds.col(ROW_TABLE_NAME_FIELD).equalTo(t));
-				tds = tds.drop(tds.col(ROW_TABLE_NAME_FIELD)).drop(tds.col(ROW_KEY_FIELD_FIELD)).drop(tds.col(ROW_KEY_VALUE_FIELD));
+				tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
 				write(t, tds);
 			}
 		} else throw new UnsupportedOperationException("Can only save dataset");

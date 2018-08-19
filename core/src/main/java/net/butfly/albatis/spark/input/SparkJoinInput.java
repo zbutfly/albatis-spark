@@ -7,6 +7,7 @@ import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.impl.Sparks;
 
 @SuppressWarnings("rawtypes")
 public class SparkJoinInput extends SparkInput<Rmap> {
@@ -41,7 +42,7 @@ public class SparkJoinInput extends SparkInput<Rmap> {
 			Dataset<?> ds = in.dataset();
 			ds0 = ds0.join(ds, ds0.col(col).equalTo(ds.col(key)), joinType).distinct();
 		}
-		return ds0.map(row -> $utils$.rmap(input.table(), row), $utils$.ENC_R);
+		return ds0.map(row -> Sparks.rmap(input.table(), row), Sparks.ENC_R);
 	}
 
 	@Override

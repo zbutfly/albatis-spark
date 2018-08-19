@@ -11,6 +11,7 @@ import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albacore.utils.Systems;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
@@ -18,6 +19,7 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Wrapper;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.impl.SparkIO;
+import net.butfly.albatis.spark.impl.Sparks;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -26,6 +28,14 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	protected SparkInput(SparkSession spark, URISpec targetUri, String... table) {
 		super(spark, targetUri, table);
 		dataset = load();
+		if (Systems.isDebug()) {
+			int limit = Integer.parseInt(System.getProperty("albatis.spark.debug.limit", "-1"));
+			if (limit > 0) {
+				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\".");
+				dataset = dataset.limit(limit);
+			} else logger().info(
+					"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
+		}
 	}
 
 	public Dataset<V> dataset() {
@@ -102,7 +112,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
-		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (Rmap) conv.apply(r), $utils$.ENC_R));
+		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.map(r -> (Rmap) conv.apply(r), Sparks.ENC_R));
 	}
 
 	@Override
@@ -123,7 +133,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		return new SparkInputWrapper<>(this, (Dataset<V1>) dataset.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(),
-				$utils$.ENC_R));
+				Sparks.ENC_R));
 	}
 
 	@SuppressWarnings("unchecked")

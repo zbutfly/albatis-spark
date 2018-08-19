@@ -23,6 +23,7 @@ import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.Sparks;
 import net.butfly.albatis.spark.input.SparkDataInput;
 
 @Schema("mongodb")
@@ -60,7 +61,7 @@ public class SparkMongoInput extends SparkDataInput implements SparkMongo {
 			}
 			// rdd.first();
 			Dataset<Row> ds = unwrapId(rdd.toDF());
-			Dataset<Rmap> dsr = ds.map(r -> $utils$.rmap(table(), r), $utils$.ENC_R);
+			Dataset<Rmap> dsr = ds.map(r -> Sparks.rmap(table(), r), Sparks.ENC_R);
 			dds = null == dds ? dsr : dds.union(dsr);
 		}
 		return dds;
@@ -79,7 +80,7 @@ public class SparkMongoInput extends SparkDataInput implements SparkMongo {
 		fs.add(new StructField("_id", DataTypes.StringType, f.nullable(), f.metadata()));
 		StructType sch = new StructType(fs.toArray(new StructField[fs.size()]));
 		return ds.map(r -> {
-			Object[] values = $utils$.listJava(r.toSeq()).toArray();
+			Object[] values = Sparks.listJava(r.toSeq()).toArray();
 			values[d] = ((Row) r.get(d)).getAs("oid");
 			return new GenericRowWithSchema(values, sch);
 		}, RowEncoder.apply(sch));

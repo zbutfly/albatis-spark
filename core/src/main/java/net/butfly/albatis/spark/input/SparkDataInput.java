@@ -12,6 +12,7 @@ import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.serder.BsonSerder;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.impl.Sparks;
 
 /**
  * generally, any kafka with value of a serialized map should come from here
@@ -33,12 +34,12 @@ public abstract class SparkDataInput extends SparkInput<Rmap> {
 		if (null != f) dr = dr.format(f);
 		Dataset<Row> ds = dr.options(opts).load();
 
-		Dataset<Rmap> dds = ds.map(r -> $utils$.rmap(table(), r), $utils$.ENC_R);
+		Dataset<Rmap> dds = ds.map(r -> Sparks.rmap(table(), r), Sparks.ENC_R);
 		return dds;
 	}
 	//
 	// protected Rmap conv(Row row) {
-	// return $utils$.rmap(table(), row);
+	// return Sparks.rmap(table(), row);
 	// }
 
 	protected Row row(Rmap m, long c) {

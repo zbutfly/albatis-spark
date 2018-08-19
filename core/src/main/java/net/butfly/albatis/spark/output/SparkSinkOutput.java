@@ -31,7 +31,7 @@ public final class SparkSinkOutput extends SparkSinkOutputBase {
 	@Override
 	public void save(Dataset<Rmap> ds) {
 		logger().info("Dataset [" + ds.toString() + "] streaming sink to: " + output.name());
-		try (WriteHandler w = WriteHandler.of(ds)) {
+		try (WriteHandler<Rmap> w = WriteHandler.of(ds)) {
 			w.save(output);
 		}
 	}

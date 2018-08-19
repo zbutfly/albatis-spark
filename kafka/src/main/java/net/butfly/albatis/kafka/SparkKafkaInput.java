@@ -17,6 +17,7 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.Sparks;
 import net.butfly.albatis.spark.input.SparkDataInput;
 
 /**
@@ -43,7 +44,7 @@ public class SparkKafkaInput extends SparkDataInput {
 	@Override
 	protected Dataset<Rmap> load() {
 		Dataset<Rmap> ds = super.load();
-		return ds.map(this::kafka, $utils$.ENC_R);
+		return ds.map(this::kafka, Sparks.ENC_R);
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.Sparks;
 
 @Schema("kafka:msg")
 public class SparkKafkaFieldInput extends SparkKafkaInput {
@@ -27,7 +28,7 @@ public class SparkKafkaFieldInput extends SparkKafkaInput {
 	@Override
 	protected Dataset<Rmap> load() {
 		Dataset<Rmap> ds = super.load();
-		return ds.map(this::filter, $utils$.ENC_R);
+		return ds.map(this::filter, Sparks.ENC_R);
 	}
 
 	@SuppressWarnings("unchecked")

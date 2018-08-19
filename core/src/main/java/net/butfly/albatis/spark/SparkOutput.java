@@ -9,6 +9,7 @@ import net.butfly.albacore.paral.Sdream;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO;
+import net.butfly.albatis.spark.impl.Sparks;
 
 public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 	private static final long serialVersionUID = 7339834746933783020L;
@@ -38,7 +39,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			@Override
 			public void save(Dataset<V0> ds0) {
 				@SuppressWarnings("unchecked")
-				Dataset<V> ds = (Dataset<V>) ds0.map(v0 -> (Rmap) conv.apply(v0), $utils$.ENC_R);
+				Dataset<V> ds = (Dataset<V>) ds0.map(v0 -> (Rmap) conv.apply(v0), Sparks.ENC_R);
 				SparkOutput.this.save(ds);
 			}
 		};
@@ -52,7 +53,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			@Override
 			public void save(Dataset<V0> ds0) {
 				@SuppressWarnings("unchecked")
-				Dataset<V> ds = (Dataset<V>) ds0.flatMap(v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of(v0))).list().iterator(), $utils$.ENC_R);
+				Dataset<V> ds = (Dataset<V>) ds0.flatMap(v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of(v0))).list().iterator(), Sparks.ENC_R);
 				SparkOutput.this.save(ds);
 			}
 		};
@@ -73,7 +74,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			@Override
 			public void save(Dataset<V0> ds0) {
 				@SuppressWarnings("unchecked")
-				Dataset<V> ds = (Dataset<V>) ds0.flatMap(v0 -> ((Sdream<Rmap>) conv.apply(v0)).list().iterator(), $utils$.ENC_R);
+				Dataset<V> ds = (Dataset<V>) ds0.flatMap(v0 -> ((Sdream<Rmap>) conv.apply(v0)).list().iterator(), Sparks.ENC_R);
 				SparkOutput.this.save(ds);
 			}
 		};
