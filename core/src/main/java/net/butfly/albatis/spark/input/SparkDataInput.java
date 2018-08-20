@@ -10,9 +10,9 @@ import org.apache.spark.sql.streaming.DataStreamReader;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.serder.BsonSerder;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.impl.Sparks;
 
 /**
  * generally, any kafka with value of a serialized map should come from here
@@ -20,27 +20,19 @@ import net.butfly.albatis.spark.impl.Sparks;
 public abstract class SparkDataInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = 8309576584660953676L;
 
-	public SparkDataInput(SparkSession spark, URISpec targetUri, String... table) {
+	public SparkDataInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
 
 	@Override
-	protected Dataset<Rmap> load() {
+	protected Dataset<Row> load() {
 		Map<String, String> opts = options();
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
-
 		DataStreamReader dr = spark.readStream();
 		String f = format();
 		if (null != f) dr = dr.format(f);
-		Dataset<Row> ds = dr.options(opts).load();
-
-		Dataset<Rmap> dds = ds.map(r -> Sparks.rmap(table(), r), Sparks.ENC_R);
-		return dds;
+		return dr.options(opts).load();
 	}
-	//
-	// protected Rmap conv(Row row) {
-	// return Sparks.rmap(table(), row);
-	// }
 
 	protected Row row(Rmap m, long c) {
 		Row r = RowFactory.create(m.table(), null == m.key() ? null : m.key().toString(), BsonSerder.map(m));

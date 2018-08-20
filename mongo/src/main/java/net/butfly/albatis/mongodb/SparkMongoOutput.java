@@ -7,8 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
@@ -25,11 +23,11 @@ import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 import net.butfly.albatis.spark.output.SparkWriting;
-import net.butfly.albatis.spark.util.DSdream;
 
 @Schema("mongodb")
 public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWriting, SparkMongo {
@@ -38,7 +36,7 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	private final String mongodbn;
 	private final MongoSpark mongo;
 
-	public SparkMongoOutput(SparkSession spark, URISpec targetUri, String... table) {
+	public SparkMongoOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 		mongodbn = targetUri.getPathAt(0);
 		mongo = MongoSpark.builder().options(options()).javaSparkContext(new JavaSparkContext(spark.sparkContext())).build();
@@ -62,42 +60,15 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
-		if (s instanceof DSdream) write(((DSdream<Rmap>) s).ds);
-		else Maps.ofQ(s, Rmap::table).forEach(this::write);
+		Maps.ofQ(s, Rmap::table).forEach(this::write);
 	}
 
-	private void write(Dataset<Rmap> ds) {
-		if (schema().isEmpty()) ds.foreachPartition(it -> enqueue(Sdream.of(it)));
-		else {
-			// Dataset<Row> rds =
-			rmap2rowDs(ds).foreachPartition(rs -> Maps.ofQ(Colls.list(rs, this::row2rmap), Rmap::table).forEach(this::write));
-			/**
-			 * FUCK stupid groupby->agg need to join back origin dataset to get full list of rows
-			 * 
-			 * <pre>
-			 * Encoder<Row> s = RowEncoder.apply(new StructType(new StructField[] { //
-			 * 		new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, false, new Metadata()) //
-			 * 		, new StructField("records", DataTypes.createArrayType(rds.schema()), false, new Metadata())//
-			 * }));
-			 * RelationalGroupedDataset dss = rds.groupBy(ROW_TABLE_NAME_FIELD);
-			 * Dataset<Row> lds = dss.agg(collect_list(ROW_TABLE_NAME_FIELD).as("records"));
-			 * lds.schema();
-			 * lds.foreach(r -> {
-			 * 	String t = r.getAs(ROW_TABLE_NAME_FIELD);
-			 * 	Object l = r.get(2);
-			 * 	logger().error("Table [" + t + "]: " + String.valueOf(l));
-			 * });
-			 * </pre>
-			 */
-		}
-	}
-
-	protected void write(Row row) {
-		Rmap r = row2rmap(row);
-		long rr = write(mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(r.table()), r);
-		if (rr > 0) succeeded(rr);
-		else failed(Sdream.of());
-	}
+	// protected void write(Row row) {
+	// Rmap r = row2rmap(row);
+	// long rr = write(mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(r.table()), r);
+	// if (rr > 0) succeeded(rr);
+	// else failed(Sdream.of());
+	// }
 
 	private void write(String t, BlockingQueue<Rmap> docs) {
 		Map<String, String> opts = options();

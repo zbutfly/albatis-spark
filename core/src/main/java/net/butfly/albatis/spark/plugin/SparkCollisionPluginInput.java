@@ -30,7 +30,7 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 		Dataset<Row> ds0 = super.load();
 		for (SparkInput<Row> in : cInputs.keySet()) {
 			String key = cInputs.get(in);
-			Dataset<Row> ds = in.dataset();
+			Dataset<Row> ds = in.vals();
 			ds0 = ds0.join(ds, ds0.col(PLUGIN_KEY).equalTo(ds.col(key)), "inner");
 		}
 		return ds0;

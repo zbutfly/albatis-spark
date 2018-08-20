@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSaveOutput;
 
@@ -15,9 +16,9 @@ public class ParquetOutput extends SparkSaveOutput {
 	private final String format;
 	private final String root;
 
-	public ParquetOutput(SparkSession spark, URISpec targetUri, String... table) {
+	public ParquetOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
-		if (tables.length != 1) throw new IllegalArgumentException("ParquetOutput need one table, can be =Expression");
+		if (table.length != 1) throw new IllegalArgumentException("ParquetOutput need one table, can be =Expression");
 		String[] schemas = targetUri.getScheme().split(":");
 		if (schemas.length > 2) format = schemas[2];
 		else format = "parquet";

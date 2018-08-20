@@ -1,17 +1,28 @@
 package net.butfly.albatis.spark.output;
 
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
+
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
+import net.butfly.albacore.paral.Sdream;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.SparkOutput;
+import net.butfly.albatis.spark.impl.Sparks.SchemaSupport;
 import net.butfly.albatis.spark.util.DSdream;
 
-class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame, Rmap> {
-	protected WriteHandlerFrame(Dataset<Rmap> ds) {
+class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
+	protected WriteHandlerFrame(TableDesc table, Dataset<Rmap> ds) {
+		super(rmap2row(table, ds));
+	}
+
+	protected WriteHandlerFrame(Dataset<Row> ds) {
 		super(ds);
 	}
 
@@ -23,10 +34,16 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame, Rmap> {
 
 	@Override
 	public void save(Output<Rmap> output) {
-		try (Connection cc = output.connect();) {
-			output.enqueue(DSdream.of(ds));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		if (output instanceof SparkOutput) output.enqueue(DSdream.of(ds));
+		else {
+			ds.foreachPartition(it -> {
+				try (Connection cc = output.connect();) {
+					// TODO: split
+					output.enqueue(Sdream.of(it).map(SchemaSupport::row2rmap));
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			});
 		}
 	}
 }

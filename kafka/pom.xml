@@ -28,7 +28,6 @@
 			<groupId>net.butfly.albatis</groupId>
 			<artifactId>albatis-kafka-io</artifactId>
 			<version>1.5.2-SNAPSHOT</version>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.kafka</groupId>

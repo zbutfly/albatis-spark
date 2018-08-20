@@ -4,6 +4,7 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
@@ -12,7 +13,7 @@ import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 public class SparkSolrOutput extends SparkSinkSaveOutput {
 	private static final long serialVersionUID = 1598463842099800246L;
 
-	protected SparkSolrOutput(SparkSession spark, URISpec targetUri, String[] table) {
+	protected SparkSolrOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
 

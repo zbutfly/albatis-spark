@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
@@ -14,7 +15,7 @@ import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 public class SparkESOutput extends SparkSinkSaveOutput {
 	private static final long serialVersionUID = 2840201452393061853L;
 
-	protected SparkESOutput(SparkSession spark, URISpec targetUri, String[] table) {
+	protected SparkESOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
 
@@ -33,6 +34,5 @@ public class SparkESOutput extends SparkSinkSaveOutput {
 	@Override
 	public void enqueue(Sdream<Rmap> r) {
 		// TODO Auto-generated method stub
-
 	}
 }

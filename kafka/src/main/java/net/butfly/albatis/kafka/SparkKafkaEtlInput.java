@@ -1,39 +1,44 @@
 package net.butfly.albatis.kafka;
 
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.ROW_KEY_FIELD_FIELD;
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.ROW_KEY_VALUE_FIELD;
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.ROW_OP_FIELD;
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.ROW_TABLE_NAME_FIELD;
+
 import java.util.Map;
 
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap.Op;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 
 @Deprecated
 @Schema("kafka:etl")
-public class SparkKafkaEtlInput extends SparkKafkaFieldInput {
+public class SparkKafkaEtlInput extends SparkKafkaInput {
 	private static final long serialVersionUID = -8077483839198954L;
-	private final Map<String, String> keys;
 
-	public SparkKafkaEtlInput(SparkSession spark, URISpec targetUri, Map<String, String> topicKeys) {
-		super(spark, targetUri, topicKeys.keySet().toArray(new String[0]));
-		this.keys = topicKeys;
+	public SparkKafkaEtlInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+		super(spark, targetUri, table);
 	}
 
 	@Override
-	protected Rmap filter(Rmap etl) {
-		return super.filter(etl(etl, keys));
-	}
-
-	public static Rmap etl(Rmap etl, Map<String, String> keys) {
+	protected Map<String, Object> kafka(Row kafka) {
+		Map<String, Object> map = super.kafka(kafka);
 		@SuppressWarnings("unchecked")
-		Map<String, Object> value = (Map<String, Object>) etl.get("value");
-		String key = keys.get(etl.table());
-		key = null == key ? null : (String) value.get(key);
-		Rmap r = new Rmap(etl.table(), key, value);
-		String op = (String) etl.get("oper_type");
+		Map<String, Object> value = (Map<String, Object>) map.get("value");
+		String topic = (String) map.get(ROW_TABLE_NAME_FIELD);
+
+		String keyField = schema(topic).rowkey();
+		String keyValue = null == keyField ? null : (String) value.get(keyField);
+		String op = (String) map.get("oper_type");
 		int opv = null == op ? Integer.parseInt(op) : Op.DEFAULT;
-		r.op(opv);
-		return r;
+
+		value.put(ROW_KEY_FIELD_FIELD, keyField);
+		value.put(ROW_KEY_VALUE_FIELD, keyValue);
+		value.put(ROW_OP_FIELD, opv);
+		return value;
 	}
 }

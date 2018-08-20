@@ -36,8 +36,8 @@ public class SparkPluginInput extends SparkInput<Row> {
 	protected Dataset<Row> load() {
 		String maxScore = pc.getMaxScore();
 		List<Dataset<Row>> dsList = new ArrayList<>();
-		pc.getKeys().forEach(k -> dsList.add(input.dataset().groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(
-				MAX_SCORE))));
+		pc.getKeys().forEach(k -> dsList.add(input.vals().groupBy(col(k).as(PLUGIN_KEY))//
+				.agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))));
 		// if (dsList.isEmpty()) return null;
 		Dataset<Row> ds0 = dsList.get(0);
 		for (int i = 1; i < dsList.size(); i++)

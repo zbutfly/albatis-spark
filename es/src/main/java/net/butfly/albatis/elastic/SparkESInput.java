@@ -7,6 +7,7 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.input.SparkDataInput;
 
@@ -16,7 +17,7 @@ public class SparkESInput extends SparkDataInput {
 	private static String HTTP_PORT = "httpport";
 
 	public SparkESInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri, targetUri.getPath());
+		super(spark, targetUri, TableDesc.dummy(targetUri.getPath()));
 	}
 
 	@Override
@@ -26,7 +27,7 @@ public class SparkESInput extends SparkDataInput {
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
 		options.put("es.port", targetUri.getParameter(HTTP_PORT));
-		options.put("es.resource", table());
+		options.put("es.resource", table().name);
 		return options;
 	}
 

@@ -25,6 +25,7 @@ import net.butfly.albacore.utils.IOs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
@@ -100,24 +101,24 @@ public class SparkConnection implements EnvironmentConnection {
 	}
 
 	@Override
-	public <M extends Rmap> Input<M> input(String... table) throws IOException {
+	public <M extends Rmap> Input<M> input(TableDesc... table) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	@Deprecated
-	public <M extends Rmap> Output<M> output(String... table) throws IOException {
+	public <M extends Rmap> Output<M> output(TableDesc... table) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <V, O extends Output<V>> O output(URISpec uri, String... table) {
+	public <V, O extends Output<V>> O output(URISpec uri, TableDesc... table) {
 		return SparkIO.output(spark, uri, table);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <V, I extends Input<V>> I input(URISpec uri, String... table) {
+	public <V, I extends Input<V>> I input(URISpec uri, TableDesc... table) {
 		return (I) SparkIO.input(spark, uri, table);
 	}
 

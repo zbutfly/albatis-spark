@@ -1,10 +1,12 @@
 package net.butfly.albatis.spark.output;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 
 /**
@@ -13,14 +15,14 @@ import net.butfly.albatis.io.Rmap;
 public abstract class SparkSinkSaveOutput extends SparkSinkOutputBase {
 	private static final long serialVersionUID = 1L;
 
-	public SparkSinkSaveOutput(SparkSession spark, URISpec targetUri, String... table) {
+	public SparkSinkSaveOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
 
 	@Override
-	public final void save(Dataset<Rmap> ds) {
+	public final void save(Dataset<Row> ds) {
 		logger().info("Dataset [" + ds.toString() + "] save by sinking into batchs.");
-		try (WriteHandler<Rmap> w = WriteHandler.of(ds)) {
+		try (WriteHandler w = WriteHandler.of(ds)) {
 			w.save(this);
 		}
 	}

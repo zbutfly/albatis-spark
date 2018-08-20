@@ -4,6 +4,7 @@ import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSaveOutput;
 
@@ -11,7 +12,7 @@ import net.butfly.albatis.spark.output.SparkSaveOutput;
 public class SparkKafkaOutput extends SparkSaveOutput {
 	private static final long serialVersionUID = 9003837433163351306L;
 
-	SparkKafkaOutput(SparkSession spark, URISpec targetUri, String... table) {
+	SparkKafkaOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
 
@@ -19,7 +20,7 @@ public class SparkKafkaOutput extends SparkSaveOutput {
 	public java.util.Map<String, String> options() {
 		java.util.Map<String, String> options = Maps.of();
 		options.put("kafka.bootstrap.servers", targetUri.getHost());
-		options.put("subscribe", table());
+		options.put("subscribe", String.join(",", schemaAll().keySet()));
 		options.put("startingOffsets", "earliest");
 		return options;
 	}

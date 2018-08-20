@@ -1,7 +1,12 @@
 package net.butfly.albatis.spark.output;
 
+import java.io.IOException;
+
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+
+import com.hzcominfo.albatis.nosql.Connection;
 
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albatis.io.OddOutput;
@@ -29,10 +34,15 @@ public final class SparkSinkOutput extends SparkSinkOutputBase {
 	}
 
 	@Override
-	public void save(Dataset<Rmap> ds) {
+	public void save(Dataset<Row> ds) {
 		logger().info("Dataset [" + ds.toString() + "] streaming sink to: " + output.name());
-		try (WriteHandler<Rmap> w = WriteHandler.of(ds)) {
+		try (WriteHandler w = WriteHandler.of(ds)) {
 			w.save(output);
 		}
+	}
+
+	@Override
+	public Connection connect() throws IOException {
+		return output.connect();
 	}
 }
