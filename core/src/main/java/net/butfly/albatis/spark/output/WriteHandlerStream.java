@@ -16,6 +16,7 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.impl.Sparks;
 
 class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 	private DataStreamWriter<Row> w;
@@ -38,20 +39,20 @@ class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 		}
 	}
 
-	private DataStreamWriter<Row> w() {
-		return ds.writeStream().outputMode(OutputMode.Update()).trigger(trigger());
+	private DataStreamWriter<Row> w(boolean purge) {
+		return (purge ? Sparks.purge(ds) : ds).writeStream().outputMode(OutputMode.Update()).trigger(trigger());
 	}
 
 	@Override
 	public void save(String format, Map<String, String> options) { // TODO: need two mode
 		options.putIfAbsent("checkpointLocation", checkpoint());
-		w = w().format(format).options(options);
+		w = w(true).format(format).options(options);
 	}
 
 	@Override
-	public void save(Output<Rmap> output) {
-		Map<String, String> opts = Maps.of("checkpointLocation", checkpoint(), "output", output.ser());
-		w = w().format(SparkSinkOutput.FORMAT).options(opts);
+	public void save(String table, Output<Rmap> output) {
+		Map<String, String> opts = Maps.of("checkpointLocation", checkpoint(), "output", output.ser(), "table", table);
+		w = w(false).format(SparkSinkOutput.FORMAT).options(opts);
 	}
 
 	protected Trigger trigger() {

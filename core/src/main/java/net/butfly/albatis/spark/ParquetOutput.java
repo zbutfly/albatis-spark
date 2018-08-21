@@ -34,8 +34,8 @@ public class ParquetOutput extends SparkSaveOutput {
 	}
 
 	@Override
-	public Map<String, String> options() {
-		return Maps.of("path", root);
+	public Map<String, String> options(String table) {
+		return Maps.of("path", root /* + "/" + table */);
 	}
 
 	protected final String parse(String s) {

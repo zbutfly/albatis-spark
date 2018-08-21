@@ -25,6 +25,7 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkOutput;
 import net.butfly.albatis.spark.impl.Sparks;
 import scala.collection.Seq;
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.byTable;
 
 /**
  * Streaming sink writing
@@ -37,7 +38,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 	}
 
 	@Override
-	public abstract void save(Dataset<Row> ds);
+	public abstract void save(String table, Dataset<Row> ds);
 
 	@Override
 	public String format() {
@@ -45,7 +46,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 	}
 
 	@Override
-	public Map<String, String> options() {
+	public Map<String, String> options(String table) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -75,9 +76,11 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 			if (rows.isEmpty()) return;
 			Dataset<Row> ds = batch.sparkSession().createDataset(rows, RowEncoder.apply(batch.schema()));
 			// XXX: now the batch is frame, not streaming.
-			try (WriteHandler w = WriteHandler.of(ds);) {
-				w.save(output);
-			}
+			byTable(ds).forEach((tt, d) -> {
+				try (WriteHandler w = WriteHandler.of(ds);) {
+					w.save(tt, output);
+				}
+			});
 			long tt = System.currentTimeMillis() - t;
 			time.add(tt);
 			logger.debug("Sink[" + batchId + "] finished in: " + tt + " ms, avg: " + acc.value() / (time.value() / 1000.0) + " input/s.");
@@ -94,7 +97,8 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 		@Override
 		public Sink createSink(SQLContext ctx, scala.collection.immutable.Map<String, String> options, Seq<String> partitionColumns,
 				OutputMode outputMode) {
-			String code = Sparks.mapizeJava(options).get("output");
+			Map<String, String> opts = Sparks.mapizeJava(options);
+			String code = opts.get("output");
 			Output<Rmap> o = IO.der(code);
 			return new OutputSink(o, ctx.sparkContext().longAccumulator(ctx.sparkContext().appName() + ":COUNT"), //
 					ctx.sparkContext().longAccumulator(ctx.sparkContext().appName() + ":TIME"));

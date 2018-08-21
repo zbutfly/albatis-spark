@@ -17,10 +17,10 @@ public class SparkKafkaOutput extends SparkSaveOutput {
 	}
 
 	@Override
-	public java.util.Map<String, String> options() {
+	public java.util.Map<String, String> options(String table) {
 		java.util.Map<String, String> options = Maps.of();
 		options.put("kafka.bootstrap.servers", targetUri.getHost());
-		options.put("subscribe", String.join(",", schemaAll().keySet()));
+		options.put("subscribe", table);
 		options.put("startingOffsets", "earliest");
 		return options;
 	}

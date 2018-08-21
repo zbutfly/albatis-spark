@@ -39,16 +39,17 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	public SparkMongoOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 		mongodbn = targetUri.getPathAt(0);
-		mongo = MongoSpark.builder().options(options()).javaSparkContext(new JavaSparkContext(spark.sparkContext())).build();
+		mongo = MongoSpark.builder().options(options(null)).javaSparkContext(new JavaSparkContext(spark.sparkContext())).build();
 	}
 
 	@Override
-	public Map<String, String> options() {
+	public Map<String, String> options(String table) {
 		Map<String, String> opts = mongoOpts(targetUri);
 		opts.put("replaceDocument", "true");
 		opts.put("maxBatchSize", Integer.toString(BATCH_SIZE));
 		opts.put("localThreshold", "0");
 		opts.put("writeConcern", "majority");
+		if (null != table) opts.put("collection", table);
 		return opts;
 	}
 
@@ -71,8 +72,6 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	// }
 
 	private void write(String t, BlockingQueue<Rmap> docs) {
-		Map<String, String> opts = options();
-		opts.put("collection", t);
 		long total = docs.size();
 		logger().trace("MongoSpark upsert [" + total + "] to [" + t + "] with batch [" + BATCH_SIZE + "] starting.");
 		long now = System.currentTimeMillis();

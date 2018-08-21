@@ -1,11 +1,13 @@
 package net.butfly.albatis.spark.plugin;
 
+import static org.apache.spark.sql.functions.col;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.impl.Sparks;
 
 public class SparkCollisionPluginInput extends SparkPluginInput {
 	private static final long serialVersionUID = -8270271411455957886L;
@@ -28,11 +30,8 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	@Override
 	protected Dataset<Row> load() {
 		Dataset<Row> ds0 = super.load();
-		for (SparkInput<Row> in : cInputs.keySet()) {
-			String key = cInputs.get(in);
-			Dataset<Row> ds = in.vals();
-			ds0 = ds0.join(ds, ds0.col(PLUGIN_KEY).equalTo(ds.col(key)), "inner");
-		}
+		for (SparkInput<Row> in : cInputs.keySet())
+			ds0 = ds0.join(Sparks.union(in.rows().values().iterator()), ds0.col(PLUGIN_KEY).equalTo(col(cInputs.get(in))), "inner");
 		return ds0;
 	}
 

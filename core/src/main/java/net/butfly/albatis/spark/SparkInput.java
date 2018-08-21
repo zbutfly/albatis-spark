@@ -2,6 +2,7 @@ package net.butfly.albatis.spark;
 
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.byTable;
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.row2rmap;
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
 
 import java.util.List;
 import java.util.Map;
@@ -17,9 +18,8 @@ import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.Systems;
-import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
-import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
@@ -30,49 +30,85 @@ import net.butfly.albatis.spark.impl.Sparks;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
-	private Dataset<V> vals;
-	private Dataset<Row> rows;
+	private Map<String, Dataset<V>> vals = Maps.of();
+	private Map<String, Dataset<Row>> rows = Maps.of();
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
-		rows(load());
-		if (null != vals && Systems.isDebug()) {
+		Dataset<Row> ds = load();
+		if (null != ds && Systems.isDebug()) {
 			int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
 			if (limit > 0) {
-				rows(rows.limit(limit));
-				long n = rows.count();
+				ds = ds.limit(limit);
+				long n = ds.count();
 				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\","//
 						+ " results count: " + n);
 			} else logger().info(
 					"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
 		}
+		rows(Maps.of("*", ds));
+	}
+
+	public Map<String, String> options() {
+		return Maps.of();
 	}
 
 	@SuppressWarnings("unchecked")
-	public final Dataset<V> vals() {
-		return null != vals ? vals : (Dataset<V>) row2rmap(rows);
+	public final Map<String, Dataset<V>> vals() {
+		if (!vals.isEmpty()) return vals;
+		Map<String, Dataset<V>> r = Maps.of();
+		if (rows.containsKey("*")) {
+			Map<String, Dataset<Row>> dss = byTable(rows.remove("*"));
+			for (String t : dss.keySet()) {
+				rows.put(t, dss.get(t));
+				r.put(t, (Dataset<V>) row2rmap(dss.get(t)));
+			}
+		} else for (String t : rows.keySet())
+			r.put(t, (Dataset<V>) row2rmap(rows.get(t)));
+		return r;
+
 	}
 
 	@SuppressWarnings("unchecked")
-	public final Dataset<Row> rows(Map<String, TableDesc> schemas) {
-		if (null != rows) return rows;
-		List<Dataset<Row>> rds = Colls.list();
-		byTable((Dataset<Rmap>) vals, schemas, (t, ds) -> rds.add(ds));
-		Dataset<Row> ds = null;
-		for (Dataset<Row> d : rds)
-			ds = null == ds ? d : ds.union(d);
-		return ds;
+	public final Map<String, Dataset<Row>> rows() {
+		if (!rows.isEmpty()) return rows;
+		else {
+			Map<String, Dataset<V>> dss = vals();
+			Map<String, Dataset<Row>> dsr = Maps.of();
+			for (String t : dss.keySet()) {
+				Dataset<Row> ds = rmap2row(schema(t), (Dataset<Rmap>) dss.get(t));
+				dsr.put(t, ds);
+			}
+			return dsr;
+		}
 	}
 
-	protected final SparkInput<V> vals(Dataset<V> rmaps) {
-		this.vals = rmaps;
-		this.rows = null;
+	@SuppressWarnings("unchecked")
+	public final Map<String, Dataset<Row>> rowsOut(Map<String, TableDesc> schemas) {
+		if (!rows.isEmpty()) return rows;
+		else {
+			Map<String, Dataset<V>> dss = vals();
+			Map<String, Dataset<Row>> dsr = Maps.of();
+			for (String t : dss.keySet()) {
+				Map<String, Dataset<Row>> dss1 = byTable((Dataset<Rmap>) dss.get(t), schemas);
+				dss1.forEach((dt, d) -> dsr.compute(dt, (dtt, origin) -> {
+					if (null == origin) return d;
+					else return d.union(origin);
+				}));
+			}
+			return dsr;
+		}
+	}
+
+	protected final SparkInput<V> vals(Map<String, Dataset<V>> rmaps) {
+		this.vals.putAll(rmaps);
+		this.rows.clear();
 		return this;
 	}
 
-	protected final SparkInput<V> rows(Dataset<Row> rows) {
-		this.rows = rows;
-		this.vals = null;
+	protected final SparkInput<V> rows(Map<String, Dataset<Row>> rows) {
+		this.rows.putAll(rows);;
+		this.vals.clear();
 		return this;
 	}
 
@@ -107,8 +143,11 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public SparkInput<V> filter(Predicate<V> predicater) {
-		Dataset<V> ds1 = vals().filter(predicater::test);
-		return (SparkInput<V>) new SparkInputWrapper(this, (Dataset<Rmap>) ds1);
+		Map<String, Dataset<V>> dss = vals();
+		Map<String, Dataset<Rmap>> dss1 = Maps.of();
+		for (String t : dss.keySet())
+			dss1.put(t, (Dataset<Rmap>) dss.get(t).filter(predicater::test));
+		return (SparkInput<V>) new SparkInputWrapper(this, dss1);
 	}
 
 	@Override
@@ -123,8 +162,11 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
-		Dataset<Rmap> ds1 = vals().map(r -> (Rmap) conv.apply(r), Sparks.ENC_RMAP);
-		return (SparkInput<V1>) new SparkInputWrapper(this, ds1);
+		Map<String, Dataset<V>> dss = vals();
+		Map<String, Dataset<Rmap>> dss1 = Maps.of();
+		for (String t : dss.keySet())
+			dss1.put(t, dss.get(t).map(r -> (Rmap) conv.apply(r), Sparks.ENC_RMAP));
+		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
 	}
 
 	@Override
@@ -144,8 +186,11 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
-		Dataset<Rmap> ds1 = vals().flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), Sparks.ENC_RMAP);
-		return (SparkInput<V1>) new SparkInputWrapper(this, ds1);
+		Map<String, Dataset<V>> dss = vals();
+		Map<String, Dataset<Rmap>> dss1 = Maps.of();
+		for (String t : dss.keySet())
+			dss1.put(t, dss.get(t).flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), Sparks.ENC_RMAP));
+		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -162,7 +207,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	public int features() {
 		int f = super.features();
-		if (vals().isStreaming()) f |= IO.Feature.STREAMING;
+		// if (vals().isStreaming()) f |= IO.Feature.STREAMING;
 		return f;
 	}
 }

@@ -40,10 +40,6 @@ public abstract class SparkIO implements IO, Serializable {
 		// else if (null != targetUri && null != targetUri.getFile()) schema(TableDesc.dummy(targetUri.getFile()));
 	}
 
-	public Map<String, String> options() {
-		return Maps.of();
-	}
-
 	public String format() {
 		return null;
 	}

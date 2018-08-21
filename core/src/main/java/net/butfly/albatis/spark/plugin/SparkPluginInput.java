@@ -11,6 +11,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.impl.Sparks;
 
 public class SparkPluginInput extends SparkInput<Row> {
 	private static final long serialVersionUID = -3514105763334222049L;
@@ -36,13 +37,12 @@ public class SparkPluginInput extends SparkInput<Row> {
 	protected Dataset<Row> load() {
 		String maxScore = pc.getMaxScore();
 		List<Dataset<Row>> dsList = new ArrayList<>();
-		pc.getKeys().forEach(k -> dsList.add(input.vals().groupBy(col(k).as(PLUGIN_KEY))//
-				.agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))));
-		// if (dsList.isEmpty()) return null;
+		pc.getKeys().forEach(k -> input.rows().forEach((t, d) -> dsList.add(//
+				d.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE)))));
 		Dataset<Row> ds0 = dsList.get(0);
 		for (int i = 1; i < dsList.size(); i++)
 			ds0.union(dsList.get(i));
-		return ds0;
+		return Sparks.union(dsList.iterator());
 	}
 
 	@Override

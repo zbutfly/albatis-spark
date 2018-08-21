@@ -1,7 +1,5 @@
 package net.butfly.albatis.spark;
 
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.byTable;
-
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
@@ -39,23 +37,21 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 	}
 
 	@Override
-	public Map<String, String> options() {
-		return Maps.of("path", root);
+	public Map<String, String> options(String table) {
+		return Maps.of("path", root + table);
 	}
 
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
 		if (!(s instanceof DSdream)) throw new UnsupportedOperationException("Can only save dataset");
-		if (schemaAll().size() > 1) byTable(((DSdream) s).ds, this::write);
-		else write(table().name, ((DSdream) s).ds);
+		DSdream d = (DSdream) s;
+		write(d.table, d.ds);
 	}
 
 	protected void write(String t, Dataset<Row> ds) {
-		Map<String, String> opts = options();
-		opts.put("path", opts.remove("path") + t);
 		long n = System.currentTimeMillis();
 		try (WriteHandler w = WriteHandler.of(ds)) {
-			w.save(format(), opts);
+			w.save(format(), options(t));
 		} finally {
 			logger().trace(() -> "Table split saved in " + (System.currentTimeMillis() - n) + " ms.");
 		}

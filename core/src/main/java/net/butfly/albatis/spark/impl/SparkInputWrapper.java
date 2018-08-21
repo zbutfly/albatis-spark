@@ -16,7 +16,7 @@ public final class SparkInputWrapper extends SparkInput<Rmap> implements Wrapper
 	private static final long serialVersionUID = 5957738224117308018L;
 	private final SparkInput<?> base;
 
-	public SparkInputWrapper(SparkInput<?> s, Dataset<Rmap> ds) {
+	public SparkInputWrapper(SparkInput<?> s, Map<String, Dataset<Rmap>> ds) {
 		super(s.spark, s.targetUri);
 		this.base = s;
 		vals(ds);

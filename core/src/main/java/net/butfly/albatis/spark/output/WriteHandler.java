@@ -21,7 +21,7 @@ public interface WriteHandler extends AutoCloseable {
 	@Override
 	default void close() {}
 
-	void save(Output<Rmap> output);
+	void save(String table, Output<Rmap> output);
 
 	void save(String format, Map<String, String> options);
 

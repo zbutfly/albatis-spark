@@ -25,13 +25,13 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 	public abstract String format();
 
 	@Override
-	public abstract Map<String, String> options();
+	public abstract Map<String, String> options(String table);
 
 	@Override
-	public final void save(Dataset<Row> ds) {
+	public final void save(String table, Dataset<Row> ds) {
 		logger().info("Dataset [" + ds.toString() + "] native save with format: " + format());
 		try (WriteHandler w = WriteHandler.of(ds)) {
-			w.save(format(), options());
+			w.save(format(), options(table));
 		} finally {
 			logger().info("Spark saving finished.");
 		}

@@ -26,7 +26,7 @@ public class SparkESOutput extends SparkSinkSaveOutput {
 	}
 
 	@Override
-	public Map<String, String> options() {
+	public Map<String, String> options(String table) {
 		// TODO Auto-generated method stub
 		return null;
 	}

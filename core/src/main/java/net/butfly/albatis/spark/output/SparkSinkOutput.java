@@ -35,10 +35,10 @@ public final class SparkSinkOutput extends SparkSinkOutputBase {
 	}
 
 	@Override
-	public void save(Dataset<Row> ds) {
+	public void save(String table, Dataset<Row> ds) {
 		logger().info("Dataset [" + ds.toString() + "] streaming sink to: " + output.name());
 		try (WriteHandler w = WriteHandler.of(ds)) {
-			w.save(output);
+			w.save(table, output);
 		}
 	}
 

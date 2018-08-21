@@ -24,7 +24,7 @@ public class SparkHbaseOutput extends SparkSaveOutput {
 	}
 
 	@Override
-	public Map<String, String> options() {
+	public Map<String, String> options(String table) {
 		Map<String, String> opts = Maps.of();
 		opts.put(HBaseTableCatalog.tableCatalog(), "hBaseCatalog");
 		opts.put(HBaseTableCatalog.newTable(), "5");

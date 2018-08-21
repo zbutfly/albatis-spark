@@ -60,9 +60,9 @@ public class SparkConnection implements EnvironmentConnection {
 		String name = Systems.getMainClass().getSimpleName();
 		logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString());
 		// fxxking mongodb-spark-connector
-		if (null == sparkConf.get("spark.mongodb.input.uri")) sparkConf.set("spark.mongodb.input.uri",
+		if (!sparkConf.contains("spark.mongodb.input.uri")) sparkConf.set("spark.mongodb.input.uri",
 				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
-		if (null == sparkConf.get("spark.mongodb.output.uri")) sparkConf.set("spark.mongodb.output.uri",
+		if (!sparkConf.contains("spark.mongodb.output.uri")) sparkConf.set("spark.mongodb.output.uri",
 				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
 		this.spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
 	}
@@ -92,7 +92,7 @@ public class SparkConnection implements EnvironmentConnection {
 			if (!vv.isEmpty()) params.put(k.toString().trim(), vv);
 		});
 
-		if (!params.containsKey("spark.sql.shuffle.partitions")) params.put("spark.sql.shuffle.partitions", "2001");
+		if (!params.containsKey("spark.sql.shuffle.partitions") && !Systems.isDebug()) params.put("spark.sql.shuffle.partitions", "2001");
 		return params;
 	}
 
@@ -125,15 +125,15 @@ public class SparkConnection implements EnvironmentConnection {
 		return (I) SparkIO.input(spark, uri, table);
 	}
 
-	public <V> SparkJoinInput innerJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
+	public <V> SparkJoinInput innerJoin(SparkInput<Rmap> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkInnerJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput orJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
+	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkOrJoinInput(input, col, joinInputs);
 	}
 
-	public SparkJoinInput nonJoin(SparkInput<Row> input, String col, Map<SparkInput<?>, String> joinInputs) {
+	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, Map<SparkInput<?>, String> joinInputs) {
 		return new SparkNonJoinInput(input, col, joinInputs);
 	}
 

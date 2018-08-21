@@ -1,7 +1,8 @@
 package net.butfly.albatis.spark;
 
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.byTable;
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.row2rmap;
+
+import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -10,6 +11,7 @@ import org.apache.spark.sql.SparkSession;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
@@ -28,10 +30,14 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		return targetUri;
 	}
 
-	public abstract void save(Dataset<Row> dataset);
+	public abstract void save(String table, Dataset<Row> ds);
 
-	private final void saveRmap(Dataset<Rmap> ds) {
-		byTable(ds, schemaAll(), (t, d) -> SparkOutput.this.save(d));
+	public Map<String, String> options(String table) {
+		return Maps.of();
+	}
+
+	private final void saveRmap(String table, Dataset<Rmap> ds) {
+		save(table, Sparks.SchemaSupport.rmap2row(schema(table), ds));
 	}
 
 	@Override
@@ -46,10 +52,10 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			private static final long serialVersionUID = -1680036215116179632L;
 
 			@Override
-			public void save(Dataset<Row> ds0) {
+			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), Sparks.ENC_RMAP);
-				saveRmap(ds);
+				saveRmap(table, ds);
 			}
 		};
 	}
@@ -60,11 +66,11 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			private static final long serialVersionUID = 5079963400315523098L;
 
 			@Override
-			public void save(Dataset<Row> ds0) {
+			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
 						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), Sparks.ENC_RMAP);
-				saveRmap(ds);
+				saveRmap(table, ds);
 			}
 		};
 	}
@@ -82,11 +88,11 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			private static final long serialVersionUID = -2887496205884721038L;
 
 			@Override
-			public void save(Dataset<Row> ds0) {
+			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
 						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), Sparks.ENC_RMAP);
-				saveRmap(ds);
+				saveRmap(table, ds);
 			}
 		};
 	}
