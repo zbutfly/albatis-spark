@@ -32,10 +32,6 @@ import scala.collection.Seq;
 public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 	private static final long serialVersionUID = -1L;
 
-	protected SparkSinkOutputBase(SparkSession spark) {
-		super(spark, null);
-	}
-
 	public SparkSinkOutputBase(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
@@ -87,7 +83,6 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 			logger.debug("Sink[" + batchId + "] finished in: " + tt + " ms, avg: " + acc.value() / (time.value() / 1000.0) + " input/s.");
 		}
 
-		
 	}
 
 	public static class OutputSinkProvider implements DataSourceV2, StreamSinkProvider, DataSourceRegister {

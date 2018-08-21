@@ -21,7 +21,7 @@ public abstract class SparkSinkSaveOutput extends SparkSinkOutputBase {
 
 	@Override
 	public final void save(Dataset<Row> ds) {
-		logger().info("Dataset [" + ds.toString() + "] save by sinking into batchs.");
+		logger().info("Dataset [" + ds.toString() + "] saving into output [" + getClass().getSimpleName() + "].");
 		try (WriteHandler w = WriteHandler.of(ds)) {
 			w.save(this);
 		}

@@ -8,13 +8,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.io.lambda.BiConsumer;
 import net.butfly.albacore.utils.Reflections;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
@@ -22,8 +18,6 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
-import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.impl.Sparks.SchemaSupport;
 import net.butfly.albatis.spark.input.SparkDataInput;
 
 public abstract class SparkIO implements IO, Serializable {
@@ -43,7 +37,7 @@ public abstract class SparkIO implements IO, Serializable {
 		this.targetUri = targetUri;
 
 		if (table.length > 0) schema(table);
-		else if (null != targetUri && null != targetUri.getFile()) schema(TableDesc.dummy(targetUri.getFile()));
+		// else if (null != targetUri && null != targetUri.getFile()) schema(TableDesc.dummy(targetUri.getFile()));
 	}
 
 	public Map<String, String> options() {
@@ -135,9 +129,7 @@ public abstract class SparkIO implements IO, Serializable {
 		int priority() default 0;
 	}
 
-	@Deprecated
 	public TableDesc table() {
-		// String[] tables = tables.getValue();
 		Map<String, TableDesc> all = schemaAll();
 		if (all.isEmpty()) //
 			throw new RuntimeException("No table defined for spark i/o.");
@@ -155,19 +147,4 @@ public abstract class SparkIO implements IO, Serializable {
 	public int features() {
 		return IO.super.features() | IO.Feature.SPARK;
 	}
-
-	// ====================
-	public final void byRmapTable(Dataset<Rmap> ds, BiConsumer<String, Dataset<Row>> using) {
-		ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList().forEach(t -> {
-			Dataset<Row> tds = SchemaSupport.rmap2row(schema(t), ds);
-			ds.filter(r -> !r.table().equals(t));
-			tds = tds.drop(SchemaSupport.ROW_TABLE_NAME_FIELD, SchemaSupport.ROW_KEY_FIELD_FIELD, SchemaSupport.ROW_KEY_VALUE_FIELD);
-			using.accept(t, tds);
-		});
-	}
-
-	// protected final Dataset<Row> map2row(TableDesc table, Dataset<? extends Map<String, Object>> ds, int op) {
-	// StructType s = sparkSchema(table);
-	// return ds.map(map -> row0(s, map, table.name, table.rowkey(), op), RowEncoder.apply(s));
-	// }
 }

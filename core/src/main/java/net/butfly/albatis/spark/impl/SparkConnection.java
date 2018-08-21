@@ -59,12 +59,17 @@ public class SparkConnection implements EnvironmentConnection {
 		if (host.isEmpty()) host = DEFAULT_HOST;
 		String name = Systems.getMainClass().getSimpleName();
 		logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString());
+		// fxxking mongodb-spark-connector
+		if (null == sparkConf.get("spark.mongodb.input.uri")) sparkConf.set("spark.mongodb.input.uri",
+				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
+		if (null == sparkConf.get("spark.mongodb.output.uri")) sparkConf.set("spark.mongodb.output.uri",
+				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
 		this.spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
 	}
 
 	private String host(Map<String, String> params) {
 		String host = params.remove("spark.host");
-		String paral = params.remove("spark.parallelism");
+		String paral = params.get("spark.default.parallelism");
 		if (null == paral) paral = "*";
 		if (null != host) host = host + "[" + paral + "]";
 		else host = uriSpec.getHost();
@@ -86,10 +91,8 @@ public class SparkConnection implements EnvironmentConnection {
 			String vv = v.toString().trim();
 			if (!vv.isEmpty()) params.put(k.toString().trim(), vv);
 		});
-		// fxxking mongodb-spark-connector
-		params.putIfAbsent("spark.mongodb.input.uri", "mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
-		params.putIfAbsent("spark.mongodb.output.uri", "mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
 
+		if (!params.containsKey("spark.sql.shuffle.partitions")) params.put("spark.sql.shuffle.partitions", "2001");
 		return params;
 	}
 

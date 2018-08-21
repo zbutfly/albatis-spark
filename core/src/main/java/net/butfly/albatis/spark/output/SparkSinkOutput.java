@@ -9,6 +9,7 @@ import org.apache.spark.sql.SparkSession;
 import com.hzcominfo.albatis.nosql.Connection;
 
 import net.butfly.albacore.io.lambda.Consumer;
+import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.OddOutput;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
@@ -22,7 +23,7 @@ public final class SparkSinkOutput extends SparkSinkOutputBase {
 	protected final Output<Rmap> output;
 
 	public SparkSinkOutput(SparkSession spark, Output<Rmap> output) {
-		super(spark);
+		super(spark, output.target(), output.schemaAll().values().toArray(new TableDesc[0]));
 		this.output = output;
 	}
 

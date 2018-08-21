@@ -45,22 +45,19 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
-		if (s instanceof DSdream) {
-			Dataset<Row> ds = ((DSdream) s).ds;
-			// ds = ds.repartition(ds.col(ROW_TABLE_NAME_FIELD), ds.col(ROW_KEY_VALUE_FIELD));
-			byTable(ds, this::write);
-		} else //
-			throw new UnsupportedOperationException("Can only save dataset");
+		if (!(s instanceof DSdream)) throw new UnsupportedOperationException("Can only save dataset");
+		if (schemaAll().size() > 1) byTable(((DSdream) s).ds, this::write);
+		else write(table().name, ((DSdream) s).ds);
 	}
 
 	protected void write(String t, Dataset<Row> ds) {
 		Map<String, String> opts = options();
 		opts.put("path", opts.remove("path") + t);
-		logger().trace(() -> "Parquet saving [" + ds.count() + "] records to " + opts.toString());
+		long n = System.currentTimeMillis();
 		try (WriteHandler w = WriteHandler.of(ds)) {
 			w.save(format(), opts);
 		} finally {
-			logger().info("Spark saving finished.");
+			logger().trace(() -> "Table split saved in " + (System.currentTimeMillis() - n) + " ms.");
 		}
 	}
 

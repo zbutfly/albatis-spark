@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark;
 
+import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.byTable;
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.row2rmap;
 
 import org.apache.spark.sql.Dataset;
@@ -29,8 +30,8 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 
 	public abstract void save(Dataset<Row> dataset);
 
-	protected final void saveRmap(Dataset<Rmap> ds) {
-		byRmapTable(ds, (t, d) -> SparkOutput.this.save(d));
+	private final void saveRmap(Dataset<Rmap> ds) {
+		byTable(ds, schemaAll(), (t, d) -> SparkOutput.this.save(d));
 	}
 
 	@Override
