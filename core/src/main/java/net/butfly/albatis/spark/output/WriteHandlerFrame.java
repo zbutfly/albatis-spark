@@ -14,7 +14,6 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkOutput;
-import net.butfly.albatis.spark.impl.Sparks;
 import net.butfly.albatis.spark.impl.Sparks.SchemaSupport;
 import net.butfly.albatis.spark.util.DSdream;
 
@@ -30,14 +29,14 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 	@Override
 	public void save(String format, Map<String, String> options) {
 		options.putIfAbsent("checkpointLocation", checkpoint());
-		Sparks.purge(ds).write().format(format).options(options).save();
+		purge().write().format(format).options(options).save();
 	}
 
 	@Override
 	public void save(String table, Output<Rmap> output) {
-		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, Sparks.purge(ds)));
+		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, purge()));
 		else {// should not be touch
-			Sparks.purge(ds).foreachPartition(it -> {
+			purge().foreachPartition(it -> {
 				try (Connection cc = output.connect();) {
 					// TODO: split
 					output.enqueue(Sdream.of(it).map(SchemaSupport::row2rmap));

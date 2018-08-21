@@ -297,23 +297,21 @@ public interface Sparks {
 		}
 
 		public static Map<String, Dataset<Row>> byTable(Dataset<Row> ds) {
-			Dataset<Row> ds1 = ds.repartition(col(ROW_TABLE_NAME_FIELD), col(ROW_KEY_VALUE_FIELD));
-			List<String> keys = ds1.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
+			List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
 					.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
-			logger.debug("byTable got table list: " + keys);
 			Map<String, Dataset<Row>> r = Maps.of();
 			keys = new ArrayList<>(keys);
 			while (!keys.isEmpty()) {
 				String t = keys.remove(0);
 				Dataset<Row> tds;
-				if (keys.isEmpty()) tds = ds1;
+				if (keys.isEmpty()) tds = ds;
 				else {
-					tds = ds1.filter(col(ROW_TABLE_NAME_FIELD).equalTo(t));
-					ds1 = ds1.filter(col(ROW_TABLE_NAME_FIELD).notEqual(t));
+					tds = ds.filter(col(ROW_TABLE_NAME_FIELD).equalTo(t));
+					ds = ds.filter(col(ROW_TABLE_NAME_FIELD).notEqual(t)).persist();
 				}
 				// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
 				logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
-				r.put(t, tds);
+				r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
 			}
 			return r;
 		}
@@ -336,10 +334,10 @@ public interface Sparks {
 				if (keys.isEmpty()) tds = SchemaSupport.rmap2row(tt, ds);
 				else {
 					tds = SchemaSupport.rmap2row(tt, ds.filter(rr -> t.equals(rr.table())));
-					ds = ds.filter(rr -> !t.equals(rr.table()));
+					ds = ds.filter(rr -> !t.equals(rr.table())).persist();
 				}
 				// tds = tds.drop(SchemaSupport.ROW_TABLE_NAME_FIELD, SchemaSupport.ROW_KEY_FIELD_FIELD, SchemaSupport.ROW_KEY_VALUE_FIELD);
-				r.put(t, tds);
+				r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
 			}
 			return r;
 		}
@@ -361,13 +359,6 @@ public interface Sparks {
 		Dataset<Row> d = ds.next();
 		while (ds.hasNext())
 			d = d.union(ds.next());
-		return d;
-	}
-
-	public static Dataset<Row> purge(Dataset<Row> ds) {
-		Dataset<Row> d = ds;
-		for (StructField f : Sparks.SchemaSupport.EXTRA_FIELDS_SCHEMA)
-			if (ds.schema().getFieldIndex(f.name()).nonEmpty()) d = d.drop(ds.col(f.name()));
 		return d;
 	}
 }

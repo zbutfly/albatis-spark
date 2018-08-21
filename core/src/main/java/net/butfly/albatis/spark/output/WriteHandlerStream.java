@@ -16,7 +16,6 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.impl.Sparks;
 
 class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 	private DataStreamWriter<Row> w;
@@ -40,7 +39,7 @@ class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 	}
 
 	private DataStreamWriter<Row> w(boolean purge) {
-		return (purge ? Sparks.purge(ds) : ds).writeStream().outputMode(OutputMode.Update()).trigger(trigger());
+		return (purge ? purge() : ds).writeStream().outputMode(OutputMode.Update()).trigger(trigger());
 	}
 
 	@Override
