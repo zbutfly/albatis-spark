@@ -64,6 +64,7 @@ public class SparkConnection implements EnvironmentConnection {
 				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
 		if (!sparkConf.contains("spark.mongodb.output.uri")) sparkConf.set("spark.mongodb.output.uri",
 				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
+		sparkConf.registerKryoClasses(new Class[] { Rmap.class });
 		this.spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
 	}
 
