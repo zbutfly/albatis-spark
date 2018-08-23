@@ -1,10 +1,10 @@
 package net.butfly.albatis.spark.util;
 
 import static net.butfly.albatis.spark.impl.Sparks.alias;
-import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.build;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.row2rmap;
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.build;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
 import java.util.Iterator;
 import java.util.List;

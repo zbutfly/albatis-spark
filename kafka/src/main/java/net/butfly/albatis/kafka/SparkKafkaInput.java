@@ -1,6 +1,8 @@
 package net.butfly.albatis.kafka;
 
-import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.ROW_KEY_VALUE_FIELD;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
@@ -22,7 +24,6 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import net.butfly.albatis.spark.impl.Sparks.SchemaSupport;
 import net.butfly.albatis.spark.input.SparkDataInput;
 
 /**
@@ -54,13 +55,13 @@ public class SparkKafkaInput extends SparkDataInput {
 		while (!keys.isEmpty()) {
 			TableDesc tt = keys.remove(0);
 			Dataset<Row> tds;
-			if (keys.isEmpty()) tds = SchemaSupport.rmap2row(tt, ds);
+			if (keys.isEmpty()) tds = rmap2row(tt, ds);
 			else {
-				tds = SchemaSupport.rmap2row(tt, ds.filter(rr -> tt.name.equals(rr.table())));
+				tds = rmap2row(tt, ds.filter(rr -> tt.name.equals(rr.table())));
 				ds = ds.filter(rr -> !tt.name.equals(rr.table())).persist();
 			}
-			// tds = tds.drop(SchemaSupport.ROW_TABLE_NAME_FIELD, SchemaSupport.ROW_KEY_FIELD_FIELD, SchemaSupport.ROW_KEY_VALUE_FIELD);
-			r.add(tds.repartition(col(SchemaSupport.ROW_KEY_VALUE_FIELD)).alias(tt.name));
+			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
+			r.add(tds.repartition(col(ROW_KEY_VALUE_FIELD)).alias(tt.name));
 		}
 		return r;
 	}

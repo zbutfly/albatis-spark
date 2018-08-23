@@ -1,7 +1,9 @@
 package net.butfly.albatis.spark;
 
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.row2rmap;
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
+import static net.butfly.albatis.spark.impl.Sparks.alias;
 
 import java.util.Map;
 
@@ -17,8 +19,6 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO;
-import net.butfly.albatis.spark.impl.Sparks;
-import static net.butfly.albatis.spark.impl.Sparks.alias;
 
 public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 	private static final long serialVersionUID = 7339834746933783020L;
@@ -68,7 +68,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			@Override
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
-				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), Sparks.ENC_RMAP).alias(alias(ds0));
+				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP).alias(alias(ds0));
 				saver(ds);
 			}
 		};
@@ -83,7 +83,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
-						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), Sparks.ENC_RMAP).alias(alias(ds0));
+						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP).alias(alias(ds0));
 				saver(ds);
 			}
 		};
@@ -105,7 +105,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
-						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), Sparks.ENC_RMAP).alias(alias(ds0));
+						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP).alias(alias(ds0));
 				saver(ds);
 			}
 		};

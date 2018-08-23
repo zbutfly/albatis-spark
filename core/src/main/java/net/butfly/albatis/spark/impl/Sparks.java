@@ -15,81 +15,35 @@ import static net.butfly.albatis.ddl.vals.ValType.Flags.STR;
 import static net.butfly.albatis.ddl.vals.ValType.Flags.STRL;
 import static net.butfly.albatis.ddl.vals.ValType.Flags.UNKNOWN;
 import static net.butfly.albatis.ddl.vals.ValType.Flags.VOID;
+import static net.butfly.albatis.spark.impl.Schemas.ROW_KEY_VALUE_FIELD;
+import static net.butfly.albatis.spark.impl.Schemas.ROW_TABLE_NAME_FIELD;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.lit;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
 import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 
-import com.google.common.base.Supplier;
-
-import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
-import net.butfly.albatis.ddl.FieldDesc;
-import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.ddl.vals.ValType;
-import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.io.Rmap.Op;
-import scala.Function0;
-import scala.collection.JavaConversions;
-import scala.collection.JavaConverters;
 import scala.collection.Seq;
-import scala.runtime.AbstractFunction0;
 
 public interface Sparks {
 	static final Logger logger = Logger.getLogger(Sparks.class);
-	@SuppressWarnings("rawtypes")
-	static final Encoder<Map> ENC_MAP = Encoders.javaSerialization(Map.class);
-	static final Encoder<Rmap> ENC_RMAP = Encoders.javaSerialization(Rmap.class);
-
-	static String defaultColl(URISpec u) {
-		String file = u.getFile();
-		String[] path = u.getPaths();
-		String tbl = null;
-		if (path.length > 0) tbl = file;
-		return tbl;
-	};
-
-	static Map<String, Object> rowMap(Row row) {
-		Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala().toSeq();
-		Map<String, Object> map = JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
-		String t = (String) map.remove("___table");
-		if (null != t) return new Rmap(t, map);
-		else return map;
-	}
-
-	static Rmap rmap(String table, Row row) {
-		return new Rmap(table, Sparks.rowMap(row));
-	}
-
-	static DataType classType(Object v) {
-		return classType(null == v ? Void.class : v.getClass());
-	}
 
 	@SuppressWarnings("deprecation")
 	static DataType fieldType(ValType t) {
@@ -183,19 +137,6 @@ public interface Sparks {
 		throw new UnsupportedOperationException(c.getName() + " not support for spark sql data type");
 	}
 
-	static <T> Seq<T> dataset(Iterable<T> rows) {
-		return JavaConverters.asScalaIteratorConverter(rows.iterator()).asScala().toSeq();
-	}
-
-	static <RR> Function0<RR> func0(Supplier<RR> f) {
-		return new AbstractFunction0<RR>() {
-			@Override
-			public RR apply() {
-				return f.get();
-			}
-		};
-	}
-
 	static <T> scala.collection.Map<String, T> mapizeScala(java.util.Map<String, T> javaMap) {
 		return scala.collection.JavaConversions.mapAsScalaMap(javaMap);
 	}
@@ -210,104 +151,6 @@ public interface Sparks {
 
 	static <T> Seq<T> listScala(List<T> javaList) {
 		return scala.collection.JavaConversions.asScalaBuffer(javaList);
-	}
-
-	static class SchemaSupport {
-		static StructField build(FieldDesc f) {
-			return new StructField(f.name, Sparks.fieldType(f.type), true, Metadata.empty());
-		}
-
-		static StructType build(TableDesc schema, StructField... extras) {
-			int l = schema.fields().length;
-			StructField[] sfs = new StructField[l + extras.length];
-			for (int i = 0; i < l; i++)
-				sfs[i] = build(schema.fields()[i]);
-			for (int i = 0; i < extras.length; i++)
-				sfs[l + i] = extras[i];
-			return new StructType(sfs);
-		}
-
-		public static TableDesc build(StructType schema) {
-			TableDesc t = TableDesc.dummy("");
-			for (StructField f : schema.fields())
-				t.field(new FieldDesc(t, f.name(), Sparks.valType(f.dataType())));
-			return t;
-		}
-
-		public static StructType build(TableDesc table) {
-			// StructField[] extras = extra ? EXTRA_FIELDS_SCHEMA : new StructField[0];
-			int l = table.fields().length;
-			StructField[] sfs = new StructField[l + EXTRA_FIELDS_SCHEMA.length];
-			for (int i = 0; i < l; i++)
-				sfs[i] = build(table.fields()[i]);
-			for (int i = l; i < sfs.length; i++)
-				sfs[i] = EXTRA_FIELDS_SCHEMA[i - l];
-			return new StructType(sfs);
-		}
-
-		public final static String ROW_TABLE_NAME_FIELD = "___table";
-		public final static String ROW_KEY_VALUE_FIELD = "___key_value";
-		public final static String ROW_KEY_FIELD_FIELD = "___key_field";
-		public final static String ROW_OP_FIELD = "___op";
-		public final static StructField[] EXTRA_FIELDS_SCHEMA = new StructField[] { //
-				new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, true, Metadata.empty()) //
-				, new StructField(ROW_KEY_VALUE_FIELD, DataTypes.StringType, true, Metadata.empty()) //
-				, new StructField(ROW_KEY_FIELD_FIELD, DataTypes.StringType, true, Metadata.empty())//
-				, new StructField(ROW_OP_FIELD, DataTypes.IntegerType, true, Metadata.empty())//
-		};
-
-		public static final Rmap row2rmap(Row row) {
-			Map<String, Object> m = Maps.of();
-			for (int i = 0; i < row.schema().fieldNames().length; i++) {
-				if (row.isNullAt(i)) continue;
-				String f = row.schema().fieldNames()[i];
-				Object v = row.get(i);
-				m.put(f, v);
-			}
-			String t = (String) m.remove(ROW_TABLE_NAME_FIELD);
-			String k = (String) m.remove(ROW_KEY_VALUE_FIELD);
-			String kf = (String) m.remove(ROW_KEY_FIELD_FIELD);
-			int op = m.containsKey(ROW_OP_FIELD) ? ((Number) m.remove(ROW_OP_FIELD)).intValue() : Op.DEFAULT;
-			return new Rmap(t, k, m).keyField(kf).op(op);
-		}
-
-		public static final Dataset<Rmap> row2rmap(Dataset<Row> ds) {
-			logger.warn("Row transform to Rmap, maybe slowly from here: \n\t" + //
-					Colls.list(Thread.currentThread().getStackTrace()).get(2).toString());
-			return ds.map(SchemaSupport::row2rmap, ENC_RMAP);
-		}
-
-		public static Dataset<Row> rmap2row(TableDesc table, Dataset<Rmap> ds) {
-			StructType s = build(table);
-			return ds.map(r -> rmap2row(r, s, table.rowkey(), r.op()), RowEncoder.apply(s));
-		}
-
-		public static Row rmap2row(Rmap r, StructType s, String keyField, int op) {
-			Object[] vs = new Object[s.fields().length];
-			for (int i = 0; i < vs.length - EXTRA_FIELDS_SCHEMA.length; i++) {
-				Object v = r.get(s.fields()[i].name());
-				if (null != v) {
-					vs[i] = r.get(s.fields()[i].name());
-					// logger.error(s.fields()[i].dataType().toString() + ": " + v.toString() + "{" + v.getClass().toString() + "}");
-				}
-			}
-			vs[vs.length - 4] = r.table();
-			vs[vs.length - 3] = null == keyField ? null : r.get(keyField);
-			vs[vs.length - 2] = keyField;
-			vs[vs.length - 1] = op;
-			return new GenericRowWithSchema(vs, s);
-		}
-
-		@Deprecated
-		public static Rmap rawToRmap(Row row) {
-			byte[] data = row.getAs("value");
-			try (ObjectInputStream oss = new ObjectInputStream(new ByteArrayInputStream(data));) {
-				return (Rmap) oss.readObject();
-			} catch (ClassNotFoundException | IOException e) {
-				logger.error("Sinked row data [" + data.length + "] corrupted.", e);
-				throw new RuntimeException(e);
-			}
-		}
 	}
 
 	public static Dataset<Row> union(Iterator<Dataset<Row>> ds) {
@@ -328,8 +171,8 @@ public interface Sparks {
 	}
 
 	static List<Dataset<Row>> byTable(Dataset<Row> ds) {
-		List<String> keys = ds.groupBy(SchemaSupport.ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
-				.map(r -> r.getAs(SchemaSupport.ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
+		List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
+				.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
 		List<Dataset<Row>> r = Colls.list();
 		keys = new ArrayList<>(keys);
 		while (!keys.isEmpty()) {
@@ -337,12 +180,12 @@ public interface Sparks {
 			Dataset<Row> tds;
 			if (keys.isEmpty()) tds = ds;
 			else {
-				tds = ds.filter(col(SchemaSupport.ROW_TABLE_NAME_FIELD).equalTo(t));
-				ds = ds.filter(col(SchemaSupport.ROW_TABLE_NAME_FIELD).notEqual(t)).persist();
+				tds = ds.filter(col(ROW_TABLE_NAME_FIELD).equalTo(t));
+				ds = ds.filter(col(ROW_TABLE_NAME_FIELD).notEqual(t)).persist();
 			}
 			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
 			logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
-			r.add(tds.repartition(col(SchemaSupport.ROW_KEY_VALUE_FIELD)).alias(t));
+			r.add(tds.repartition(col(ROW_KEY_VALUE_FIELD)).alias(t));
 		}
 		return r;
 	}

@@ -1,6 +1,6 @@
 package net.butfly.albatis.spark.output;
 
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 
 import java.util.Map;
 
@@ -14,7 +14,7 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkOutput;
-import net.butfly.albatis.spark.impl.Sparks.SchemaSupport;
+import net.butfly.albatis.spark.impl.Schemas;
 import net.butfly.albatis.spark.util.DSdream;
 
 class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
@@ -39,7 +39,7 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 			purge().foreachPartition(it -> {
 				try (Connection cc = output.connect();) {
 					// TODO: split
-					output.enqueue(Sdream.of(it).map(SchemaSupport::row2rmap));
+					output.enqueue(Sdream.of(it).map(Schemas::row2rmap));
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}

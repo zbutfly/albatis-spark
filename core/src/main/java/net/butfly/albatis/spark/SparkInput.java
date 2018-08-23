@@ -1,9 +1,10 @@
 package net.butfly.albatis.spark;
 
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 import static net.butfly.albatis.spark.impl.Sparks.alias;
 import static net.butfly.albatis.spark.impl.Sparks.byTable;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.row2rmap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +31,6 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.impl.SparkIO;
 import net.butfly.albatis.spark.impl.SparkInputWrapper;
-import net.butfly.albatis.spark.impl.Sparks;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -149,7 +149,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		List<Dataset<V>> dss = vals();
 		List<Dataset<Rmap>> dss1 = Colls.list();
 		for (Dataset<V> d : dss)
-			dss1.add(d.map(r -> (Rmap) conv.apply(r), Sparks.ENC_RMAP).alias(alias(d)));
+			dss1.add(d.map(r -> (Rmap) conv.apply(r), ENC_RMAP).alias(alias(d)));
 		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
 	}
 
@@ -173,7 +173,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		List<Dataset<V>> dss = vals();
 		List<Dataset<Rmap>> dss1 = Colls.list();
 		for (Dataset<V> d : dss)
-			dss1.add(d.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), Sparks.ENC_RMAP).alias(alias(d)));
+			dss1.add(d.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP).alias(alias(d)));
 		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
 	}
 

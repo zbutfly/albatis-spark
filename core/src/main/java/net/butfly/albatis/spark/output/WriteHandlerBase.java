@@ -1,10 +1,10 @@
 package net.butfly.albatis.spark.output;
 
+import static net.butfly.albatis.spark.impl.Schemas.EXTRA_FIELDS_SCHEMA;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructField;
-
-import net.butfly.albatis.spark.impl.Sparks;
+import org.apache.spark.sql.types.StructField;;
 
 abstract class WriteHandlerBase<T extends WriteHandlerBase<T>> implements WriteHandler {
 	protected final Dataset<Row> ds;
@@ -19,7 +19,7 @@ abstract class WriteHandlerBase<T extends WriteHandlerBase<T>> implements WriteH
 
 	protected Dataset<Row> purge() {
 		Dataset<Row> d = ds;
-		for (StructField f : Sparks.SchemaSupport.EXTRA_FIELDS_SCHEMA)
+		for (StructField f : EXTRA_FIELDS_SCHEMA)
 			if (ds.schema().getFieldIndex(f.name()).nonEmpty()) d = d.drop(ds.col(f.name()));
 		return d;
 	}

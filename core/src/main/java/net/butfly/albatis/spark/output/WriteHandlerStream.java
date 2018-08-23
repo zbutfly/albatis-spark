@@ -1,6 +1,6 @@
 package net.butfly.albatis.spark.output;
 
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 
 import java.util.Map;
 
