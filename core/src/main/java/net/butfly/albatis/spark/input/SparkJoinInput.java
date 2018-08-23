@@ -1,5 +1,10 @@
 package net.butfly.albatis.spark.input;
 
+import static net.butfly.albatis.spark.impl.Sparks.byTable;
+import static net.butfly.albatis.spark.impl.Sparks.union;
+import static org.apache.spark.sql.functions.col;
+
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
@@ -7,9 +12,6 @@ import org.apache.spark.sql.Row;
 
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.impl.Sparks;
-
-import static org.apache.spark.sql.functions.col;
 
 @SuppressWarnings("rawtypes")
 public class SparkJoinInput extends SparkInput<Rmap> {
@@ -37,15 +39,12 @@ public class SparkJoinInput extends SparkInput<Rmap> {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
-		Dataset<Row> ds0 = Sparks.union(input.rows().values().iterator());
-		for (SparkInput<?> in : joinInputs.keySet()) {
-			String key = joinInputs.get(in);
-			Map<String, Dataset<Row>> ds = in.rows();
-			for (Dataset<Row> d : ds.values())
-				ds0 = ds0.join(d, col(col).equalTo(col(key)), joinType).distinct();
-		}
-		return ds0;
+	protected List<Dataset<Row>> load() {
+		Dataset<Row> ds0 = union(input.rows().iterator());
+		for (SparkInput<?> in : joinInputs.keySet())
+			for (Dataset<Row> d : in.rows())
+				ds0 = ds0.join(d, col(col).equalTo(col(joinInputs.get(in))), joinType).distinct();
+		return byTable(ds0);
 	}
 
 	@Override

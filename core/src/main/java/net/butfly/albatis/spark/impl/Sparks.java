@@ -36,6 +36,8 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
@@ -277,10 +279,10 @@ public interface Sparks {
 
 		public static Dataset<Row> rmap2row(TableDesc table, Dataset<Rmap> ds) {
 			StructType s = build(table);
-			return ds.map(r -> map2row(r, s, table.rowkey(), r.op()), RowEncoder.apply(s));
+			return ds.map(r -> rmap2row(r, s, table.rowkey(), r.op()), RowEncoder.apply(s));
 		}
 
-		public static Row map2row(Rmap r, StructType s, String keyField, int op) {
+		public static Row rmap2row(Rmap r, StructType s, String keyField, int op) {
 			Object[] vs = new Object[s.fields().length];
 			for (int i = 0; i < vs.length - EXTRA_FIELDS_SCHEMA.length; i++) {
 				Object v = r.get(s.fields()[i].name());
@@ -294,52 +296,6 @@ public interface Sparks {
 			vs[vs.length - 2] = keyField;
 			vs[vs.length - 1] = op;
 			return new GenericRowWithSchema(vs, s);
-		}
-
-		public static Map<String, Dataset<Row>> byTable(Dataset<Row> ds) {
-			List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
-					.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
-			Map<String, Dataset<Row>> r = Maps.of();
-			keys = new ArrayList<>(keys);
-			while (!keys.isEmpty()) {
-				String t = keys.remove(0);
-				Dataset<Row> tds;
-				if (keys.isEmpty()) tds = ds;
-				else {
-					tds = ds.filter(col(ROW_TABLE_NAME_FIELD).equalTo(t));
-					ds = ds.filter(col(ROW_TABLE_NAME_FIELD).notEqual(t)).persist();
-				}
-				// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
-				logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
-				r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
-			}
-			return r;
-		}
-
-		public static final Map<String, Dataset<Row>> byTable(Dataset<Rmap> ds, Map<String, TableDesc> schemas) {
-			if (schemas.isEmpty()) throw new UnsupportedOperationException("Non-schema output does not support row operator.");
-			TableDesc first = schemas.values().iterator().next();
-			Map<String, Dataset<Row>> r = Maps.of();
-			List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
-			keys = new ArrayList<>(keys);
-			while (!keys.isEmpty()) {
-				String t = keys.remove(0);
-				TableDesc tt = schemas.get(t);
-				if (null == tt) { // expr table
-					logger.warn("Table [" + t + "] not found in schemas, using first: " + first.toString() + " and register it.");
-					tt = first;
-					schemas.put(t, tt);
-				}
-				Dataset<Row> tds;
-				if (keys.isEmpty()) tds = SchemaSupport.rmap2row(tt, ds);
-				else {
-					tds = SchemaSupport.rmap2row(tt, ds.filter(rr -> t.equals(rr.table())));
-					ds = ds.filter(rr -> !t.equals(rr.table())).persist();
-				}
-				// tds = tds.drop(SchemaSupport.ROW_TABLE_NAME_FIELD, SchemaSupport.ROW_KEY_FIELD_FIELD, SchemaSupport.ROW_KEY_VALUE_FIELD);
-				r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
-			}
-			return r;
 		}
 
 		@Deprecated
@@ -360,5 +316,34 @@ public interface Sparks {
 		while (ds.hasNext())
 			d = d.union(ds.next());
 		return d;
+	}
+
+	public static Dataset<Row> union(Iterable<Dataset<Row>> ds) {
+		return union(ds.iterator());
+	}
+
+	public static String alias(Dataset<?> ds) {
+		LogicalPlan p = ds.logicalPlan();
+		return p instanceof SubqueryAlias ? ((SubqueryAlias) p).alias() : null;
+	}
+
+	static List<Dataset<Row>> byTable(Dataset<Row> ds) {
+		List<String> keys = ds.groupBy(SchemaSupport.ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
+				.map(r -> r.getAs(SchemaSupport.ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
+		List<Dataset<Row>> r = Colls.list();
+		keys = new ArrayList<>(keys);
+		while (!keys.isEmpty()) {
+			String t = keys.remove(0);
+			Dataset<Row> tds;
+			if (keys.isEmpty()) tds = ds;
+			else {
+				tds = ds.filter(col(SchemaSupport.ROW_TABLE_NAME_FIELD).equalTo(t));
+				ds = ds.filter(col(SchemaSupport.ROW_TABLE_NAME_FIELD).notEqual(t)).persist();
+			}
+			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
+			logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
+			r.add(tds.repartition(col(SchemaSupport.ROW_KEY_VALUE_FIELD)).alias(t));
+		}
+		return r;
 	}
 }

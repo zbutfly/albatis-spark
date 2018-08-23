@@ -1,28 +1,28 @@
 package net.butfly.albatis.kafka;
 
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.build;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.map2row;
+import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
+import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.types.StructType;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.io.Rmap.Op;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import net.butfly.albatis.spark.impl.Sparks.SchemaSupport;
 import net.butfly.albatis.spark.input.SparkDataInput;
 
 /**
@@ -47,11 +47,22 @@ public class SparkKafkaInput extends SparkDataInput {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
-		Dataset<Row> ds = super.load();
-		TableDesc t = table();
-		StructType s = build(t);
-		return ds.map(r -> map2row(kafka(r), s, t.rowkey(), Op.DEFAULT), RowEncoder.apply(build(table())));
+	protected List<Dataset<Row>> load() {
+		Dataset<Rmap> ds = super.load().get(0).map(this::kafka, ENC_RMAP);
+		List<Dataset<Row>> r = Colls.list();
+		List<TableDesc> keys = Colls.list(tables());
+		while (!keys.isEmpty()) {
+			TableDesc tt = keys.remove(0);
+			Dataset<Row> tds;
+			if (keys.isEmpty()) tds = SchemaSupport.rmap2row(tt, ds);
+			else {
+				tds = SchemaSupport.rmap2row(tt, ds.filter(rr -> tt.name.equals(rr.table())));
+				ds = ds.filter(rr -> !tt.name.equals(rr.table())).persist();
+			}
+			// tds = tds.drop(SchemaSupport.ROW_TABLE_NAME_FIELD, SchemaSupport.ROW_KEY_FIELD_FIELD, SchemaSupport.ROW_KEY_VALUE_FIELD);
+			r.add(tds.repartition(col(SchemaSupport.ROW_KEY_VALUE_FIELD)).alias(tt.name));
+		}
+		return r;
 	}
 
 	@Override

@@ -1,11 +1,15 @@
 package net.butfly.albatis.spark.plugin;
 
+import static net.butfly.albatis.spark.impl.Sparks.alias;
 import static org.apache.spark.sql.functions.col;
+
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.impl.Sparks;
 
@@ -28,11 +32,12 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
-		Dataset<Row> ds0 = super.load();
-		for (SparkInput<Row> in : cInputs.keySet())
-			ds0 = ds0.join(Sparks.union(in.rows().values().iterator()), ds0.col(PLUGIN_KEY).equalTo(col(cInputs.get(in))), "inner");
-		return ds0;
+	protected List<Dataset<Row>> load() {
+		List<Dataset<Row>> dss = super.load();
+		List<Dataset<Row>> dss1 = Colls.list();
+		cInputs.forEach((in, key) -> dss.forEach(ds -> dss1.add(//
+				ds.join(Sparks.union(in.rows()), ds.col(PLUGIN_KEY).equalTo(col(key)), "inner").alias(alias(ds)))));
+		return dss;
 	}
 
 	@Override

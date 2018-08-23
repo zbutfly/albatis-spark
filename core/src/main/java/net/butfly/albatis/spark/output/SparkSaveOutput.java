@@ -10,6 +10,7 @@ import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkOutput;
+import static net.butfly.albatis.spark.impl.Sparks.alias;
 
 /**
  * Writing by spark native save(), with self.format() and self.options()
@@ -28,10 +29,10 @@ public abstract class SparkSaveOutput extends SparkOutput<Rmap> {
 	public abstract Map<String, String> options(String table);
 
 	@Override
-	public final void save(String table, Dataset<Row> ds) {
+	public final void save(Dataset<Row> ds) {
 		logger().info("Dataset [" + ds.toString() + "] native save with format: " + format());
 		try (WriteHandler w = WriteHandler.of(ds)) {
-			w.save(format(), options(table));
+			w.save(format(), options(alias(ds)));
 		} finally {
 			logger().info("Spark saving finished.");
 		}

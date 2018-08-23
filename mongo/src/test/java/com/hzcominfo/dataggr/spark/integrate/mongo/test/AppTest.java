@@ -10,7 +10,7 @@ public class AppTest {
 		URISpec uri = new URISpec("mongodb://devdb:Devdb1234@172.30.10.31:40012/devdb.PH_ZHK_CZRK");
 		try (SparkConnection client = new SparkConnection(uri); SparkInput<Rmap> in = client.input(uri);) {
 			in.open();
-			in.vals().forEach((t, ds) -> System.out.println(ds));
+			in.vals().forEach(System.out::println);
 		}
 	}
 }

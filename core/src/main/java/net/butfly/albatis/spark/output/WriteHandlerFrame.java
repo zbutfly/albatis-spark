@@ -33,8 +33,8 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 	}
 
 	@Override
-	public void save(String table, Output<Rmap> output) {
-		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, purge()));
+	public void save(Output<Rmap> output) {
+		if (output instanceof SparkOutput) output.enqueue(DSdream.of(purge()));
 		else {// should not be touch
 			purge().foreachPartition(it -> {
 				try (Connection cc = output.connect();) {

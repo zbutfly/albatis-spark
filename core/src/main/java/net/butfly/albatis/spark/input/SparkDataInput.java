@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark.input;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
@@ -10,6 +11,7 @@ import org.apache.spark.sql.streaming.DataStreamReader;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.serder.BsonSerder;
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
@@ -25,13 +27,13 @@ public abstract class SparkDataInput extends SparkInput<Rmap> {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
+	protected List<Dataset<Row>> load() {
 		Map<String, String> opts = options();
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
 		DataStreamReader dr = spark.readStream();
 		String f = format();
 		if (null != f) dr = dr.format(f);
-		return dr.options(opts).load();
+		return Colls.list(dr.options(opts).load().alias("*"));
 	}
 
 	protected Row row(Rmap m, long c) {

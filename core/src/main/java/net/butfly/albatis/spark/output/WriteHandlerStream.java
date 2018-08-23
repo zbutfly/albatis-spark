@@ -49,8 +49,8 @@ class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 	}
 
 	@Override
-	public void save(String table, Output<Rmap> output) {
-		Map<String, String> opts = Maps.of("checkpointLocation", checkpoint(), "output", output.ser(), "table", table);
+	public void save(Output<Rmap> output) {
+		Map<String, String> opts = Maps.of("checkpointLocation", checkpoint(), "output", output.ser());
 		w = w(false).format(SparkSinkOutput.FORMAT).options(opts);
 	}
 

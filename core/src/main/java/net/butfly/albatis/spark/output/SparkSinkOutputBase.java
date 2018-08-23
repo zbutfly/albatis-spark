@@ -25,7 +25,7 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkOutput;
 import net.butfly.albatis.spark.impl.Sparks;
 import scala.collection.Seq;
-import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.byTable;
+import static net.butfly.albatis.spark.impl.Sparks.byTable;
 
 /**
  * Streaming sink writing
@@ -38,7 +38,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 	}
 
 	@Override
-	public abstract void save(String table, Dataset<Row> ds);
+	public abstract void save(Dataset<Row> ds);
 
 	@Override
 	public String format() {
@@ -76,11 +76,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 			if (rows.isEmpty()) return;
 			Dataset<Row> ds = batch.sparkSession().createDataset(rows, RowEncoder.apply(batch.schema()));
 			// XXX: now the batch is frame, not streaming.
-			byTable(ds).forEach((tt, d) -> {
-				try (WriteHandler w = WriteHandler.of(ds);) {
-					w.save(tt, output);
-				}
-			});
+			byTable(ds).forEach(d -> WriteHandler.save(d, output));
 			long tt = System.currentTimeMillis() - t;
 			time.add(tt);
 			logger.debug("Sink[" + batchId + "] finished in: " + tt + " ms, avg: " + acc.value() / (time.value() / 1000.0) + " input/s.");

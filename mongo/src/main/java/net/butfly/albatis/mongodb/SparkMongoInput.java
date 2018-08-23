@@ -2,8 +2,10 @@ package net.butfly.albatis.mongodb;
 
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.ROW_KEY_VALUE_FIELD;
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.ROW_TABLE_NAME_FIELD;
+import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaSparkContext;
@@ -40,9 +42,9 @@ public class SparkMongoInput extends SparkDataInput implements SparkMongo {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
+	protected List<Dataset<Row>> load() {
 		JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
-		Dataset<Row> dds = null;
+		List<Dataset<Row>> dds = Colls.list();
 		for (TableDesc t : schemaAll().values()) {
 			Map<String, String> opts = options();
 			opts.put("collection", t.name);
@@ -50,14 +52,15 @@ public class SparkMongoInput extends SparkDataInput implements SparkMongo {
 
 			JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, rc);
 			if (Systems.isDebug()) {
-				int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
+				@SuppressWarnings("deprecation")
+				int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1")) / rdd.getNumPartitions();
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
-
-			Dataset<Row> d = rdd.toDF();
-			d = d.withColumn(ROW_TABLE_NAME_FIELD, lit(t.name)).withColumn(ROW_KEY_VALUE_FIELD, d.col("_id.oid")).withColumn("_id", d.col(
-					"_id.oid"));
-			dds = null == dds ? d : dds.union(d);
+			dds.add(rdd.toDF()//
+					.withColumn(ROW_TABLE_NAME_FIELD, lit(t.name))//
+					.withColumn(ROW_KEY_VALUE_FIELD, col("_id.oid"))//
+					.withColumn("_id", col("_id.oid"))//
+					.alias(t.name));
 		}
 		return dds;
 	}

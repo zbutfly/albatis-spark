@@ -1,10 +1,12 @@
 package net.butfly.albatis.spark.impl;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.IO;
@@ -16,15 +18,15 @@ public final class SparkInputWrapper extends SparkInput<Rmap> implements Wrapper
 	private static final long serialVersionUID = 5957738224117308018L;
 	private final SparkInput<?> base;
 
-	public SparkInputWrapper(SparkInput<?> s, Map<String, Dataset<Rmap>> ds) {
+	public SparkInputWrapper(SparkInput<?> s, List<Dataset<Rmap>> ds) {
 		super(s.spark, s.targetUri);
 		this.base = s;
 		vals(ds);
 	}
 
 	@Override
-	protected Dataset<Row> load() {
-		return null;
+	protected List<Dataset<Row>> load() {
+		return Colls.list();
 	}
 
 	@Override

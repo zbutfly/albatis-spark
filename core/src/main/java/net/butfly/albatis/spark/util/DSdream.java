@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark.util;
 
+import static net.butfly.albatis.spark.impl.Sparks.alias;
 import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.build;
 import static net.butfly.albatis.spark.impl.Sparks.SchemaSupport.rmap2row;
@@ -31,30 +32,24 @@ import net.butfly.albatis.spark.output.SparkSinkOutput;
 public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 	private static final long serialVersionUID = 4996999561898013014L;
 	public final Dataset<Row> ds;
-	public final String table;
 
-	private DSdream(String table, Dataset<Row> impl) {
+	private DSdream(Dataset<Row> impl) {
 		ds = impl;
-		this.table = table;
 	}
 
-	// public static DSdream of(Dataset<Row> impl) {
-	// return new DSdream(null, impl);
-	// }
-
-	public static DSdream of(String table, Dataset<Row> impl) {
-		return new DSdream(table, impl);
+	public static DSdream of(Dataset<Row> impl) {
+		return new DSdream(impl);
 	}
 
 	public static DSdream ofMap(Dataset<Rmap> ds, TableDesc schema) {
-		return new DSdream(schema.name, rmap2row(schema, ds));
+		return new DSdream(rmap2row(schema, ds).alias(schema.name));
 
 	}
 
 	public static DSdream of(SQLContext ctx, Sdream<Rmap> s, TableDesc schema) {
-		if (s instanceof DSdream) return new DSdream(schema.name, ((DSdream) s).ds);
+		if (s instanceof DSdream) return new DSdream(((DSdream) s).ds);
 		Dataset<Rmap> rds = ctx.createDataset(s.list(), ENC_RMAP);
-		return of(schema.name, rmap2row(schema, rds));
+		return of(rmap2row(schema, rds).alias(schema.name));
 	}
 
 	@Override
@@ -108,7 +103,7 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 
 	@Override
 	public Sdream<Rmap> union(Sdream<Rmap> another) {
-		if (another instanceof DSdream) return new DSdream(table, ds.union(((DSdream) another).ds));
+		if (another instanceof DSdream) return new DSdream(ds.union(((DSdream) another).ds).alias(alias(ds)));
 		Dataset<Rmap> ads = ds.sqlContext().createDataset(another.list(), ENC_RMAP);
 		Dataset<Rmap> uds = row2rmap(ds).union(ads);
 		return ofMap(uds, build(ds.schema()));// TODO: merge schema
@@ -124,7 +119,7 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 	@Override
 	public void eachs(Consumer<Rmap> using) {
 		try (SparkSinkOutput o = new SparkSinkOutput(ds.sparkSession(), (Consumer<Rmap>) using);) {
-			o.save(table, ds);
+			o.save(ds);
 		}
 	}
 
@@ -158,7 +153,7 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 		List<Sdream<Rmap>> dss = Colls.list();
 		double[] weights = new double[] {};
 		for (Dataset<Row> d : ds.randomSplit(weights))
-			dss.add(new DSdream(table, d));
+			dss.add(new DSdream(d.alias(alias(ds))));
 		return dss;
 	}
 
