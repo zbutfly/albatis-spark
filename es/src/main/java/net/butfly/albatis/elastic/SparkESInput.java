@@ -3,16 +3,19 @@ package net.butfly.albatis.elastic;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
+import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import net.butfly.albatis.spark.input.SparkDataInput;
 
 @Schema({ "es", "elasticsearch" })
-public class SparkESInput extends SparkDataInput {
+public class SparkESInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
 
@@ -34,5 +37,10 @@ public class SparkESInput extends SparkDataInput {
 	@Override
 	public String format() {
 		return "es";
+	}
+
+	@Override
+	protected Dataset<Row> load() {
+		return null;
 	}
 }

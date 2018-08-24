@@ -18,7 +18,8 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
-import net.butfly.albatis.spark.input.SparkDataInput;
+import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.SparkInput;
 
 public abstract class SparkIO implements IO, Serializable {
 	private static final long serialVersionUID = 3265459356239387878L;
@@ -63,7 +64,7 @@ public abstract class SparkIO implements IO, Serializable {
 		return null;
 	}
 
-	public static <V, I extends SparkDataInput> I input(SparkSession spark, URISpec uri, TableDesc... table) {
+	public static <V, I extends SparkInput<Rmap>> I input(SparkSession spark, URISpec uri, TableDesc... table) {
 		String s = uri.getScheme();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")

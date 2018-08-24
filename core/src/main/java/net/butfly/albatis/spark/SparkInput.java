@@ -74,10 +74,8 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	public final Map<String, Dataset<Row>> rows() {
 		if (rows.isEmpty()) {
 			Map<String, Dataset<Row>> dsr = Maps.of();
-			for (String t : vals.keySet()) {
-				Dataset<Row> ds = rmap2row(schema(t), (Dataset<Rmap>) vals.get(t));
-				dsr.put(t, ds);
-			}
+			for (String t : vals.keySet())
+				dsr.put(t, rmap2row(schema(t), (Dataset<Rmap>) vals.get(t)));
 			rows(dsr);
 		}
 		return rows;
@@ -86,18 +84,10 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public final Map<String, Dataset<Row>> rowsOut(Output<Rmap> output) {
 		if (!rows.isEmpty()) return rows;
-		else {
-			Map<String, Dataset<V>> dss = vals();
-			Map<String, Dataset<Row>> dsr = Maps.of();
-			for (String t : dss.keySet()) {
-				Map<String, Dataset<Row>> dss1 = compute((Dataset<Rmap>) dss.get(t), output);
-				dss1.forEach((dt, d) -> dsr.compute(dt, (dtt, origin) -> {
-					if (null == origin) return d;
-					else return d.union(origin);
-				}));
-			}
-			return dsr;
-		}
+		Map<String, Dataset<Row>> dsr = Maps.of();
+		vals.forEach((t, vs) -> compute((Dataset<Rmap>) vs, output)//
+				.forEach((dt, d) -> dsr.compute(dt, (dtt, origin) -> null == origin ? d : d.union(origin))));
+		return dsr;
 	}
 
 	protected final SparkInput<V> vals(Collection<Dataset<V>> vals) {

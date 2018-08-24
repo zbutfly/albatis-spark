@@ -2,16 +2,19 @@ package net.butfly.albatis.solr;
 
 import java.util.Map;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
+import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import net.butfly.albatis.spark.input.SparkDataInput;
 
 @Schema("solr")
-public class SparkSolrInput extends SparkDataInput {
+public class SparkSolrInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = -5201381842972371471L;
 
 	public SparkSolrInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
@@ -32,5 +35,11 @@ public class SparkSolrInput extends SparkDataInput {
 	@Override
 	public String format() {
 		return "solr";
+	}
+
+	@Override
+	protected Dataset<Row> load() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

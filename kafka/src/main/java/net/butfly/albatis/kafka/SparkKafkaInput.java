@@ -11,6 +11,9 @@ import java.util.Map;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.streaming.DataStreamReader;
+import org.apache.spark.sql.types.StructType;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
@@ -21,8 +24,8 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
+import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import net.butfly.albatis.spark.input.SparkDataInput;
 
 /**
  * <pre>
@@ -36,7 +39,7 @@ import net.butfly.albatis.spark.input.SparkDataInput;
  * </pre>
  */
 @Schema("kafka")
-public class SparkKafkaInput extends SparkDataInput {
+public class SparkKafkaInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = 9003837433163351306L;
 	private final Function<byte[], Map<String, Object>> conv;
 
@@ -46,22 +49,16 @@ public class SparkKafkaInput extends SparkDataInput {
 	}
 
 	@Override
-	protected List<Dataset<Row>> load() {
-		Dataset<Rmap> ds = super.load().get(0).map(this::kafka, ENC_RMAP);
-		List<Dataset<Row>> r = Colls.list();
-		List<TableDesc> keys = Colls.list(tables());
-		while (!keys.isEmpty()) {
-			TableDesc tt = keys.remove(0);
-			Dataset<Row> tds;
-			if (keys.isEmpty()) tds = rmap2row(tt, ds);
-			else {
-				tds = rmap2row(tt, ds.filter(rr -> tt.name.equals(rr.table())));
-				ds = ds.filter(rr -> !tt.name.equals(rr.table())).persist();
-			}
-			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
-			r.add(tds.repartition(col(ROW_KEY_VALUE_FIELD)).alias(tt.name));
-		}
-		return r;
+	protected Dataset<Row> load() {
+		Map<String, String> opts = options();
+		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
+		DataStreamReader dr = spark.readStream();
+		String f = format();
+		if (null != f) dr = dr.format(f);
+		Dataset<Row> ds = dr.options(opts).load();
+		TableDesc t = table();
+		StructType s = build(t);
+		return ds.map(r -> map2row(kafka(r), s, t.rowkey(), Op.DEFAULT), RowEncoder.apply(build(table())));
 	}
 
 	@Override

@@ -22,11 +22,12 @@ import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.ddl.TableDesc;
+import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import net.butfly.albatis.spark.input.SparkDataInput;
 
 @Schema("mongodb")
-public class SparkMongoInput extends SparkDataInput implements SparkMongo {
+public class SparkMongoInput extends SparkInput<Rmap> implements SparkMongo {
 	private static final long serialVersionUID = 2110132305482403155L;
 
 	public SparkMongoInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
@@ -51,14 +52,15 @@ public class SparkMongoInput extends SparkDataInput implements SparkMongo {
 
 			JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, rc);
 			if (Systems.isDebug()) {
+				@SuppressWarnings("deprecation")
 				int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1")) / rdd.getNumPartitions() + 1;
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
-			dds.add(rdd.toDF()//
-					.withColumn(ROW_TABLE_NAME_FIELD, lit(t.name))//
-					.withColumn(ROW_KEY_VALUE_FIELD, col("_id.oid"))//
-					.withColumn("_id", col("_id.oid"))//
-					.alias(t.name));
+
+			Dataset<Row> d = rdd.toDF();
+			d = d.withColumn(ROW_TABLE_NAME_FIELD, lit(t.name)).withColumn(ROW_KEY_VALUE_FIELD, d.col("_id.oid")).withColumn("_id", d.col(
+					"_id.oid")).persist();
+			dds = null == dds ? d : dds.union(d);
 		}
 		return dds;
 	}
