@@ -2,7 +2,6 @@ package net.butfly.albatis.mongodb;
 
 import static net.butfly.albatis.spark.impl.Schemas.ROW_KEY_VALUE_FIELD;
 import static net.butfly.albatis.spark.impl.Schemas.ROW_TABLE_NAME_FIELD;
-import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
 
 import java.util.List;

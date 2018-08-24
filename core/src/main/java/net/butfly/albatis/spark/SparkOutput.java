@@ -1,9 +1,7 @@
 package net.butfly.albatis.spark;
 
-import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
-import static net.butfly.albatis.spark.impl.Sparks.alias;
 
 import java.util.Map;
 
@@ -50,8 +48,8 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 
 	}
 
-	public Map<String, String> options(String table) {
-		return Maps.of();
+	private final void saveRmap(String table, Dataset<Rmap> ds) {
+		save(table, rmap2row(schema(table), ds));
 	}
 
 	@Override

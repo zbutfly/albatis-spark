@@ -1,13 +1,9 @@
 package net.butfly.albatis.spark;
 
-import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
-import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.compute;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
-import static net.butfly.albatis.spark.impl.Sparks.alias;
-import static net.butfly.albatis.spark.impl.Sparks.byTable;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -65,13 +61,15 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public final List<Dataset<V>> vals() {
 		if (!vals.isEmpty()) return vals;
-		List<Dataset<V>> r = Colls.list();
-		List<Dataset<Row>> dss = rows.size() == 1 && "*".equals(alias(rows.get(0))) ? byTable(rows.get(0)) : new ArrayList<>(rows);
-		rows.clear();
-		for (Dataset<Row> d : dss) {
-			rows.add(d);
-			r.add((Dataset<V>) row2rmap(d).alias(alias(d)));
-		}
+		Map<String, Dataset<V>> r = Maps.of();
+		if (rows.containsKey("*")) {
+			Map<String, Dataset<Row>> dss = compute(rows.remove("*"));
+			for (String t : dss.keySet()) {
+				rows.put(t, dss.get(t));
+				r.put(t, (Dataset<V>) row2rmap(dss.get(t)));
+			}
+		} else for (String t : rows.keySet())
+			r.put(t, (Dataset<V>) row2rmap(rows.get(t)));
 		return r;
 
 	}
@@ -79,7 +77,18 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public final List<Dataset<Row>> rows() {
 		if (!rows.isEmpty()) return rows;
-		else return Colls.list(vals(), ds -> rmap2row(schema(alias(ds)), (Dataset<Rmap>) ds));
+		else {
+			Map<String, Dataset<V>> dss = vals();
+			Map<String, Dataset<Row>> dsr = Maps.of();
+			for (String t : dss.keySet()) {
+				Map<String, Dataset<Row>> dss1 = compute((Dataset<Rmap>) dss.get(t), schemas);
+				dss1.forEach((dt, d) -> dsr.compute(dt, (dtt, origin) -> {
+					if (null == origin) return d;
+					else return d.union(origin);
+				}));
+			}
+			return dsr;
+		}
 	}
 
 	protected final SparkInput<V> vals(Collection<Dataset<V>> vals) {

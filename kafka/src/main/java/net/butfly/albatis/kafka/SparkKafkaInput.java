@@ -1,9 +1,7 @@
 package net.butfly.albatis.kafka;
 
-import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
-import static net.butfly.albatis.spark.impl.Schemas.ROW_KEY_VALUE_FIELD;
-import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
-import static org.apache.spark.sql.functions.col;
+import static net.butfly.albatis.spark.impl.Schemas.build;
+import static net.butfly.albatis.spark.impl.Schemas.map2row;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

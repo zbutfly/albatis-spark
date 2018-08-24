@@ -4,7 +4,7 @@ import static net.butfly.albatis.spark.impl.Schemas.EXTRA_FIELDS_SCHEMA;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructField;;
+import org.apache.spark.sql.types.StructField;
 
 abstract class WriteHandlerBase<T extends WriteHandlerBase<T>> implements WriteHandler {
 	protected final Dataset<Row> ds;
