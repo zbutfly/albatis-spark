@@ -1,8 +1,9 @@
 package net.butfly.albatis.spark;
 
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.compute;
-import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
 import java.util.List;
 import java.util.Map;
@@ -35,22 +36,17 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
-		List<Dataset<Row>> ds = load();
-		if (null != ds && !ds.isEmpty()) {
-			if (Systems.isDebug()) {
-				@SuppressWarnings("deprecation")
-				int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
-				if (limit <= 0) logger().info(
-						"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
-				else ds = Colls.list(ds, d -> {
-					Dataset<Row> dd = d.limit(limit).alias(alias(d));
-					long n = dd.count();
-					logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\","//
-							+ " results count: " + n);
-					return dd;
-				});
-			}
-			rows(ds);
+		Dataset<Row> ds = load();
+		if (null != ds && Systems.isDebug()) {
+			@SuppressWarnings("deprecation")
+			int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
+			if (limit > 0) {
+				ds = ds.limit(limit);
+				long n = ds.count();
+				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\","//
+						+ " results count: " + n);
+			} else logger().info(
+					"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
 		}
 	}
 
@@ -154,10 +150,10 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
-		List<Dataset<V>> dss = vals();
-		List<Dataset<Rmap>> dss1 = Colls.list();
-		for (Dataset<V> d : dss)
-			dss1.add(d.map(r -> (Rmap) conv.apply(r), ENC_RMAP).alias(alias(d)));
+		Map<String, Dataset<V>> dss = vals();
+		Map<String, Dataset<Rmap>> dss1 = Maps.of();
+		for (String t : dss.keySet())
+			dss1.put(t, dss.get(t).map(r -> (Rmap) conv.apply(r), ENC_RMAP));
 		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
 	}
 
@@ -178,10 +174,10 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
-		List<Dataset<V>> dss = vals();
-		List<Dataset<Rmap>> dss1 = Colls.list();
-		for (Dataset<V> d : dss)
-			dss1.add(d.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP).alias(alias(d)));
+		Map<String, Dataset<V>> dss = vals();
+		Map<String, Dataset<Rmap>> dss1 = Maps.of();
+		for (String t : dss.keySet())
+			dss1.put(t, dss.get(t).flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP));
 		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
 	}
 

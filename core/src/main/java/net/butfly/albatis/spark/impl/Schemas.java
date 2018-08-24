@@ -1,6 +1,5 @@
 package net.butfly.albatis.spark.impl;
 
-import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
 import static org.apache.spark.sql.functions.col;
 
 import java.io.ByteArrayInputStream;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
@@ -31,6 +31,7 @@ import net.butfly.albatis.io.Rmap.Op;
 
 public interface Schemas {
 	static final Logger logger = Logger.getLogger(Schemas.class);
+	static final Encoder<Rmap> ENC_RMAP = Encoders.kryo(Rmap.class);
 
 	static StructField build(FieldDesc f) {
 		return new StructField(f.name, Sparks.fieldType(f.type), true, Metadata.empty());

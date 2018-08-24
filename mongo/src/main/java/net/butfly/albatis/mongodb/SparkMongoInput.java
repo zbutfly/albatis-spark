@@ -11,6 +11,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.bson.Document;
 
 import com.mongodb.spark.MongoSpark;
@@ -59,9 +60,29 @@ public class SparkMongoInput extends SparkInput<Rmap> implements SparkMongo {
 
 			Dataset<Row> d = rdd.toDF();
 			d = d.withColumn(ROW_TABLE_NAME_FIELD, lit(t.name)).withColumn(ROW_KEY_VALUE_FIELD, d.col("_id.oid")).withColumn("_id", d.col(
-					"_id.oid")).persist();
+					"_id.oid"));
+			long total = d.count();
+			@SuppressWarnings("deprecation")
+			int split = Integer.parseInt(Configs.gets("albatis.spark.split", "100000"));
+			if (split > 0 && total > split) {
+				Dataset<Row>[] dss = d.randomSplit(calcSplitWeights(total, split));
+			}
+			logger().info("Mongodb table [] loaded, count [" + total
+					+ "] for confirming load data into spark since mongodb cursor will timeout on computing.");
+			d = d.persist(StorageLevel.OFF_HEAP());
 			dds = null == dds ? d : dds.union(d);
 		}
 		return dds;
+	}
+
+	private static double[] calcSplitWeights(long total, int split) {
+		int count = 1;
+		for (long curr = total; curr > split; curr = curr / 2)
+			count++;
+		double[] weights = new double[count];
+		double w = 1.0 / count;
+		for (int i = 0; i < count; i++)
+			weights[i] = w;
+		return weights;
 	}
 }

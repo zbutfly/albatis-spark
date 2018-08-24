@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark;
 
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
@@ -68,8 +69,8 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			@Override
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
-				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP).alias(alias(ds0));
-				saver(ds);
+				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP);
+				saveRmap(table, ds);
 			}
 		};
 	}
@@ -83,8 +84,8 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
-						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP).alias(alias(ds0));
-				saver(ds);
+						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP);
+				saveRmap(table, ds);
 			}
 		};
 	}
@@ -105,8 +106,8 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
-						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP).alias(alias(ds0));
-				saver(ds);
+						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP);
+				saveRmap(table, ds);
 			}
 		};
 	}

@@ -17,59 +17,24 @@ import static net.butfly.albatis.ddl.vals.ValType.Flags.UNKNOWN;
 import static net.butfly.albatis.ddl.vals.ValType.Flags.VOID;
 
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 
-import com.google.common.base.Supplier;
-
-import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.ddl.vals.ValType;
-import net.butfly.albatis.io.Rmap;
-import scala.Function0;
-import scala.collection.JavaConversions;
-import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
 public interface Sparks {
 	static final Logger logger = Logger.getLogger(Sparks.class);
-	@SuppressWarnings("rawtypes")
-	static final Encoder<Map> ENC_MAP = Encoders.kryo(Map.class);
-	static final Encoder<Rmap> ENC_RMAP = Encoders.kryo(Rmap.class);
-
-	static String defaultColl(URISpec u) {
-		String file = u.getFile();
-		String[] path = u.getPaths();
-		String tbl = null;
-		if (path.length > 0) tbl = file;
-		return tbl;
-	};
-
-	static Map<String, Object> rowMap(Row row) {
-		Seq<String> seq = JavaConverters.asScalaIteratorConverter(Arrays.asList(row.schema().fieldNames()).iterator()).asScala().toSeq();
-		Map<String, Object> map = JavaConversions.mapAsJavaMap(row.getValuesMap(seq));
-		String t = (String) map.remove("___table");
-		if (null != t) return new Rmap(t, map);
-		else return map;
-	}
-
-	static Rmap rmap(String table, Row row) {
-		return new Rmap(table, Sparks.rowMap(row));
-	}
-
-	static DataType classType(Object v) {
-		return classType(null == v ? Void.class : v.getClass());
-	}
 
 	@SuppressWarnings("deprecation")
 	static DataType fieldType(ValType t) {
@@ -179,42 +144,20 @@ public interface Sparks {
 		return scala.collection.JavaConversions.asScalaBuffer(javaList);
 	}
 
-	
-
-	public static Dataset<Row> union(Iterator<Dataset<Row>> ds) {
+	public static <T> Dataset<T> union(Iterator<Dataset<T>> ds) {
 		if (!ds.hasNext()) return null;
-		Dataset<Row> d = ds.next();
+		Dataset<T> d = ds.next();
 		while (ds.hasNext())
 			d = d.union(ds.next());
 		return d;
 	}
 
-	public static Dataset<Row> union(Iterable<Dataset<Row>> ds) {
+	public static <T> Dataset<T> union(Iterable<Dataset<T>> ds) {
 		return union(ds.iterator());
 	}
 
 	public static String alias(Dataset<?> ds) {
 		LogicalPlan p = ds.logicalPlan();
 		return p instanceof SubqueryAlias ? ((SubqueryAlias) p).alias() : null;
-	}
-
-	static List<Dataset<Row>> byTable(Dataset<Row> ds) {
-		List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
-				.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
-		List<Dataset<Row>> r = Colls.list();
-		keys = new ArrayList<>(keys);
-		while (!keys.isEmpty()) {
-			String t = keys.remove(0);
-			Dataset<Row> tds;
-			if (keys.isEmpty()) tds = ds;
-			else {
-				tds = ds.filter(col(ROW_TABLE_NAME_FIELD).equalTo(t));
-				ds = ds.filter(col(ROW_TABLE_NAME_FIELD).notEqual(t)).persist();
-			}
-			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
-			logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
-			r.add(tds.repartition(col(ROW_KEY_VALUE_FIELD)).alias(t));
-		}
-		return r;
 	}
 }

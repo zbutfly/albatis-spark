@@ -54,7 +54,7 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 		try (WriteHandler w = WriteHandler.of(ds)) {
 			w.save(format(), options(alias(ds)));
 		} finally {
-			logger().trace(() -> "Table split [" + ds.count() + " rows] saved in " + (System.currentTimeMillis() - n) + " ms.");
+			logger().info("Table [" + t + ": " + ds.toString() + "] saved in " + (System.currentTimeMillis() - n) + " ms.");
 		}
 	}
 

@@ -1,6 +1,6 @@
 package net.butfly.albatis.spark.util;
 
-import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.build;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
