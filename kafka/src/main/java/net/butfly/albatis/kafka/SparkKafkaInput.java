@@ -1,7 +1,6 @@
 package net.butfly.albatis.kafka;
 
-import static net.butfly.albatis.spark.impl.Schemas.build;
-import static net.butfly.albatis.spark.impl.Schemas.map2row;
+import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,9 +10,7 @@ import java.util.Map;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.DataStreamReader;
-import org.apache.spark.sql.types.StructType;
 
 import com.hzcominfo.albatis.nosql.Connection;
 
@@ -24,9 +21,8 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
-import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.SparkMapInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-
 /**
  * <pre>
  *|-- key: binary (nullable = true)
@@ -39,7 +35,7 @@ import net.butfly.albatis.spark.impl.SparkIO.Schema;
  * </pre>
  */
 @Schema("kafka")
-public class SparkKafkaInput extends SparkInput<Rmap> {
+public class SparkKafkaInput extends SparkMapInput {
 	private static final long serialVersionUID = 9003837433163351306L;
 	private final Function<byte[], Map<String, Object>> conv;
 
@@ -49,16 +45,16 @@ public class SparkKafkaInput extends SparkInput<Rmap> {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
+	protected Dataset<Rmap> load() {
 		Map<String, String> opts = options();
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
 		DataStreamReader dr = spark.readStream();
 		String f = format();
 		if (null != f) dr = dr.format(f);
 		Dataset<Row> ds = dr.options(opts).load();
-		TableDesc t = table();
-		StructType s = build(t);
-		return ds.map(r -> map2row(kafka(r), s, t.rowkey(), Op.DEFAULT), RowEncoder.apply(build(table())));
+		// TableDesc t = table();
+		// StructType s = build(t);
+		return ds.map(r -> kafka(r), ENC_RMAP);
 	}
 
 	@Override

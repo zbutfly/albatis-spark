@@ -27,7 +27,7 @@ import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.impl.SparkIO;
-import net.butfly.albatis.spark.impl.SparkInputWrapper;
+import net.butfly.albatis.spark.impl.SparkThenInput;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
@@ -36,18 +36,28 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
-		Dataset<Row> ds = load();
-		if (null != ds && Systems.isDebug()) {
-			@SuppressWarnings("deprecation")
-			int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
-			if (limit > 0) {
-				ds = ds.limit(limit);
-				long n = ds.count();
-				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\","//
-						+ " results count: " + n);
-			} else logger().info(
-					"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
+		switch (mode()) {
+		case RMAP:
+			vals(Maps.of("*", limit(load())));
+			return;
+		case ROW:
+			rows(Maps.of("*", limit(load())));
+			return;
+		default:
 		}
+	}
+
+	/**
+	 * @return Dataset of Rmap or Row, based on data source type (fix schema db like mongodb, or schemaless data like kafka)
+	 */
+	protected abstract <T> Dataset<T> load();
+
+	public enum DatasetMode {
+		NONE, RMAP, ROW
+	}
+
+	protected DatasetMode mode() {
+		return DatasetMode.NONE;
 	}
 
 	public Map<String, String> options() {
@@ -93,9 +103,8 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		return this;
 	}
 
-	protected final SparkInput<V> rows(Collection<Dataset<Row>> rows) {
-		this.rows.clear();
-		this.rows.addAll(rows);
+	protected final SparkInput<V> rows(Map<String, Dataset<Row>> rows) {
+		this.rows.putAll(rows);
 		this.vals.clear();
 		return this;
 	}
@@ -119,8 +128,6 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		// else each(dataset, r -> using.accept(Sdream.of1(r)));
 	}
 
-	protected abstract List<Dataset<Row>> load();
-
 	@Override
 	public void close() {
 		OddInput.super.close();
@@ -131,11 +138,11 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public SparkInput<V> filter(Predicate<V> predicater) {
-		List<Dataset<V>> dss = vals();
-		List<Dataset<Rmap>> dss1 = Colls.list();
-		for (Dataset<V> d : dss)
-			dss1.add((Dataset<Rmap>) d.filter(predicater::test).alias(alias(d)));
-		return (SparkInput<V>) new SparkInputWrapper(this, dss1);
+		Map<String, Dataset<V>> dss = vals();
+		Map<String, Dataset<Rmap>> dss1 = Maps.of();
+		for (String t : dss.keySet())
+			dss1.put(t, (Dataset<Rmap>) dss.get(t).filter(predicater::test));
+		return (SparkInput<V>) new SparkThenInput(this, dss1);
 	}
 
 	@Override
@@ -154,7 +161,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		Map<String, Dataset<Rmap>> dss1 = Maps.of();
 		for (String t : dss.keySet())
 			dss1.put(t, dss.get(t).map(r -> (Rmap) conv.apply(r), ENC_RMAP));
-		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
+		return (SparkInput<V1>) new SparkThenInput(this, dss1);
 	}
 
 	@Override
@@ -178,7 +185,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		Map<String, Dataset<Rmap>> dss1 = Maps.of();
 		for (String t : dss.keySet())
 			dss1.put(t, dss.get(t).flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP));
-		return (SparkInput<V1>) new SparkInputWrapper(this, dss1);
+		return (SparkInput<V1>) new SparkThenInput(this, dss1);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -197,5 +204,20 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		int f = super.features();
 		// if (vals().isStreaming()) f |= IO.Feature.STREAMING;
 		return f;
+	}
+
+	private <T> Dataset<T> limit(Dataset<T> ds) {
+		if (null != ds && Systems.isDebug()) {
+			@SuppressWarnings("deprecation")
+			int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
+			if (limit > 0) {
+				ds = ds.limit(limit);
+				long n = ds.count();
+				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\","//
+						+ " results count: " + n);
+			} else logger().info(
+					"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
+		}
+		return ds;
 	}
 }

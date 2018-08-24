@@ -10,12 +10,11 @@ import org.apache.spark.sql.SparkSession;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
-import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 
 @Schema({ "es", "elasticsearch" })
-public class SparkESInput extends SparkInput<Rmap> {
+public class SparkESInput extends SparkRowInput {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
 
