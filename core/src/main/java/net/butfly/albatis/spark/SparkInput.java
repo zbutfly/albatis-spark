@@ -59,29 +59,38 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final List<Dataset<V>> vals() {
-		if (!vals.isEmpty()) return vals;
-		Map<String, Dataset<V>> r = Maps.of();
-		if (rows.containsKey("*")) {
-			Map<String, Dataset<Row>> dss = compute(rows.remove("*"));
-			for (String t : dss.keySet()) {
-				rows.put(t, dss.get(t));
-				r.put(t, (Dataset<V>) row2rmap(dss.get(t)));
-			}
-		} else for (String t : rows.keySet())
-			r.put(t, (Dataset<V>) row2rmap(rows.get(t)));
-		return r;
+	public final Map<String, Dataset<V>> vals() {
+		if (vals.isEmpty()) {
+			Map<String, Dataset<V>> r = Maps.of();
+			for (String t : rows.keySet())
+				r.put(t, (Dataset<V>) row2rmap(rows.get(t)));
+			vals(r);
+		}
+		return vals;
 
 	}
 
 	@SuppressWarnings("unchecked")
-	public final List<Dataset<Row>> rows() {
+	public final Map<String, Dataset<Row>> rows() {
+		if (rows.isEmpty()) {
+			Map<String, Dataset<Row>> dsr = Maps.of();
+			for (String t : vals.keySet()) {
+				Dataset<Row> ds = rmap2row(schema(t), (Dataset<Rmap>) vals.get(t));
+				dsr.put(t, ds);
+			}
+			rows(dsr);
+		}
+		return rows;
+	}
+
+	@SuppressWarnings("unchecked")
+	public final Map<String, Dataset<Row>> rowsOut(Output<Rmap> output) {
 		if (!rows.isEmpty()) return rows;
 		else {
 			Map<String, Dataset<V>> dss = vals();
 			Map<String, Dataset<Row>> dsr = Maps.of();
 			for (String t : dss.keySet()) {
-				Map<String, Dataset<Row>> dss1 = compute((Dataset<Rmap>) dss.get(t), schemas);
+				Map<String, Dataset<Row>> dss1 = compute((Dataset<Rmap>) dss.get(t), output);
 				dss1.forEach((dt, d) -> dsr.compute(dt, (dtt, origin) -> {
 					if (null == origin) return d;
 					else return d.union(origin);

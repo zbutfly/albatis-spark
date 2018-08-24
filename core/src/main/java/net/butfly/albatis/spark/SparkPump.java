@@ -26,7 +26,7 @@ class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 		output.open();
 		input.open();
 		Pump.super.open();
-		input.vals().forEach(output::saver);
+		input.rowsOut(output).forEach(output::save);
 		close();
 	}
 

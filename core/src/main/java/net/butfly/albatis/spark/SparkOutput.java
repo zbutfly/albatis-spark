@@ -46,10 +46,12 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		}
 		save(rmap2row(td, rs).alias(td.name));
 
-	}
-
 	private final void saveRmap(String table, Dataset<Rmap> ds) {
 		save(table, rmap2row(schema(table), ds));
+	}
+
+	public Map<String, String> options(String table) {
+		return Maps.of();
 	}
 
 	@Override

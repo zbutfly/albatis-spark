@@ -2,8 +2,6 @@ package net.butfly.albatis.spark.impl;
 
 import static net.butfly.albatis.spark.impl.Sparks.ENC_RMAP;
 import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.count;
-import static org.apache.spark.sql.functions.lit;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -27,11 +25,13 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.ddl.TableDesc;
+import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Rmap.Op;
 
 public interface Schemas {
 	static final Logger logger = Logger.getLogger(Schemas.class);
+
 	static StructField build(FieldDesc f) {
 		return new StructField(f.name, Sparks.fieldType(f.type), true, Metadata.empty());
 	}
@@ -117,9 +117,15 @@ public interface Schemas {
 		return new GenericRowWithSchema(vs, s);
 	}
 
+	@Deprecated
 	static Map<String, Dataset<Row>> compute(Dataset<Row> ds) {
-		List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
-				.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
+		// List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
+		// .map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
+
+		List<String> keys = ds.dropDuplicates(ROW_TABLE_NAME_FIELD)//
+				.select(ROW_TABLE_NAME_FIELD)//
+				.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING())//
+				.collectAsList();
 		Map<String, Dataset<Row>> r = Maps.of();
 		keys = new ArrayList<>(keys);
 		while (!keys.isEmpty()) {
@@ -137,20 +143,14 @@ public interface Schemas {
 		return r;
 	}
 
-	static Map<String, Dataset<Row>> compute(Dataset<Rmap> ds, Map<String, TableDesc> schemas) {
-		if (schemas.isEmpty()) throw new UnsupportedOperationException("Non-schema output does not support row operator.");
-		TableDesc first = schemas.values().iterator().next();
+	static Map<String, Dataset<Row>> compute(Dataset<Rmap> ds, Output<Rmap> output) {
 		Map<String, Dataset<Row>> r = Maps.of();
+		// List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
 		List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
 		keys = new ArrayList<>(keys);
 		while (!keys.isEmpty()) {
 			String t = keys.remove(0);
-			TableDesc tt = schemas.get(t);
-			if (null == tt) { // expr table
-				logger.warn("Table [" + t + "] not found in schemas, using first: " + first.toString() + " and register it.");
-				tt = first;
-				schemas.put(t, tt);
-			}
+			TableDesc tt = output.schema(t);
 			Dataset<Row> tds;
 			if (keys.isEmpty()) tds = rmap2row(tt, ds);
 			else {
