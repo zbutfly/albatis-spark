@@ -52,17 +52,6 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		}
 		save(rmap2row(td, rs).alias(td.name));
 
-	private final void saveRmap(String table, Dataset<Rmap> ds) {
-		save(table, rmap2row(schema(table), ds));
-	}
-
-	final Map<String, Dataset<Row>> compute(Map<String, Dataset<Rmap>> vals) {
-		Map<String, Dataset<Row>> rs = Maps.of();
-		vals.forEach((t, vs) -> compute(vs).forEach(//
-				(dt, d) -> rs.compute(dt, (dtt, origin) -> null == origin ? d : d.union(origin))));
-		return rs;
-	}
-
 	public Map<String, String> options(String table) {
 		return Maps.of();
 	}
@@ -82,7 +71,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP);
-				saveRmap(table, ds);
+				save(table, rmap2row(schema(table), ds));
 			}
 		};
 	}
@@ -97,7 +86,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
 						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP);
-				saveRmap(table, ds);
+				save(table, rmap2row(schema(table), ds));
 			}
 		};
 	}
@@ -119,9 +108,16 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
 						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP);
-				saveRmap(table, ds);
+				save(table, rmap2row(schema(table), ds));
 			}
 		};
+	}
+
+	final Map<String, Dataset<Row>> compute(Map<String, Dataset<Rmap>> vals) {
+		Map<String, Dataset<Row>> rs = Maps.of();
+		vals.forEach((t, vs) -> compute(vs).forEach(//
+				(dt, d) -> rs.compute(dt, (dtt, origin) -> null == origin ? d : d.union(origin))));
+		return rs;
 	}
 
 	private Map<String, Dataset<Row>> compute(Dataset<Rmap> ds) {

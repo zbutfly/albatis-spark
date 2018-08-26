@@ -51,10 +51,12 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 
 	protected void write(Dataset<Row> ds) {
 		long n = System.currentTimeMillis();
+		Map<String, String> opts = options(t);
 		try (WriteHandler w = WriteHandler.of(ds)) {
-			w.save(format(), options(alias(ds)));
+			w.save(format(), opts);
 		} finally {
-			logger().info("Table [" + t + ": " + ds.toString() + "] saved in " + (System.currentTimeMillis() - n) + " ms.");
+			logger().info("Table [" + t + ": " + ds.toString() + "] saved [" + opts.get("path") + "] in " + (System.currentTimeMillis() - n)
+					+ " ms.");
 		}
 	}
 

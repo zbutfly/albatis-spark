@@ -26,17 +26,19 @@ public abstract class SparkRowInput extends SparkInput<Row> {
 
 	protected double[] calcSplitWeights(long total) {
 		@SuppressWarnings("deprecation")
-		int split = Integer.parseInt(Configs.gets("albatis.spark.split", "-1"));
-		if (split > 0 && total > split) {
-			int count = 1;
-			for (long curr = total; curr > split; curr = curr / 2)
-				count *= 2;
-			double[] weights = new double[count];
-			double w = 1.0 / count;
-			for (int i = 0; i < count; i++)
-				weights[i] = w;
-			logger().info("Dataset too large [size: " + total + "], split into [" + count + "].");
-			return weights;
-		} else return new double[] { 1 };
+		int split = Integer.parseInt(Configs.gets("albatis.spark.split", "-1")), count = 1;
+		try {
+			if (split > 0 && total > split) {
+				for (long curr = total; curr > split; curr = curr / 2)
+					count *= 2;
+				double[] weights = new double[count];
+				double w = 1.0 / count;
+				for (int i = 0; i < count; i++)
+					weights[i] = w;
+				return weights;
+			} else return new double[] { 1 };
+		} finally {
+			logger().info("Dataset [size: " + total + "], split into [" + count + "].");
+		}
 	}
 }
