@@ -12,19 +12,20 @@ import net.butfly.albatis.io.IO;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Wrapper;
 import net.butfly.albatis.spark.SparkInput;
+import scala.Tuple2;
 
 public final class SparkThenInput extends SparkInput<Rmap> implements Wrapper<SparkInput<Rmap>> {
 	private static final long serialVersionUID = 5957738224117308018L;
 	private final SparkInput<?> base;
 
-	public SparkThenInput(SparkInput<?> s, Map<String, Dataset<Rmap>> ds) {
+	public SparkThenInput(SparkInput<?> s, List<Tuple2<String, Dataset<Rmap>>> ds) {
 		super(s.spark, s.targetUri);
 		this.base = s;
-		vals(ds);
+		ds.forEach(t -> vals(t._1, t._2));
 	}
 
 	@Override
-	protected <T> Dataset<T> load() {
+	protected <T> List<Tuple2<String, Dataset<T>>> load() {
 		return null;
 	}
 

@@ -23,6 +23,8 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.kafka.config.KafkaZkParser;
 import net.butfly.albatis.spark.SparkMapInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import scala.Tuple2;
+
 /**
  * <pre>
  *|-- key: binary (nullable = true)
@@ -45,7 +47,7 @@ public class SparkKafkaInput extends SparkMapInput {
 	}
 
 	@Override
-	protected Dataset<Rmap> load() {
+	protected List<Tuple2<String, Dataset<Rmap>>> load() {
 		Map<String, String> opts = options();
 		logger().info("Spark input [" + getClass().toString() + "] constructing: " + opts.toString());
 		DataStreamReader dr = spark.readStream();
@@ -54,7 +56,7 @@ public class SparkKafkaInput extends SparkMapInput {
 		Dataset<Row> ds = dr.options(opts).load();
 		// TableDesc t = table();
 		// StructType s = build(t);
-		return ds.map(r -> kafka(r), ENC_RMAP);
+		return Colls.list(new Tuple2<>("*", ds.map(r -> kafka(r), ENC_RMAP)));
 	}
 
 	@Override

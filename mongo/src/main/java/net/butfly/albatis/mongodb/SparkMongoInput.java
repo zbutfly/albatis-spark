@@ -2,6 +2,7 @@ package net.butfly.albatis.mongodb;
 
 import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
 import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_NAME;
+import static net.butfly.albatis.spark.impl.Sparks.calcSplitWeights;
 import static org.apache.spark.sql.functions.lit;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import scala.Tuple2;
 
 @Schema("mongodb")
 public class SparkMongoInput extends SparkRowInput implements SparkMongo {
@@ -42,10 +44,9 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	}
 
 	@Override
-	protected List<Dataset<Row>> load() {
+	protected List<Tuple2<String, Dataset<Row>>> load() {
 		JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
-		List<Dataset<Row>> dds = Colls.list();
-		for (TableDesc t : schemaAll().values()) {
+		List<List<Tuple2<String, Dataset<Row>>>> l = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> opts = options();
 			opts.put("collection", t.name);
 			ReadConfig rc = ReadConfig.create(opts);
@@ -60,13 +61,8 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 			Dataset<Row> d = rdd.toDF();
 			d = d.withColumn(FIELD_TABLE_NAME, lit(t.name)).withColumn(FIELD_KEY_VALUE, d.col("_id.oid")).withColumn("_id", d.col(
 					"_id.oid"));
-			double[] w = calcSplitWeights(d.count());
-			// if (w.length > 1)
-			// Dataset<Row>[] dss = d.randomSplit(w);
-
-			d = d.persist(StorageLevel.OFF_HEAP());
-			dds = null == dds ? d : dds.union(d);
-		}
-		return dds;
+			return Colls.list(calcSplitWeights(d), ds -> new Tuple2<>(t.name, ds.persist(StorageLevel.OFF_HEAP())));
+		});
+		return Colls.flat(l);
 	}
 }

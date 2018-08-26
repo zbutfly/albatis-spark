@@ -35,6 +35,7 @@ import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Rmap.Op;
+import scala.Tuple2;
 
 public interface Schemas {
 	static final Logger logger = Logger.getLogger(Schemas.class);
@@ -111,11 +112,11 @@ public interface Schemas {
 	}
 
 	@Deprecated
-	static Map<String, Dataset<Row>> compute(Dataset<Row> ds) {
+	static List<Tuple2<String, Dataset<Row>>> compute(Dataset<Row> ds) {
 		List<String> keys = ds.dropDuplicates(FIELD_TABLE_NAME).select(FIELD_TABLE_NAME)//
 				.map(r -> r.getAs(FIELD_TABLE_NAME), Encoders.STRING())//
 				.collectAsList();
-		Map<String, Dataset<Row>> r = Maps.of();
+		List<Tuple2<String, Dataset<Row>>> r = Colls.list();
 		keys = new ArrayList<>(keys);
 		while (!keys.isEmpty()) {
 			String t = keys.remove(0);
@@ -126,7 +127,7 @@ public interface Schemas {
 				ds = ds.filter(col(FIELD_TABLE_NAME).notEqual(t));
 			}
 			logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
-			r.put(t, tds.repartition(col(FIELD_KEY_VALUE)));
+			r.add(new Tuple2<>(t, tds.repartition(col(FIELD_KEY_VALUE))));
 		}
 		return r;
 	}

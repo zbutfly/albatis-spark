@@ -1,8 +1,5 @@
 package net.butfly.albatis.spark.plugin;
 
-import static net.butfly.albatis.spark.impl.Sparks.alias;
-import static org.apache.spark.sql.functions.col;
-
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +8,7 @@ import org.apache.spark.sql.Row;
 
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.impl.Sparks;
+import scala.Tuple2;
 
 public class SparkCollisionPluginInput extends SparkPluginInput {
 	private static final long serialVersionUID = -8270271411455957886L;
@@ -32,12 +29,12 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	}
 
 	@Override
-	protected List<Dataset<Row>> load() {
-		List<Dataset<Row>> dss = super.load();
-		List<Dataset<Row>> dss1 = Colls.list();
-		cInputs.forEach((in, key) -> dss.forEach(ds -> dss1.add(//
-				ds.join(Sparks.union(in.rows()), ds.col(PLUGIN_KEY).equalTo(col(key)), "inner").alias(alias(ds)))));
-		return dss;
+	protected List<Tuple2<String, Dataset<Row>>> load() {
+		List<List<List<Tuple2<String, Dataset<Row>>>>> l = Colls.list(super.load(), //
+				t -> Colls.list(cInputs.entrySet(), e -> Colls.list(e.getKey().rows(), //
+						t1 -> new Tuple2<>(t._1 + "*" + t1._1, //
+								t._2.join(t1._2, t._2.col(PLUGIN_KEY).equalTo(t1._2.col(e.getValue())), "inner")))));
+		return Colls.flat(Colls.flat(l));
 	}
 
 	@Override

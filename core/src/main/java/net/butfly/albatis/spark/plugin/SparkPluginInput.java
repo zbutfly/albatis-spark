@@ -10,8 +10,10 @@ import java.util.List;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.spark.SparkInput;
+import scala.Tuple2;
 
 public class SparkPluginInput extends SparkInput<Row> {
 	private static final long serialVersionUID = -3514105763334222049L;
@@ -33,13 +35,12 @@ public class SparkPluginInput extends SparkInput<Row> {
 		super.open();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	protected List<Dataset<Row>> load() {
+	protected List<Tuple2<String, Dataset<Row>>> load() {
 		String maxScore = pc.getMaxScore();
-		List<Dataset<Row>> dss = Colls.list();
-		pc.getKeys().forEach(k -> input.rows().forEach(d -> dss.add(//
-				d.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE)).alias(alias(d)))));
-		return dss;
+		return Colls.flat(Colls.list(pc.getKeys(), (Function<String, List<Tuple2<String, Dataset<Row>>>>) k -> Colls.list(input.rows(),
+				t -> new Tuple2<>(t._1, t._2.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))))));
 	}
 
 	@Override

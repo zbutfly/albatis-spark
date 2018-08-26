@@ -1,11 +1,14 @@
 package net.butfly.albatis.spark;
 
+import java.util.List;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
+import scala.Tuple2;
 
 public abstract class SparkMapInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = -2144747945365613002L;
@@ -16,7 +19,7 @@ public abstract class SparkMapInput extends SparkInput<Rmap> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected abstract Dataset<Rmap> load();
+	protected abstract List<Tuple2<String, Dataset<Rmap>>> load();
 
 	@Override
 	protected final DatasetMode mode() {

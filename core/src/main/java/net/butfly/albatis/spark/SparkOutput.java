@@ -1,9 +1,9 @@
 package net.butfly.albatis.spark;
 
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
-import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
 import static org.apache.spark.sql.functions.col;
 
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ import org.apache.spark.sql.SparkSession;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.paral.Sdream;
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
@@ -114,31 +115,27 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		};
 	}
 
-	final Map<String, Dataset<Row>> compute(Map<String, Dataset<Rmap>> vals) {
-		Map<String, Dataset<Row>> rs = Maps.of();
-		vals.forEach((t, vs) -> compute(vs).forEach(//
-				(dt, d) -> rs.compute(dt, (dtt, origin) -> null == origin ? d : d.union(origin))));
-		return rs;
-	}
-
-	private Map<String, Dataset<Row>> compute(Dataset<Rmap> ds) {
-		Map<String, Dataset<Row>> r = Maps.of();
-		List<Tuple2<String, String>> keys = ds.groupByKey(rr -> new Tuple2<>(rr.table(), rr.tableExpr()), //
-				Encoders.tuple(Encoders.STRING(), Encoders.STRING())).keys().collectAsList();
-		keys = new ArrayList<>(keys);
-		while (!keys.isEmpty()) {
-			Tuple2<String, String> t = keys.remove(0);
-			TableDesc tt = schema(t._1);
-			if (null == tt) tt = schema(t._2);
-			if (null == tt) throw new RuntimeException("Table definition [" + t + "] not found in schema");
-			Dataset<Row> tds;
-			if (keys.isEmpty()) tds = rmap2row(tt, ds);
-			else {
-				tds = rmap2row(tt, ds.filter(rr -> t._1.equals(rr.table())));
-				ds = ds.filter(rr -> !t._1.equals(rr.table()));
+	final List<Tuple2<String, Dataset<Row>>> compute(List<Tuple2<String, Dataset<Rmap>>> vals) {
+		return Colls.flat(Colls.list(vals, t -> {
+			Dataset<Rmap> ds = t._2;
+			List<Tuple2<String, Dataset<Row>>> r = Colls.list();
+			List<Tuple2<String, String>> keys = ds.groupByKey(rr -> new Tuple2<>(rr.table(), rr.tableExpr()), //
+					Encoders.tuple(Encoders.STRING(), Encoders.STRING())).keys().collectAsList();
+			keys = new ArrayList<>(keys);
+			while (!keys.isEmpty()) {
+				Tuple2<String, String> tn = keys.remove(0);
+				TableDesc td = schema(tn._1);
+				if (null == td) td = schema(tn._2);
+				if (null == td) throw new RuntimeException("Table definition [" + tn + "] not found in schema");
+				Dataset<Row> tds;
+				if (keys.isEmpty()) tds = rmap2row(td, ds);
+				else {
+					tds = rmap2row(td, ds.filter(rr -> tn._1.equals(rr.table())));
+					ds = ds.filter(rr -> !tn._1.equals(rr.table()));
+				}
+				r.add(new Tuple2<>(tn._1, tds.repartition(col(FIELD_KEY_VALUE))));
 			}
-			r.put(t._1, tds.repartition(col(FIELD_KEY_VALUE)));
-		}
-		return r;
+			return r;
+		}));
 	}
 }

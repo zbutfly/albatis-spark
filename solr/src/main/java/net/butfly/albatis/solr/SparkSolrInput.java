@@ -1,5 +1,6 @@
 package net.butfly.albatis.solr;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
@@ -11,6 +12,7 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import scala.Tuple2;
 
 @Schema("solr")
 public class SparkSolrInput extends SparkRowInput {
@@ -37,7 +39,7 @@ public class SparkSolrInput extends SparkRowInput {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
+	protected List<Tuple2<String, Dataset<Row>>> load() {
 		// TODO Auto-generated method stub
 		return null;
 	}

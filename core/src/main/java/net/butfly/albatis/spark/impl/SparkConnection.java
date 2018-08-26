@@ -126,16 +126,16 @@ public class SparkConnection implements EnvironmentConnection {
 		return (I) SparkIO.input(spark, uri, table);
 	}
 
-	public <V> SparkJoinInput innerJoin(SparkInput<Rmap> input, String col, Map<SparkInput<?>, String> joinInputs) {
-		return new SparkInnerJoinInput(input, col, joinInputs);
+	public <V> SparkJoinInput innerJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
+		return new SparkInnerJoinInput(input, col, joined, joinedCol);
 	}
 
-	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, Map<SparkInput<?>, String> joinInputs) {
-		return new SparkOrJoinInput(input, col, joinInputs);
+	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
+		return new SparkOrJoinInput(input, col, joined, joinedCol);
 	}
 
-	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, Map<SparkInput<?>, String> joinInputs) {
-		return new SparkNonJoinInput(input, col, joinInputs);
+	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
+		return new SparkNonJoinInput(input, col, joined, joinedCol);
 	}
 
 	@SuppressWarnings("unchecked")

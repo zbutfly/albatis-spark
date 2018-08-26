@@ -1,6 +1,7 @@
 package net.butfly.albatis.elastic;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
@@ -12,6 +13,7 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import scala.Tuple2;
 
 @Schema({ "es", "elasticsearch" })
 public class SparkESInput extends SparkRowInput {
@@ -39,7 +41,7 @@ public class SparkESInput extends SparkRowInput {
 	}
 
 	@Override
-	protected Dataset<Row> load() {
+	protected List<Tuple2<String, Dataset<Row>>> load() {
 		return null;
 	}
 }

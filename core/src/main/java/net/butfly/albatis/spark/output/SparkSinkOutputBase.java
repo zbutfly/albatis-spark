@@ -66,7 +66,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 		@Override
 		public void addBatch(long batchId, Dataset<Row> batch) {
 			logger.debug("Sink [" + batchId + ", streaming: " + batch.isStreaming() + "] started.");
-			long t = System.currentTimeMillis();
+			long start = System.currentTimeMillis();
 
 			// XXX: Fxxk spark streaming, the streaming dataset in batch can and can only be collected!
 			List<Row> rows = batch.collectAsList();
@@ -76,14 +76,15 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 			if (rows.isEmpty()) return;
 			Dataset<Row> ds = batch.sparkSession().createDataset(rows, RowEncoder.apply(batch.schema()));
 			// XXX: now the batch is frame, not streaming.
-			compute(ds).forEach((tt, d) -> {
-				try (WriteHandler w = WriteHandler.of(ds);) {
-					w.save(tt, output);
+			compute(ds).forEach(t -> {
+				try (WriteHandler w = WriteHandler.of(t._2);) {
+					w.save(t._1, output);
 				}
 			});
-			long tt = System.currentTimeMillis() - t;
-			time.add(tt);
-			logger.debug("Sink[" + batchId + "] finished in: " + tt + " ms, avg: " + acc.value() / (time.value() / 1000.0) + " input/s.");
+			long spent = System.currentTimeMillis() - start;
+			time.add(spent);
+			logger.debug("Sink[" + batchId + "] finished in: " + spent + " ms, "//
+					+ "avg: " + acc.value() / (time.value() / 1000.0) + " input/s.");
 		}
 
 	}

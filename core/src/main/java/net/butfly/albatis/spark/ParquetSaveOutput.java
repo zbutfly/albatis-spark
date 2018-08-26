@@ -28,8 +28,8 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 		String[] schemas = targetUri.getScheme().split(":");
 		if (schemas.length > 1) format = schemas[1];
 		else format = "parquet";
-
 		root = path();
+		System.setProperty("albatis.spark.split", "-1");// not support split, target path could not be write twice.
 	}
 
 	@Override

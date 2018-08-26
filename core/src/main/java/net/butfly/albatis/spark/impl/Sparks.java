@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 
+import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
@@ -165,5 +166,24 @@ public interface Sparks {
 	public static String alias(Dataset<?> ds) {
 		LogicalPlan p = ds.logicalPlan();
 		return p instanceof SubqueryAlias ? ((SubqueryAlias) p).alias() : null;
+	}
+
+	static <T> List<Dataset<T>> calcSplitWeights(Dataset<T> ds) {
+		@SuppressWarnings("deprecation")
+		int split = Integer.parseInt(Configs.gets("albatis.spark.split", "-1")), count = 1;
+		if (split <= 0) return Colls.list(ds);
+		long total = ds.count();
+		if (total > split) return Colls.list(ds);
+		try {
+			for (long curr = total; curr > split; curr = curr / 2)
+				count *= 2;
+			double[] weights = new double[count];
+			double w = 1.0 / count;
+			for (int i = 0; i < count; i++)
+				weights[i] = w;
+			return Colls.list(ds.randomSplit(weights));
+		} finally {
+			logger.info("Dataset [size: " + total + "], split into [" + count + "].");
+		}
 	}
 }
