@@ -1,6 +1,7 @@
 package net.butfly.albatis.spark.output;
 
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.purge;
 
 import java.util.Map;
 
@@ -39,7 +40,7 @@ class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 	}
 
 	private DataStreamWriter<Row> w(boolean purge) {
-		return (purge ? purge() : ds).writeStream().outputMode(OutputMode.Update()).trigger(trigger());
+		return (purge ? purge(ds) : ds).writeStream().outputMode(OutputMode.Update()).trigger(trigger());
 	}
 
 	@Override

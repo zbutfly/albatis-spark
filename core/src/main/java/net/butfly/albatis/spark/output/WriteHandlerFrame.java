@@ -1,6 +1,7 @@
 package net.butfly.albatis.spark.output;
 
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.purge;
 
 import java.util.Map;
 
@@ -29,14 +30,14 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 	@Override
 	public void save(String format, Map<String, String> options) {
 		options.putIfAbsent("checkpointLocation", checkpoint());
-		purge().write().format(format).options(options).save();
+		purge(ds).write().format(format).options(options).save();
 	}
 
 	@Override
-	public void save(Output<Rmap> output) {
-		if (output instanceof SparkOutput) output.enqueue(DSdream.of(purge()));
+	public void save(String table, Output<Rmap> output) {
+		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, purge(ds)));
 		else {// should not be touch
-			purge().foreachPartition(it -> {
+			purge(ds).foreachPartition(it -> {
 				try (Connection cc = output.connect();) {
 					// TODO: split
 					output.enqueue(Sdream.of(it).map(Schemas::row2rmap));

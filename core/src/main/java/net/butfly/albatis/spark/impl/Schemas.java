@@ -1,5 +1,14 @@
 package net.butfly.albatis.spark.impl;
 
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELDS;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_FIELD;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_OP;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_EXPR;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_NAME;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.get;
+import static net.butfly.albatis.spark.impl.Sparks.fieldType;
+import static net.butfly.albatis.spark.impl.Sparks.valType;
 import static org.apache.spark.sql.functions.col;
 
 import java.io.ByteArrayInputStream;
@@ -15,7 +24,6 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
-import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -33,7 +41,7 @@ public interface Schemas {
 	static final Encoder<Rmap> ENC_RMAP = Encoders.kryo(Rmap.class);
 
 	static StructField build(FieldDesc f) {
-		return new StructField(f.name, Sparks.fieldType(f.type), true, Metadata.empty());
+		return new StructField(f.name, fieldType(f.type), true, Metadata.empty());
 	}
 
 	static StructType build(TableDesc schema, StructField... extras) {
@@ -49,31 +57,21 @@ public interface Schemas {
 	static TableDesc build(StructType schema) {
 		TableDesc t = TableDesc.dummy("");
 		for (StructField f : schema.fields())
-			t.field(new FieldDesc(t, f.name(), Sparks.valType(f.dataType())));
+			t.field(new FieldDesc(t, f.name(), valType(f.dataType())));
 		return t;
 	}
 
 	static StructType build(TableDesc table) {
 		// StructField[] extras = extra ? EXTRA_FIELDS_SCHEMA : new StructField[0];
 		int l = table.fields().length;
-		StructField[] sfs = new StructField[l + EXTRA_FIELDS_SCHEMA.length];
-		for (int i = 0; i < l; i++)
+		StructField[] sfs = new StructField[l + FIELDS.size()];
+		int i = 0;
+		for (; i < l; i++)
 			sfs[i] = build(table.fields()[i]);
-		for (int i = l; i < sfs.length; i++)
-			sfs[i] = EXTRA_FIELDS_SCHEMA[i - l];
+		for (; i < sfs.length; i++)
+			sfs[i] = get(i - l).struct;
 		return new StructType(sfs);
 	}
-
-	final static String ROW_TABLE_NAME_FIELD = "___table";
-	final static String ROW_KEY_VALUE_FIELD = "___key_value";
-	final static String ROW_KEY_FIELD_FIELD = "___key_field";
-	final static String ROW_OP_FIELD = "___op";
-	final static StructField[] EXTRA_FIELDS_SCHEMA = new StructField[] { //
-			new StructField(ROW_TABLE_NAME_FIELD, DataTypes.StringType, true, Metadata.empty()) //
-			, new StructField(ROW_KEY_VALUE_FIELD, DataTypes.StringType, true, Metadata.empty()) //
-			, new StructField(ROW_KEY_FIELD_FIELD, DataTypes.StringType, true, Metadata.empty())//
-			, new StructField(ROW_OP_FIELD, DataTypes.IntegerType, true, Metadata.empty())//
-	};
 
 	static Rmap row2rmap(Row row) {
 		Map<String, Object> m = Maps.of();
@@ -83,11 +81,12 @@ public interface Schemas {
 			Object v = row.get(i);
 			m.put(f, v);
 		}
-		String t = (String) m.remove(ROW_TABLE_NAME_FIELD);
-		String k = (String) m.remove(ROW_KEY_VALUE_FIELD);
-		String kf = (String) m.remove(ROW_KEY_FIELD_FIELD);
-		int op = m.containsKey(ROW_OP_FIELD) ? ((Number) m.remove(ROW_OP_FIELD)).intValue() : Op.DEFAULT;
-		return new Rmap(t, k, m).keyField(kf).op(op);
+		String t = (String) m.remove(FIELD_TABLE_NAME);
+		String te = (String) m.remove(FIELD_TABLE_EXPR);
+		String k = (String) m.remove(FIELD_KEY_VALUE);
+		String kf = (String) m.remove(FIELD_KEY_FIELD);
+		int op = m.containsKey(FIELD_OP) ? ((Number) m.remove(FIELD_OP)).intValue() : Op.DEFAULT;
+		return new Rmap(k, m).table(t, te).keyField(kf).op(op);
 	}
 
 	static Dataset<Rmap> row2rmap(Dataset<Row> ds) {
@@ -103,28 +102,18 @@ public interface Schemas {
 
 	static Row map2row(Rmap r, StructType s, String keyField, int op) {
 		Object[] vs = new Object[s.fields().length];
-		for (int i = 0; i < vs.length - EXTRA_FIELDS_SCHEMA.length; i++) {
-			Object v = r.get(s.fields()[i].name());
-			if (null != v) {
-				vs[i] = r.get(s.fields()[i].name());
-				// logger.error(s.fields()[i].dataType().toString() + ": " + v.toString() + "{" + v.getClass().toString() + "}");
-			}
-		}
-		vs[vs.length - 4] = r.table();
-		vs[vs.length - 3] = null == keyField ? null : r.get(keyField);
-		vs[vs.length - 2] = keyField;
-		vs[vs.length - 1] = op;
+		Object v;
+		SchemaExtraField ex;
+		String n;
+		for (int i = 0; i < vs.length - FIELDS.size(); i++)
+			if (null != (v = null != (ex = get(n = s.fields()[i].name())) ? ex.getter.apply(r) : r.get(n))) vs[i] = v;
 		return new GenericRowWithSchema(vs, s);
 	}
 
 	@Deprecated
 	static Map<String, Dataset<Row>> compute(Dataset<Row> ds) {
-		// List<String> keys = ds.groupBy(ROW_TABLE_NAME_FIELD).agg(count(lit(1)).alias("cnt"))//
-		// .map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING()).collectAsList();
-
-		List<String> keys = ds.dropDuplicates(ROW_TABLE_NAME_FIELD)//
-				.select(ROW_TABLE_NAME_FIELD)//
-				.map(r -> r.getAs(ROW_TABLE_NAME_FIELD), Encoders.STRING())//
+		List<String> keys = ds.dropDuplicates(FIELD_TABLE_NAME).select(FIELD_TABLE_NAME)//
+				.map(r -> r.getAs(FIELD_TABLE_NAME), Encoders.STRING())//
 				.collectAsList();
 		Map<String, Dataset<Row>> r = Maps.of();
 		keys = new ArrayList<>(keys);
@@ -133,17 +122,14 @@ public interface Schemas {
 			Dataset<Row> tds;
 			if (keys.isEmpty()) tds = ds;
 			else {
-				tds = ds.filter(col(ROW_TABLE_NAME_FIELD).equalTo(t));
-				ds = ds.filter(col(ROW_TABLE_NAME_FIELD).notEqual(t));
+				tds = ds.filter(col(FIELD_TABLE_NAME).equalTo(t));
+				ds = ds.filter(col(FIELD_TABLE_NAME).notEqual(t));
 			}
-			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
 			logger.trace(() -> "Table split finished, got [" + t + "].");// and processing with [" + ds.count() + "] records.");
-			r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
+			r.put(t, tds.repartition(col(FIELD_KEY_VALUE)));
 		}
 		return r;
 	}
-
-	
 
 	@Deprecated
 	static Rmap rawToRmap(Row row) {

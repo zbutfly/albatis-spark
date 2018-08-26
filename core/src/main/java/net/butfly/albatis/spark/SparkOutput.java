@@ -1,9 +1,9 @@
 package net.butfly.albatis.spark;
 
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
-import static net.butfly.albatis.spark.impl.Schemas.ROW_KEY_VALUE_FIELD;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
 import static org.apache.spark.sql.functions.col;
 
 import java.util.ArrayList;
@@ -23,6 +23,7 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.SparkIO;
+import scala.Tuple2;
 
 public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 	private static final long serialVersionUID = 7339834746933783020L;
@@ -122,20 +123,21 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 
 	private Map<String, Dataset<Row>> compute(Dataset<Rmap> ds) {
 		Map<String, Dataset<Row>> r = Maps.of();
-		// List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
-		List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
+		List<Tuple2<String, String>> keys = ds.groupByKey(rr -> new Tuple2<>(rr.table(), rr.tableExpr()), //
+				Encoders.tuple(Encoders.STRING(), Encoders.STRING())).keys().collectAsList();
 		keys = new ArrayList<>(keys);
 		while (!keys.isEmpty()) {
-			String t = keys.remove(0);
-			TableDesc tt = schema(t);
+			Tuple2<String, String> t = keys.remove(0);
+			TableDesc tt = schema(t._1);
+			if (null == tt) tt = schema(t._2);
+			if (null == tt) throw new RuntimeException("Table definition [" + t + "] not found in schema");
 			Dataset<Row> tds;
 			if (keys.isEmpty()) tds = rmap2row(tt, ds);
 			else {
-				tds = rmap2row(tt, ds.filter(rr -> t.equals(rr.table())));
-				ds = ds.filter(rr -> !t.equals(rr.table()));
+				tds = rmap2row(tt, ds.filter(rr -> t._1.equals(rr.table())));
+				ds = ds.filter(rr -> !t._1.equals(rr.table()));
 			}
-			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
-			r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
+			r.put(t._1, tds.repartition(col(FIELD_KEY_VALUE)));
 		}
 		return r;
 	}

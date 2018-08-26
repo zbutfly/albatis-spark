@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.ddl.vals.ValType;
@@ -142,6 +143,11 @@ public interface Sparks {
 
 	static <T> Seq<T> listScala(List<T> javaList) {
 		return scala.collection.JavaConversions.asScalaBuffer(javaList);
+	}
+
+	@SafeVarargs
+	static <T> Seq<T> listScala(T... cols) {
+		return scala.collection.JavaConversions.asScalaBuffer(Colls.list(cols));
 	}
 
 	public static <T> Dataset<T> union(Iterator<Dataset<T>> ds) {
