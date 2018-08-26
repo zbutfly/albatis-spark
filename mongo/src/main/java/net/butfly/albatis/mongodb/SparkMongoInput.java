@@ -2,7 +2,7 @@ package net.butfly.albatis.mongodb;
 
 import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
 import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_NAME;
-import static net.butfly.albatis.spark.impl.Sparks.calcSplitWeights;
+import static net.butfly.albatis.spark.impl.Sparks.split;
 import static org.apache.spark.sql.functions.lit;
 
 import java.util.List;
@@ -61,7 +61,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 			Dataset<Row> d = rdd.toDF();
 			d = d.withColumn(FIELD_TABLE_NAME, lit(t.name)).withColumn(FIELD_KEY_VALUE, d.col("_id.oid")).withColumn("_id", d.col(
 					"_id.oid"));
-			return Colls.list(calcSplitWeights(d), ds -> new Tuple2<>(t.name, ds.persist(StorageLevel.OFF_HEAP())));
+			return Colls.list(split(d, false), ds -> new Tuple2<>(t.name, ds.persist(StorageLevel.OFF_HEAP())));
 		});
 		return Colls.flat(l);
 	}

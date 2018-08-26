@@ -168,12 +168,12 @@ public interface Sparks {
 		return p instanceof SubqueryAlias ? ((SubqueryAlias) p).alias() : null;
 	}
 
-	static <T> List<Dataset<T>> calcSplitWeights(Dataset<T> ds) {
+	static <T> List<Dataset<T>> split(Dataset<T> ds, boolean forceFetch) {
 		@SuppressWarnings("deprecation")
 		int split = Integer.parseInt(Configs.gets("albatis.spark.split", "-1")), count = 1;
-		if (split <= 0) return Colls.list(ds);
+		if (split <= 0 && !forceFetch) return Colls.list(ds);
 		long total = ds.count();
-		if (total > split) return Colls.list(ds);
+		if (split > 0 && total > split) return Colls.list(ds);
 		try {
 			for (long curr = total; curr > split; curr = curr / 2)
 				count *= 2;
