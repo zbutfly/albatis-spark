@@ -1,12 +1,17 @@
 package net.butfly.albatis.spark;
 
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
+import static net.butfly.albatis.spark.impl.Schemas.ROW_KEY_VALUE_FIELD;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
+import static org.apache.spark.sql.functions.col;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
@@ -49,6 +54,13 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 
 	private final void saveRmap(String table, Dataset<Rmap> ds) {
 		save(table, rmap2row(schema(table), ds));
+	}
+
+	final Map<String, Dataset<Row>> compute(Map<String, Dataset<Rmap>> vals) {
+		Map<String, Dataset<Row>> rs = Maps.of();
+		vals.forEach((t, vs) -> compute(vs).forEach(//
+				(dt, d) -> rs.compute(dt, (dtt, origin) -> null == origin ? d : d.union(origin))));
+		return rs;
 	}
 
 	public Map<String, String> options(String table) {
@@ -110,5 +122,25 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 				saveRmap(table, ds);
 			}
 		};
+	}
+
+	private Map<String, Dataset<Row>> compute(Dataset<Rmap> ds) {
+		Map<String, Dataset<Row>> r = Maps.of();
+		// List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
+		List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
+		keys = new ArrayList<>(keys);
+		while (!keys.isEmpty()) {
+			String t = keys.remove(0);
+			TableDesc tt = schema(t);
+			Dataset<Row> tds;
+			if (keys.isEmpty()) tds = rmap2row(tt, ds);
+			else {
+				tds = rmap2row(tt, ds.filter(rr -> t.equals(rr.table())));
+				ds = ds.filter(rr -> !t.equals(rr.table()));
+			}
+			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
+			r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
+		}
+		return r;
 	}
 }

@@ -25,7 +25,6 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.ddl.TableDesc;
-import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.Rmap.Op;
 
@@ -144,25 +143,7 @@ public interface Schemas {
 		return r;
 	}
 
-	static Map<String, Dataset<Row>> compute(Dataset<Rmap> ds, Output<Rmap> output) {
-		Map<String, Dataset<Row>> r = Maps.of();
-		// List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
-		List<String> keys = ds.groupByKey(Rmap::table, Encoders.STRING()).keys().collectAsList();
-		keys = new ArrayList<>(keys);
-		while (!keys.isEmpty()) {
-			String t = keys.remove(0);
-			TableDesc tt = output.schema(t);
-			Dataset<Row> tds;
-			if (keys.isEmpty()) tds = rmap2row(tt, ds);
-			else {
-				tds = rmap2row(tt, ds.filter(rr -> t.equals(rr.table())));
-				ds = ds.filter(rr -> !t.equals(rr.table()));
-			}
-			// tds = tds.drop(ROW_TABLE_NAME_FIELD, ROW_KEY_FIELD_FIELD, ROW_KEY_VALUE_FIELD);
-			r.put(t, tds.repartition(col(ROW_KEY_VALUE_FIELD)));
-		}
-		return r;
-	}
+	
 
 	@Deprecated
 	static Rmap rawToRmap(Row row) {

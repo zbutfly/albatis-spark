@@ -1,7 +1,6 @@
 package net.butfly.albatis.spark;
 
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
-import static net.butfly.albatis.spark.impl.Schemas.compute;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
@@ -31,8 +30,8 @@ import net.butfly.albatis.spark.impl.SparkThenInput;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
-	private List<Dataset<V>> vals = Colls.list();
-	private List<Dataset<Row>> rows = Colls.list();
+	final Map<String, Dataset<V>> vals = Maps.of();
+	final Map<String, Dataset<Row>> rows = Maps.of();
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
@@ -87,18 +86,8 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		return rows;
 	}
 
-	@SuppressWarnings("unchecked")
-	public final Map<String, Dataset<Row>> rowsOut(Output<Rmap> output) {
-		if (!rows.isEmpty()) return rows;
-		Map<String, Dataset<Row>> dsr = Maps.of();
-		vals.forEach((t, vs) -> compute((Dataset<Rmap>) vs, output)//
-				.forEach((dt, d) -> dsr.compute(dt, (dtt, origin) -> null == origin ? d : d.union(origin))));
-		return dsr;
-	}
-
-	protected final SparkInput<V> vals(Collection<Dataset<V>> vals) {
-		this.vals.clear();
-		this.vals.addAll(vals);
+	protected final SparkInput<V> vals(Map<String, Dataset<V>> rmaps) {
+		this.vals.putAll(rmaps);
 		this.rows.clear();
 		return this;
 	}
