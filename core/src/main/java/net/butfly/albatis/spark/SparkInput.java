@@ -11,6 +11,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import com.hzcominfo.albatis.Albatis;
+
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.io.lambda.Function;
@@ -184,14 +186,14 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private <T> Dataset<T> limit(Dataset<T> ds) {
 		if (null != ds && Systems.isDebug()) {
 			@SuppressWarnings("deprecation")
-			int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1"));
+			int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1"));
 			if (limit > 0) {
 				ds = ds.limit(limit);
 				long n = ds.count();
-				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"albatis.spark.debug.limit\","//
+				logger().error("Debugging, resultset is limit as [" + limit + "] by setting \"" + Albatis.PROP_DEBUG_INPUT_LIMIT + "\","//
 						+ " results count: " + n);
-			} else logger().info(
-					"Debugging, resultset can be limited as setting \"albatis.spark.debug.limit\", if presented and positive.");
+			} else logger().info("Debugging, resultset can be limited as setting \"" + Albatis.PROP_DEBUG_INPUT_LIMIT
+					+ "\", if presented and positive.");
 		}
 		return ds;
 	}

@@ -15,6 +15,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import org.bson.Document;
 
+import com.hzcominfo.albatis.Albatis;
 import com.mongodb.spark.MongoSpark;
 import com.mongodb.spark.config.ReadConfig;
 import com.mongodb.spark.rdd.api.java.JavaMongoRDD;
@@ -54,7 +55,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 			JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, rc);
 			if (Systems.isDebug()) {
 				@SuppressWarnings("deprecation")
-				int limit = Integer.parseInt(Configs.gets("albatis.spark.debug.limit", "-1")) / rdd.getNumPartitions() + 1;
+				int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1")) / rdd.getNumPartitions() + 1;
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
 
