@@ -72,7 +72,8 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 		case "":
 			break;
 		default:
-			throw new UnsupportedOperationException("hosts can only be '.', '~' or empty.");
+			throw new UnsupportedOperationException("file uri [" + targetUri
+					+ "] look should like 'file:format://./paths', 'file:format://~/paths' or file:format:///paths.");
 			// return parseHdfs();
 		}
 		return path;
