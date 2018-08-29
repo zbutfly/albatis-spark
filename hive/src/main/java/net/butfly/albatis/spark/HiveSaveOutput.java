@@ -14,12 +14,15 @@ import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.impl.Schemas;
+import net.butfly.albatis.spark.impl.SparkConf;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 import net.butfly.albatis.spark.output.WriteHandler;
 import net.butfly.albatis.spark.util.DSdream;
 
 @Schema("hive")
+@SparkConf("spark.sql.catalogImplementation=hive")
+@SparkConf("hive.exec.dynamic.partition.mode=nonstrict")
 public class HiveSaveOutput extends SparkSinkSaveOutput {
 	private static final long serialVersionUID = 2452118954794960617L;
 	private final String defdb;

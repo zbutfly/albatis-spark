@@ -25,11 +25,13 @@ import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.impl.SparkConf;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 import net.butfly.albatis.spark.output.SparkWriting;
 
 @Schema("mongodb")
+@SparkConf(key = "spark.mongodb.output.uri", value = "mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection")
 public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWriting, SparkMongo {
 	private static final long serialVersionUID = -887072515139730517L;
 	private static final int BATCH_SIZE = 250;

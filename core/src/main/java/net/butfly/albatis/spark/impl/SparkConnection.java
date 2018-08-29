@@ -14,7 +14,6 @@ import org.apache.spark.scheduler.SparkListenerStageSubmitted;
 import org.apache.spark.scheduler.SparkListenerTaskEnd;
 import org.apache.spark.scheduler.SparkListenerTaskStart;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
@@ -43,8 +42,9 @@ public class SparkConnection implements EnvironmentConnection {
 	private static final long serialVersionUID = 5093686615279489589L;
 	private final static String DEFAULT_HOST = "local[*]";
 
-	public final SparkSession spark;
+	private SparkSession spark = null;
 	private final URISpec uriSpec;
+	public final SparkConf sparkConf;
 
 	public SparkConnection() {
 		this(null);
@@ -52,35 +52,33 @@ public class SparkConnection implements EnvironmentConnection {
 
 	public SparkConnection(URISpec uriSpec) {
 		this.uriSpec = uriSpec;
-		SparkConf sparkConf = new SparkConf();
-		Map<String, String> params = params();
-		String host = host(params);
-		params().forEach(sparkConf::set);
-		if (host.isEmpty()) host = DEFAULT_HOST;
-		String name = Systems.getMainClass().getSimpleName();
-		logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString());
-		// fxxking mongodb-spark-connector
-		if (!sparkConf.contains("spark.mongodb.input.uri")) sparkConf.set("spark.mongodb.input.uri",
-				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
-		if (!sparkConf.contains("spark.mongodb.output.uri")) sparkConf.set("spark.mongodb.output.uri",
-				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
-		// fuxxing hive
-		if (!sparkConf.contains("spark.sql.catalogImplementation")) sparkConf.set("spark.sql.catalogImplementation", "hive");
-		if (!sparkConf.contains("hive.exec.dynamic.partition.mode")) sparkConf.set("hive.exec.dynamic.partition.mode", "nonstrict");
-
-		sparkConf.registerKryoClasses(new Class[] { Rmap.class });
-		this.spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
+		sparkConf = new SparkConf();
 	}
 
-	private String host(Map<String, String> params) {
-		String host = params.remove("spark.host");
-		String paral = params.get("spark.default.parallelism");
-		if (null == paral) paral = "*";
-		if (null != host) host = host + "[" + paral + "]";
-		else host = uriSpec.getHost();
-		if (null == host || host.isEmpty()) host = DEFAULT_HOST;
-		logger.debug("Spark host detected: " + host);
-		return host;
+	public SparkSession spark() {
+		if (null == spark) {
+			SparkIO.scan();
+			Map<String, String> params = params();
+			String host = host(params);
+			params().forEach(sparkConf::set);
+			if (host.isEmpty()) host = DEFAULT_HOST;
+			String name = Systems.getMainClass().getSimpleName();
+
+			sparkConf.registerKryoClasses(new Class[] { Rmap.class });
+			logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
+			spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
+		}
+		return spark;
+	}
+
+	private final static Map<String, String> extras = Maps.of();
+
+	public static void extra(String key, String value) {
+		extras.compute(key, (k, v) -> {
+			if (null == v) return value;
+			logger.warn("SparkConf duplicated: " + key + "=" + value + " and =" + v);
+			return value;
+		});
 	}
 
 	private Map<String, String> params() {
@@ -97,13 +95,14 @@ public class SparkConnection implements EnvironmentConnection {
 			if (!vv.isEmpty()) params.put(k.toString().trim(), vv);
 		});
 
+		extras.forEach(params::putIfAbsent);
 		if (!params.containsKey("spark.sql.shuffle.partitions") && !Systems.isDebug()) params.put("spark.sql.shuffle.partitions", "2001");
 		return params;
 	}
 
 	@Override
 	public void close() {
-		if (spark != null) {
+		if (null != spark) {
 			spark.close();
 		}
 	}
@@ -121,13 +120,13 @@ public class SparkConnection implements EnvironmentConnection {
 
 	@Override
 	public <V, O extends Output<V>> O output(URISpec uri, TableDesc... table) {
-		return SparkIO.output(spark, uri, table);
+		return SparkIO.output(spark(), uri, table);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <V, I extends Input<V>> I input(URISpec uri, TableDesc... table) {
-		return (I) SparkIO.input(spark, uri, table);
+		return (I) SparkIO.input(spark(), uri, table);
 	}
 
 	public <V> SparkJoinInput innerJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
@@ -165,10 +164,6 @@ public class SparkConnection implements EnvironmentConnection {
 		return uriSpec;
 	}
 
-	public <T> Dataset<T> toDS(List<T> rows, Class<T> clazz) {
-		return spark.createDataset(rows, Encoders.bean(clazz));
-	}
-
 	/**
 	 * job start stage <br/>
 	 * stage submit tasks <br/>
@@ -178,7 +173,6 @@ public class SparkConnection implements EnvironmentConnection {
 	 */
 	public void addSparkListener() {
 		spark.sparkContext().addSparkListener(new SparkListener() {
-
 			@Override
 			public void onJobStart(SparkListenerJobStart jobStart) {
 				Seq<Object> seq = jobStart.stageIds();
@@ -236,5 +230,16 @@ public class SparkConnection implements EnvironmentConnection {
 		public List<String> schemas() {
 			return Colls.list("spark");
 		}
+	}
+
+	private String host(Map<String, String> params) {
+		String host = params.remove("spark.host");
+		String paral = params.get("spark.default.parallelism");
+		if (null == paral) paral = "*";
+		if (null != host) host = host + "[" + paral + "]";
+		else host = uriSpec.getHost();
+		if (null == host || host.isEmpty()) host = DEFAULT_HOST;
+		logger.debug("Spark host detected: " + host);
+		return host;
 	}
 }

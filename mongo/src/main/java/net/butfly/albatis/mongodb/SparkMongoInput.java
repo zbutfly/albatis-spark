@@ -26,10 +26,12 @@ import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
+import net.butfly.albatis.spark.impl.SparkConf;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import scala.Tuple2;
 
 @Schema("mongodb")
+@SparkConf(key = "spark.mongodb.input.uri", value = "mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection")
 public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	private static final long serialVersionUID = 2110132305482403155L;
 
