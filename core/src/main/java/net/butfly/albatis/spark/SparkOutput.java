@@ -117,6 +117,11 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 
 	final List<Tuple2<String, Dataset<Row>>> compute(List<Tuple2<String, Dataset<Rmap>>> vals) {
 		return Colls.flat(Colls.list(vals, t -> {
+			TableDesc td;
+			if (1 == schemaAll().size() && '=' != (td = schemaAll().values().iterator().next()).name.charAt(0)) return Colls.list(
+					new Tuple2<>(td.name, rmap2row(td, t._2)));
+
+			logger().debug("Multiple or variable tables output, collect keys from dataset...");
 			Dataset<Rmap> ds = t._2;
 			List<Tuple2<String, Dataset<Row>>> r = Colls.list();
 			List<Tuple2<String, String>> keys = ds.groupByKey(rr -> new Tuple2<>(rr.table(), rr.tableExpr()), //
@@ -124,7 +129,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			keys = new ArrayList<>(keys);
 			while (!keys.isEmpty()) {
 				Tuple2<String, String> tn = keys.remove(0);
-				TableDesc td = schema(tn._1);
+				td = schema(tn._1);
 				if (null == td) td = schema(tn._2);
 				if (null == td) throw new RuntimeException("Table definition [" + tn + "] not found in schema");
 				Dataset<Row> tds;

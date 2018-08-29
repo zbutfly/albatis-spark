@@ -138,8 +138,10 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
-		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> new Tuple2<>(t._1, t._2.map(r -> (Rmap) conv.apply(r),
-				ENC_RMAP)));
+		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
+			Dataset<Rmap> ds1 = t._2.map(r -> (Rmap) conv.apply(r), ENC_RMAP);
+			return new Tuple2<>(t._1, ds1);
+		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);
 	}
 
@@ -160,8 +162,10 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
-		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> new Tuple2<>(t._1, t._2.flatMap(v -> ((List<Rmap>) conv.apply(v)
-				.list()).iterator(), ENC_RMAP)));
+		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
+			Dataset<Rmap> ds1 = t._2.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);
+			return new Tuple2<>(t._1, ds1);
+		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);
 	}
 

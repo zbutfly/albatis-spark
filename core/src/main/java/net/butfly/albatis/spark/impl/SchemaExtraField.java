@@ -1,5 +1,8 @@
 package net.butfly.albatis.spark.impl;
 
+import static net.butfly.albatis.spark.impl.Sparks.fieldType;
+import static org.apache.spark.sql.types.DataTypes.createStructField;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -8,12 +11,12 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.io.Rmap;
 
 public final class SchemaExtraField implements Serializable {
@@ -61,11 +64,15 @@ public final class SchemaExtraField implements Serializable {
 	}
 
 	private SchemaExtraField(String name, DataType type, Function<Rmap, ?> getter) {
-		this(new StructField(name, type, true, Metadata.empty()), getter);
+		this(createStructField(name, type, true), getter);
 	}
 
 	private SchemaExtraField(StructField field, Function<Rmap, ?> getter) {
 		this.struct = field;
 		this.getter = getter;
+	}
+
+	static StructField struct(FieldDesc f) {
+		return createStructField(f.name, fieldType(f.type), true);
 	}
 }
