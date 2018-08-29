@@ -98,10 +98,11 @@ public abstract class SparkIO implements IO, Serializable {
 
 	private static void reg(Class<? extends IO> io, Schema schema, Class<? extends SparkIO> cls) {
 		Logger l = Logger.getLogger(cls);
+		l.debug("Spark" + io.getSimpleName() + " driver loaded: " + cls.getName() + " as schema [" + String.join(", ", schema.value())
+				+ "]");
 		for (String s : schema.value())
 			ADAPTERS.get(io).compute(s, (ss, existed) -> {
 				if (null == existed) {
-					l.debug("Spark[Output] schema [" + ss + "] register for class:  " + cls.getName());
 					return cls;
 				} else {
 					Schema s0 = existed.getAnnotation(Schema.class);

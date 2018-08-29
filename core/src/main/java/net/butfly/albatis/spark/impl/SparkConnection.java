@@ -66,6 +66,7 @@ public class SparkConnection implements EnvironmentConnection {
 				"mongodb://127.0.0.1/FxxkMongoSpark.FakeCollection");
 		// fuxxing hive
 		if (!sparkConf.contains("spark.sql.catalogImplementation")) sparkConf.set("spark.sql.catalogImplementation", "hive");
+		if (!sparkConf.contains("hive.exec.dynamic.partition.mode")) sparkConf.set("hive.exec.dynamic.partition.mode", "nonstrict");
 
 		sparkConf.registerKryoClasses(new Class[] { Rmap.class });
 		this.spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
