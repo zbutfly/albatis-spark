@@ -17,6 +17,7 @@ import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.util.LongAccumulator;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.IO;
@@ -47,7 +48,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 
 	@Override
 	public Map<String, String> options(String table) {
-		throw new UnsupportedOperationException();
+		return Maps.of();
 	}
 
 	public static class OutputSink implements Sink, Serializable {

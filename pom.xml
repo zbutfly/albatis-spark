@@ -22,6 +22,7 @@
 		<module>core</module>
 		<module>kafka</module>
 		<module>mongo</module>
+		<module>hive</module>
 		<module>solr</module>
 		<module>es</module>
 		<!-- <module>hdfs</module> -->

@@ -124,6 +124,12 @@ public abstract class SparkIO implements IO, Serializable {
 		String[] value();
 
 		int priority() default 0;
+
+		/**
+		 * @return Schemas support for the driver, like zk://, http://, and so on. <br>
+		 *         They can only be recognized in new XXX("zk://"), but not spi loading like connection.connect("...");
+		 */
+		String[] compatible() default {};
 	}
 
 	public TableDesc table() {
