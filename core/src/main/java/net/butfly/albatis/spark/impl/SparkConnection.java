@@ -67,14 +67,15 @@ public class SparkConnection implements EnvironmentConnection {
 			sparkConf.registerKryoClasses(new Class[] { Rmap.class });
 			logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
 			spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
+			paramHadoop().forEach(spark.sparkContext().hadoopConfiguration()::set);
 		}
 		return spark;
 	}
 
-	private final static Map<String, String> extras = Maps.of();
+	private final static Map<String, String> EXTRA_SPARK_CONFS = Maps.of();
 
 	public static void extra(String key, String value) {
-		extras.compute(key, (k, v) -> {
+		EXTRA_SPARK_CONFS.compute(key, (k, v) -> {
 			if (null == v) return value;
 			logger.warn("SparkConf duplicated: " + key + "=" + value + " and =" + v);
 			return value;
@@ -95,8 +96,24 @@ public class SparkConnection implements EnvironmentConnection {
 			if (!vv.isEmpty()) params.put(k.toString().trim(), vv);
 		});
 
-		extras.forEach(params::putIfAbsent);
+		EXTRA_SPARK_CONFS.forEach(params::putIfAbsent);
 		if (!params.containsKey("spark.sql.shuffle.partitions") && !Systems.isDebug()) params.put("spark.sql.shuffle.partitions", "2001");
+		return params;
+	}
+
+	private Map<String, String> paramHadoop() {
+		Properties props = new Properties();
+		try {
+			props.load(IOs.open("spark-hadoop.properties"));
+		} catch (IOException e) {
+			logger.warn("Default spark hadoop configuration file [classpath:spark-hadoop.properties] loading failed.");
+		}
+
+		Map<String, String> params = Maps.of();
+		props.forEach((k, v) -> {
+			String vv = v.toString().trim();
+			if (!vv.isEmpty()) params.put(k.toString().trim(), vv);
+		});
 		return params;
 	}
 
