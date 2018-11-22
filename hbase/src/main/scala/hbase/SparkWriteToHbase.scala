@@ -1,5 +1,7 @@
 package hbase
 
+import java.lang
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.Put
@@ -8,6 +10,7 @@ import org.apache.hadoop.hbase.mapreduce.TableOutputFormat
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.util.LongAccumulator
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -15,6 +18,8 @@ import org.apache.spark.{SparkConf, SparkContext}
   *
   * 执行需要传入一个orc文件路径,作为要导入hbase的数据
   */
+
+
 class SparkWriteToHbase {
 
 }
@@ -40,7 +45,6 @@ object SparkWriteToHbase {
 //  创建df,把orc数据放到spark-sql的临时表里
     val session: SparkSession = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
 
-
     val df: DataFrame = session.read.orc(orcPath)
 //  创建临时视图,里边有orc数据,
     df.createOrReplaceTempView("user_install_statusTemp")
@@ -50,15 +54,19 @@ object SparkWriteToHbase {
 
     val rdd: RDD[Row] = dfRes.rdd
 
+    val numberofRows: LongAccumulator = sc.longAccumulator("NumberofRows")
+
     val hbaseRDD: RDD[(ImmutableBytesWritable, Put)] = rdd.mapPartitions(row => {
       val list: List[Row] = row.toList
-      println(list)
-//    accumulator累加器,计数. 看遍历多少次
+//      println(list)
+//    accumulator累加器,计数. 统计下过来了多少行
+      numberofRows.add(1L)
       import scala.collection.mutable.ListBuffer
       val resultList = new ListBuffer[(ImmutableBytesWritable, Put)]
       // 在外面new出来在循环里面重复使用,避免了多次new对象造成内存浪费
       val writable = new ImmutableBytesWritable()
       for (next <- list) {
+//      设置rowkey和value
         val put = new Put(Bytes.toBytes("spark_part_" + next.getString(0)))
         put.addColumn(Bytes.toBytes("familyC"), Bytes.toBytes("count"), Bytes.toBytes(next.getLong(1)))
         writable.set(put.getRow)

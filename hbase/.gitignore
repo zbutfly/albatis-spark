@@ -1,16 +1,17 @@
-﻿# Created by .ignore support plugin (hsz.mobi)
+# Created by .ignore support plugin (hsz.mobi)
 
-*.a       # 忽略所有 .a 结尾的文件
+# 忽略所有 .a 结尾的文件
+*.log
 
-!lib.a    # 但 lib.a 除外
-
-/TODO     # 仅仅忽略项目根目录下的 TODO 文件，不包括 subdir/TODObuild/    # 忽略
-
-build/ 目录下的所有文件doc/*.txt # 会忽略
+# 但 lib.a 除外
+!lib.a
+/TODO
 
 *.iml
 
 /target/
 
-*.log
+/metastore_db/
+
+.idea/*
 

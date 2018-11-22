@@ -18,6 +18,9 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 /**
   * spark读取hbase到hdfs
+  *
+  * 比如读取
+  * create 'dcx_test',{NAME=>'familyC',VERSION=>1,COMPRESSION=>'snappy'}
   */
 
 class SparkHbaseRead {
@@ -42,12 +45,6 @@ object SparkHbaseRead{
     conf.set("spark.serialize",classOf[KryoSerializer].getName)
     conf.registerKryoClasses(Array[Class[_]](classOf[ORCUtil]))
 
-    val sc = new SparkContext(conf)
-
-//   修改成sparksession格式
-//    val hiveContext = new HiveContext(sc)
-//    val dataFrame: DataFrame = hiveContext.read.orc(orcPath)
-
     val session: SparkSession = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
 
     val dataFrame: DataFrame = session.read.orc(orcPath)
@@ -61,15 +58,12 @@ object SparkHbaseRead{
       import scala.collection.mutable.ListBuffer
       val resultlist = new ListBuffer[(ImmutableBytesWritable, KeyValue)]
 
-      row.foreach(row => {
-        val rowkey = new ImmutableBytesWritable()
-        rowkey.set(Bytes.toBytes("spark_read_hbase" + row.getString(1)))
-//      指定要导出的列族 列名
-        val keyValue = new KeyValue(rowkey.get(),Bytes.toBytes("f"),Bytes.toBytes("country"),Bytes.toBytes(row.getString(4)))
-        resultlist += ((rowkey,keyValue))
-      })
-      import scala.collection.mutable.ListBuffer
-      new ListBuffer[(ImmutableBytesWritable, KeyValue)]
+      for(row <- rowList){
+        val rk = new ImmutableBytesWritable()
+        rk.set(Bytes.toBytes("rowkeyPrefix" + row.getString(1)))
+        val keyValue = new KeyValue(rk.get(),Bytes.toBytes("familyC"),Bytes.toBytes("columnName"),Bytes.toBytes(row.getString(4)))
+        resultlist += ((rk,keyValue))
+      }
       resultlist.toIterator
     }).sortByKey()
 
