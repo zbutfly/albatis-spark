@@ -1,19 +1,14 @@
 package net.butfly.albatis.kafka;
 
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.streaming.DataStreamReader;
-
 import com.hzcominfo.albatis.nosql.Connection;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.collection.Colls;
@@ -56,8 +51,14 @@ public class SparkKafkaInput extends SparkMapInput {
 		Dataset<Row> ds = dr.options(opts).load();
 		// TableDesc t = table();
 		// StructType s = build(t);
-		return Colls.list(new Tuple2<>("*", ds.map(r -> kafka(r), ENC_RMAP)));
+
+//        return Colls.list(new Tuple2<>("*",ds.map( row -> kafka(row),ENC_RMAP )));
+
+//      解决模糊函数问题
+		return Colls.list(new Tuple2<>("*", ds.map((MapFunction<Row, Rmap>) row -> kafka(row), ENC_RMAP)));
 	}
+
+
 
 	@Override
 	public String format() {
@@ -68,7 +69,10 @@ public class SparkKafkaInput extends SparkMapInput {
 	public java.util.Map<String, String> options() {
 		java.util.Map<String, String> options = Maps.of();
 		String[] brokers;
-		try (KafkaZkParser k = new KafkaZkParser(targetUri.getHost() + targetUri.getPath())) {
+//        String host = targetUri.getHost();
+//        String path = targetUri.getPath();
+
+        try (KafkaZkParser k = new KafkaZkParser(targetUri.getHost() + targetUri.getPath())) {
 			brokers = k.getBrokers();
 		} catch (IOException e) {
 			throw new RuntimeException(e);

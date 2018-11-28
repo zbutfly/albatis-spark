@@ -12,9 +12,10 @@ import net.butfly.albatis.spark.output.SparkSaveOutput;
 public class SparkKafkaOutput extends SparkSaveOutput {
 	private static final long serialVersionUID = 9003837433163351306L;
 
-	SparkKafkaOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	public SparkKafkaOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 	}
+
 
 	@Override
 	public java.util.Map<String, String> options(String table) {
