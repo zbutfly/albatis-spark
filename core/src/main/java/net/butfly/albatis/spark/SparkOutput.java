@@ -10,9 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.spark.api.java.function.FilterFunction;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -75,7 +72,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			@Override
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
-				Dataset<Rmap> ds = row2rmap(ds0).map((MapFunction<Rmap, Rmap>)  v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP);
+				Dataset<Rmap> ds = row2rmap(ds0).map(v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP);
 				save(table, rmap2row(schema(table), ds));
 			}
 		};
@@ -90,7 +87,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
-						(FlatMapFunction<Rmap, Rmap>)  v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP);
+						v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP);
 				save(table, rmap2row(schema(table), ds));
 			}
 		};
@@ -112,7 +109,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			public void save(Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
-						(FlatMapFunction<Rmap, Rmap>) v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP);
+						v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP);
 				save(table, rmap2row(schema(table), ds));
 			}
 		};
@@ -127,7 +124,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			logger().debug("Multiple or variable tables output, collect keys from dataset...");
 			Dataset<Rmap> ds = t._2;
 			List<Tuple2<String, Dataset<Row>>> r = Colls.list();
-			List<Tuple2<String, String>> keys = ds.groupByKey((MapFunction<Rmap, Tuple2<String,String>>) rr -> new Tuple2<>(rr.table(), rr.tableExpr()), //
+			List<Tuple2<String, String>> keys = ds.groupByKey(rr -> new Tuple2<>(rr.table(), rr.tableExpr()), //
 					Encoders.tuple(Encoders.STRING(), Encoders.STRING())).keys().collectAsList();
 			keys = new ArrayList<>(keys);
 			while (!keys.isEmpty()) {
@@ -138,8 +135,8 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 				Dataset<Row> tds;
 				if (keys.isEmpty()) tds = rmap2row(td, ds);
 				else {
-					tds = rmap2row(td, ds.filter((FilterFunction<Rmap>)  rr -> tn._1.equals(rr.table())));
-					ds = ds.filter((FilterFunction<Rmap>) rr -> !tn._1.equals(rr.table()));
+					tds = rmap2row(td, ds.filter(rr -> tn._1.equals(rr.table())));
+					ds = ds.filter(rr -> !tn._1.equals(rr.table()));
 				}
 				r.add(new Tuple2<>(tn._1, tds.repartition(col(FIELD_KEY_VALUE))));
 			}
