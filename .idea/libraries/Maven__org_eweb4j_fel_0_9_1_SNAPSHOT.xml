@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.eweb4j:fel:0.9.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eweb4j/fel/0.9.1-SNAPSHOT/fel-0.9.1-20181120.173609-9.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eweb4j/fel/0.9.1-SNAPSHOT/fel-0.9.1-20181120.173609-9-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eweb4j/fel/0.9.1-SNAPSHOT/fel-0.9.1-20181120.173609-9-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -12,7 +12,8 @@
 	<version>1.5.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<properties>
-		<version.spark>2.3.1</version.spark>
+		<!--<version.spark>2.3.1</version.spark>-->
+		<version.spark>2.4.0</version.spark>
 		<version.kafka>0.10.2.2</version.kafka>
 		<version.avro>1.8.2</version.avro>
 		<maven.compiler.source>8</maven.compiler.source>

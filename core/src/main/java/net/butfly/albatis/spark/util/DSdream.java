@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.api.java.function.ReduceFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
@@ -65,7 +68,7 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 
 	@Override
 	public Rmap reduce(BinaryOperator<Rmap> accumulator) {
-		return row2rmap(ds).reduce(accumulator::apply);
+		return row2rmap(ds).reduce((ReduceFunction<Rmap>) accumulator::apply);
 	}
 
 	// conving =======================================
@@ -83,20 +86,20 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 
 	@Override
 	public <R> Sdream<R> map(Function<Rmap, R> conv) {
-		Dataset<Rmap> dds = row2rmap(ds).map(m -> (Rmap) conv.apply(m), ENC_RMAP);
+		Dataset<Rmap> dds = row2rmap(ds).map((MapFunction<Rmap, Rmap>)  m -> (Rmap) conv.apply(m), ENC_RMAP);
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 
 	@SuppressWarnings("deprecation")
 	@Override
 	public <R> Sdream<R> map(Function<Sdream<Rmap>, Sdream<R>> conv, int maxBatchSize) {
-		Dataset<Rmap> dds = row2rmap(ds).flatMap(m -> (Iterator<Rmap>) conv.apply(Sdream.of1(m)).list().iterator(), ENC_RMAP);
+		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>)  m -> (Iterator<Rmap>) conv.apply(Sdream.of1(m)).list().iterator(), ENC_RMAP);
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 
 	@Override
 	public <R> Sdream<R> mapFlat(Function<Rmap, Sdream<R>> flat) {
-		Dataset<Rmap> dds = row2rmap(ds).flatMap(m -> (Iterator<Rmap>) flat.apply(m).list().iterator(), ENC_RMAP);
+		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>) m -> (Iterator<Rmap>) flat.apply(m).list().iterator(), ENC_RMAP);
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 

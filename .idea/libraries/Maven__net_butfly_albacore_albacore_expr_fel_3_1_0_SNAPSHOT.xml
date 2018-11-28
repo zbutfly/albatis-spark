@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.butfly.albacore:albacore-expr-fel:3.1.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/butfly/albacore/albacore-expr-fel/3.1.0-SNAPSHOT/albacore-expr-fel-3.1.0-20181120.173610-8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/butfly/albacore/albacore-expr-fel/3.1.0-SNAPSHOT/albacore-expr-fel-3.1.0-20181120.173610-8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/butfly/albacore/albacore-expr-fel/3.1.0-SNAPSHOT/albacore-expr-fel-3.1.0-20181120.173610-8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
