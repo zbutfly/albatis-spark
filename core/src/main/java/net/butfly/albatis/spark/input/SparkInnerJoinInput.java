@@ -6,7 +6,9 @@ import net.butfly.albatis.spark.SparkInput;
 public class SparkInnerJoinInput extends SparkJoinInput {
 	private static final long serialVersionUID = 377289278732441635L;
 
+//	todo 重构代码,把join改写成通用的
+//	this that other joinType
 	public SparkInnerJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
 		super(input, col, joined, joinedCol, "inner");
-	}
+    }
 }

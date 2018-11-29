@@ -3,6 +3,7 @@ package net.butfly.albatis.spark;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -41,7 +42,7 @@ public class HiveSaveOutput extends SparkSinkSaveOutput {
 		if (!(s instanceof DSdream)) throw new UnsupportedOperationException("Can only save dataset");
 		DSdream d = (DSdream) s;
 		String htbl = null == defdb || d.table.indexOf('.') >= 0 ? d.table : defdb + "." + d.table;
-		List<String> dbFields = spark.sql("describe " + htbl).map(r -> r.getAs("col_name"), Encoders.STRING()).collectAsList();
+		List<String> dbFields = spark.sql("describe " + htbl).map((MapFunction<Row, String>)  r -> r.getAs("col_name"), Encoders.STRING()).collectAsList();
 		List<String> selFields = Colls.list();
 		for (String dbf : dbFields) {
 			if ('#' == dbf.charAt(0)) break;
