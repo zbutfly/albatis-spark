@@ -7,6 +7,8 @@ import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -139,7 +141,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
 		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
-			Dataset<Rmap> ds1 = t._2.map(r -> (Rmap) conv.apply(r), ENC_RMAP);
+			Dataset<Rmap> ds1 = t._2.map((MapFunction<V, Rmap>)  r -> (Rmap) conv.apply(r), ENC_RMAP);
 			return new Tuple2<>(t._1, ds1);
 		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);
@@ -163,7 +165,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
-			Dataset<Rmap> ds1 = t._2.flatMap(v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);
+			Dataset<Rmap> ds1 = t._2.flatMap((FlatMapFunction<V, Rmap>)  v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);
 			return new Tuple2<>(t._1, ds1);
 		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);

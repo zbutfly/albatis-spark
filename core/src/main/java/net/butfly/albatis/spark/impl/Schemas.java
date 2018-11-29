@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
@@ -84,12 +85,12 @@ public interface Schemas {
 	static Dataset<Rmap> row2rmap(Dataset<Row> ds) {
 		logger.warn("Row transform to Rmap, maybe slowly from here: \n\t" + //
 				Colls.list(Thread.currentThread().getStackTrace()).get(2).toString());
-		return ds.map(Schemas::row2rmap, ENC_RMAP);
+		return ds.map((MapFunction<Row, Rmap>) Schemas::row2rmap, ENC_RMAP);
 	}
 
 	static Dataset<Row> rmap2row(TableDesc table, Dataset<Rmap> ds) {
 		StructType s = build(table);
-		return ds.map(r -> map2row(r, s, table.rowkey(), r.op()), RowEncoder.apply(s));
+		return ds.map((MapFunction<Rmap, Row>) r -> map2row(r, s, table.rowkey(), r.op()), RowEncoder.apply(s));
 	}
 
 	static Row map2row(Rmap r, StructType s, String keyField, int op) {
@@ -105,7 +106,7 @@ public interface Schemas {
 	@Deprecated
 	static List<Tuple2<String, Dataset<Row>>> compute(Dataset<Row> ds) {
 		List<String> keys = ds.dropDuplicates(FIELD_TABLE_NAME).select(FIELD_TABLE_NAME)//
-				.map(r -> r.getAs(FIELD_TABLE_NAME), Encoders.STRING())//
+				.map((MapFunction<Row, String>)  r -> r.getAs(FIELD_TABLE_NAME), Encoders.STRING())//
 				.collectAsList();
 		List<Tuple2<String, Dataset<Row>>> r = Colls.list();
 		keys = new ArrayList<>(keys);
