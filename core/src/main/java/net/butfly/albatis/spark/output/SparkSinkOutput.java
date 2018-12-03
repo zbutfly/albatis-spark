@@ -22,10 +22,11 @@ public final class SparkSinkOutput extends SparkSinkOutputBase {
 	public static final String FORMAT = OutputSinkProvider.class.getName();
 	protected final Output<Rmap> output;
 
-	public SparkSinkOutput(SparkSession spark, Output<Rmap> output) {
-		super(spark, output.target(), output.schemaAll().values().toArray(new TableDesc[0]));
-		this.output = output;
-	}
+	public SparkSinkOutput (SparkSession spark,Output<Rmap> output){
+        super(spark,output.target(),output.schemaAll().values().toArray(new TableDesc[0]));
+        this.output = output;
+    }
+
 
 	public SparkSinkOutput(SparkSession spark, Consumer<Rmap> eaching) {
 		this(spark, (OddOutput<Rmap>) v -> {

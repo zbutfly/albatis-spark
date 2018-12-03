@@ -7,7 +7,7 @@
 //	private String format;
 //	private Map<String, String> options;
 //	private boolean isStream;
-//	
+//
 //	public ReadConfig(String format, Map<String, String> options, boolean isStream) {
 //		this.format = format;
 //		this.options = options;

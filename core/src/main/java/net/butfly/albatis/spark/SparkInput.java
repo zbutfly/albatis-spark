@@ -53,6 +53,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		}
 	}
 
+
 	/**
 	 * @return Dataset of Rmap or Row, based on data source type (fix schema db like mongodb, or schemaless data like kafka)
 	 */
@@ -74,7 +75,6 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	public final List<Tuple2<String, Dataset<V>>> vals() {
 		if (vals.isEmpty()) rows.forEach(t -> vals(t._1, (Dataset<V>) row2rmap(t._2)));
 		return vals;
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -170,6 +170,9 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);
 	}
+
+
+
 
 	@SuppressWarnings("unchecked")
 	@Override

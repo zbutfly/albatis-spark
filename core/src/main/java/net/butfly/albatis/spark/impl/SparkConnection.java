@@ -161,8 +161,8 @@ public class SparkConnection implements EnvironmentConnection {
 	@SuppressWarnings("unchecked")
 	public SparkPluginInput plugin(String className, SparkInput<Rmap> input, PluginConfig pc) {
 		try {
-			Class<? extends SparkPluginInput> c = (Class<? extends SparkPluginInput>) Class.forName(className);
-			return c.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
+			Class<? extends SparkPluginInput> clazz = (Class<? extends SparkPluginInput>) Class.forName(className);
+			return clazz.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 				| IllegalArgumentException e) {
 			throw new RuntimeException(e);

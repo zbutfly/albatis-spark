@@ -19,7 +19,7 @@ import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 
 class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
-	private DataStreamWriter<Row> w;
+	private DataStreamWriter<Row> writer;
 
 	protected WriteHandlerStream(TableDesc table, Dataset<Rmap> ds) {
 		super(rmap2row(table, ds));
@@ -31,7 +31,7 @@ class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 
 	@Override
 	public void close() {
-		StreamingQuery s = w.start();
+		StreamingQuery s = writer.start();
 		try {
 			s.awaitTermination();
 		} catch (StreamingQueryException e) {
@@ -39,20 +39,21 @@ class WriteHandlerStream extends WriteHandlerBase<WriteHandlerStream> {
 		}
 	}
 
-	private DataStreamWriter<Row> w(boolean purge) {
+//	传入purge,进行purge处理,
+	private DataStreamWriter<Row> dStreamWriter(boolean purge) {
 		return (purge ? purge(ds) : ds).writeStream().outputMode(OutputMode.Update()).trigger(trigger());
 	}
 
 	@Override
 	public void save(String format, Map<String, String> options) { // TODO: need two mode
 		options.putIfAbsent("checkpointLocation", checkpoint());
-		w = w(true).format(format).options(options);
+		writer = dStreamWriter(true).format(format).options(options);
 	}
 
 	@Override
-	public void save(Output<Rmap> output) {
-		Map<String, String> opts = Maps.of("checkpointLocation", checkpoint(), "output", output.ser());
-		w = w(false).format(SparkSinkOutput.FORMAT).options(opts);
+	public void save(String table, Output<Rmap> output) {
+		Map<String, String> opts = Maps.of("checkpointLocation", checkpoint(), "output", output.ser(), "table", table);
+		writer = dStreamWriter(false).format(SparkSinkOutput.FORMAT).options(opts);
 	}
 
 	protected Trigger trigger() {

@@ -19,7 +19,6 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
@@ -66,20 +65,22 @@ public interface Schemas {
 		return createStructType(sfs);
 	}
 
+//
 	static Rmap row2rmap(Row row) {
-		Map<String, Object> m = Maps.of();
+		Map<String, Object> map = Maps.of();
 		for (int i = 0; i < row.schema().fieldNames().length; i++) {
+//			如果row里没有i,就跳过本次循环
 			if (row.isNullAt(i)) continue;
 			String f = row.schema().fieldNames()[i];
 			Object v = row.get(i);
-			m.put(f, v);
+			map.put(f, v);
 		}
-		String t = (String) m.remove(FIELD_TABLE_NAME);
-		String te = (String) m.remove(FIELD_TABLE_EXPR);
-		String k = (String) m.remove(FIELD_KEY_VALUE);
-		String kf = (String) m.remove(FIELD_KEY_FIELD);
-		int op = m.containsKey(FIELD_OP) ? ((Number) m.remove(FIELD_OP)).intValue() : Op.DEFAULT;
-		return new Rmap(k, m).table(t, te).keyField(kf).op(op);
+		String t = (String) map.remove(FIELD_TABLE_NAME);
+		String te = (String) map.remove(FIELD_TABLE_EXPR);
+		String k = (String) map.remove(FIELD_KEY_VALUE);
+		String kf = (String) map.remove(FIELD_KEY_FIELD);
+		int op = map.containsKey(FIELD_OP) ? ((Number) map.remove(FIELD_OP)).intValue() : Op.DEFAULT;
+		return new Rmap(k, map).table(t, te).keyField(kf).op(op);
 	}
 
 	static Dataset<Rmap> row2rmap(Dataset<Row> ds) {
@@ -127,7 +128,7 @@ public interface Schemas {
 	@Deprecated
 	static Rmap rawToRmap(Row row) {
 		byte[] data = row.getAs("value");
-		try (ObjectInputStream oss = new ObjectInputStream(new ByteArrayInputStream(data));) {
+		try (ObjectInputStream oss = new ObjectInputStream(new ByteArrayInputStream(data))) {
 			return (Rmap) oss.readObject();
 		} catch (ClassNotFoundException | IOException e) {
 			logger.error("Sinked row data [" + data.length + "] corrupted.", e);

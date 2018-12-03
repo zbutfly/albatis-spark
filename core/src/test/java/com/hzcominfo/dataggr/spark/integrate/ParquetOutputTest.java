@@ -2,14 +2,17 @@ package com.hzcominfo.dataggr.spark.integrate;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.ddl.TableDesc;
+import net.butfly.albatis.spark.ParquetOutput;
 import net.butfly.albatis.spark.output.SparkSaveOutput;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 
+import java.util.Map;
+
 /**
  * Created by 党楚翔 on 2018/11/29.
  */
-public class sparkSaveOutputTest {
+public class ParquetOutputTest {
     public static void main(String[] args) {
         SparkConf conf = new SparkConf();
         conf.setMaster("local[*]");
@@ -22,7 +25,19 @@ public class sparkSaveOutputTest {
         URISpec uriSpec = new URISpec("zk://data01:2181,data02:2181,data03:2181/kafka");
 
 
-        SparkSaveOutput output = new SparkSaveOutput(session,uriSpec,TableDesc.dummy("testTable"));
+        ParquetOutput parquetOutput = new ParquetOutput(session,uriSpec,TableDesc.dummy("test"));
+
+        Map<String, String> map = parquetOutput.options("test");
+
+//        parquetOutput.
+
+
+
+
+
+
+
+//        SparkSaveOutput output = new SparkSaveOutput(session,uriSpec,TableDesc.dummy("testTable"));
 
     }
 }
