@@ -38,9 +38,11 @@ public class SparkPluginInput extends SparkInput<Row> {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
+//		拿到maxscore,压平PluginConfig, 传入table1对象,返回一个list
 		String maxScore = pc.getMaxScore();
-		return Colls.flat(Colls.list(pc.getKeys(), (Function<String, List<Tuple2<String, Dataset<Row>>>>) k -> Colls.list(input.rows(),
-				t -> new Tuple2<>(t._1, t._2.groupBy(col(k).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))))));
+		return Colls.flat(Colls.list(pc.getKeys(), (Function<String, List<Tuple2<String, Dataset<Row>>>>) table1 -> Colls.list(input.rows(),
+//			    传入一个table2对象,返回一个tuple, 第二个元素是按照他t1分组,再聚合,求count,求max
+				table2 -> new Tuple2<>(table2._1, table2._2.groupBy(col(table1).as(PLUGIN_KEY)).agg(count("*").as(COUNT), max(maxScore).as(MAX_SCORE))))));
 	}
 
 	@Override

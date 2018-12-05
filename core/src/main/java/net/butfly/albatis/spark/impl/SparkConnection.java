@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import net.butfly.albatis.spark.input.*;
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
 import org.apache.spark.scheduler.SparkListenerJobStart;
@@ -29,15 +30,12 @@ import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.input.SparkInnerJoinInput;
-import net.butfly.albatis.spark.input.SparkJoinInput;
-import net.butfly.albatis.spark.input.SparkNonJoinInput;
-import net.butfly.albatis.spark.input.SparkOrJoinInput;
 import net.butfly.albatis.spark.plugin.PluginConfig;
 import net.butfly.albatis.spark.plugin.SparkPluginInput;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
+@SparkIO.Schema({ "mongodb:basic", "file:basic" })
 public class SparkConnection implements EnvironmentConnection {
 	private static final long serialVersionUID = 5093686615279489589L;
 	private final static String DEFAULT_HOST = "local[*]";
@@ -149,6 +147,11 @@ public class SparkConnection implements EnvironmentConnection {
 	public <V> SparkJoinInput innerJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
 		return new SparkInnerJoinInput(input, col, joined, joinedCol);
 	}
+
+
+	public <V>SparkJoinInputRefactor innerJoinNew(URISpec thisU,URISpec thatU,String condiThis,String condiThat,JoinType type){
+	    return new SparkInnerJoinInputRefactor(thisU,thatU,condiThis,condiThat,type);
+    }
 
 	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
 		return new SparkOrJoinInput(input, col, joined, joinedCol);

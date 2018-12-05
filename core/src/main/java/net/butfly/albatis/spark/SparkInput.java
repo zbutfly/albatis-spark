@@ -40,6 +40,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
+//		控制mode为RMAP,要用SparkMapInput去调用
 		switch (mode()) {
 		case RMAP:
 			List<Tuple2<String, Dataset<V>>> ds = load();
@@ -56,8 +57,12 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	/**
 	 * @return Dataset of Rmap or Row, based on data source type (fix schema db like mongodb, or schemaless data like kafka)
+     *
 	 */
-	protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
+//	protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
+
+
+	protected abstract <T> List<Tuple2<String,Dataset<T>>> load();
 
 	public enum DatasetMode {
 		NONE, RMAP, ROW
@@ -163,6 +168,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
+//  传入一个function,输入是动态类型V,输出是Sdream对象
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
 			Dataset<Rmap> ds1 = t._2.flatMap((FlatMapFunction<V, Rmap>)  v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);

@@ -34,5 +34,21 @@
             <artifactId>albacore-expr-fel</artifactId>
             <version>${version.albacore}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>3.4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hzcominfo.dataggr.spark.integrate</groupId>
+            <artifactId>spark-integrate-kafka</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hzcominfo.dataggr.spark.integrate</groupId>
+            <artifactId>spark-integrate-mongo</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

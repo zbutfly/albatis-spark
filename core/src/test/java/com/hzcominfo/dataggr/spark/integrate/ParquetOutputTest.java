@@ -37,6 +37,8 @@ public class ParquetOutputTest {
 
 
 
+
+
 //        SparkSaveOutput output = new SparkSaveOutput(session,uriSpec,TableDesc.dummy("testTable"));
 
     }

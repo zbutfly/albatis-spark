@@ -25,5 +25,4 @@ public abstract class SparkMapInput extends SparkInput<Rmap> {
 	protected final DatasetMode mode() {
 		return DatasetMode.RMAP;
 	}
-
 }

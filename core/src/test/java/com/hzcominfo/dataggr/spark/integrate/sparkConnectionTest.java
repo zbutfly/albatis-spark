@@ -1,10 +1,15 @@
 package com.hzcominfo.dataggr.spark.integrate;
 
+import com.hzcominfo.dataggr.spark.integrate.mongo.SparkMongoInput;
 import com.sun.istack.internal.NotNull;
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.paral.Sdream;
+import net.butfly.albacore.utils.logger.Statistic;
 import net.butfly.albatis.ddl.TableDesc;
+import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
+import net.butfly.albatis.spark.SparkMapInput;
 import net.butfly.albatis.spark.impl.SparkConnection;
 import net.butfly.albatis.spark.impl.SparkIO;
 import net.butfly.albatis.spark.input.SparkInnerJoinInput;
@@ -13,7 +18,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
-
 import java.util.List;
 
 /**
@@ -23,45 +27,39 @@ public class sparkConnectionTest {
     public static void main(String[] args) {
         SparkConf conf = new SparkConf();
         conf.setMaster("local[*]").setAppName("esInput");
-
         @NotNull
         SparkSession session = SparkSession.builder().config(conf).getOrCreate();
 
-        SparkConnection connection = new SparkConnection();
-
         URISpec esUri = new URISpec("es://hzcominfo@172.30.10.31:39200/test_phga_search/M2ES_CZRK");
 
+        URISpec uri1 = new URISpec("mongodb://devdb:Devdb1234@172.30.10.31:40012/devdb/SPARK_FEATURE_SUB");
+        URISpec uri2 = new URISpec("mongodb://devdb:Devdb1234@172.30.10.31:40012/devdb/SPARK_FEATURE_TEST");
 
-        URISpec czrkUri = new URISpec("mongodb://devdb:Devdb1234@172.30.10.31:40012/devdb.PH_ZHK_CZRK");
+        SparkConnection connection = new SparkConnection(uri1);
 
+//        SparkInput input  =  connection.input(uri1);
+//        SparkInput input1 =  connection.input(uri2);
+//        SparkJoinInput conn = connection.innerJoin(input, "CERTIFIED_ID", input1, "ZJHM");
 
-        URISpec ztriURI = new URISpec("mongodb://devdb:Devdb1234@172.30.10.31:40012/devdb.PH_ZHK_ZTRI");
-
-
-        SparkJoinInput sparkJoinInput = connection.orJoin(new SparkInput<Rmap>(session, czrkUri, TableDesc.dummy("PH_ZHK_CZRK")) {
+        SparkJoinInput conn = connection.innerJoin(new SparkMapInput(session, uri1, TableDesc.dummy("PH_ZHK_CZRK")) {
             @Override
-            protected <T> List<Tuple2<String, Dataset<T>>> load() {
-                return (List<Tuple2<String, Dataset<T>>>) new Tuple2<String, String>(czrkUri.getFile(), czrkUri.getHost());
+            protected List<Tuple2<String, Dataset<Rmap>>> load() {
+                return null;
             }
-        }, "col", new SparkInput<Rmap>(session, ztriURI, TableDesc.dummy("PH_ZHK_ZTRI")) {
+        }, "_id", new SparkMapInput(session, uri2, TableDesc.dummy("PH_ZHK_ZTRI")) {
             @Override
-            protected <T> List<Tuple2<String, Dataset<T
-                    >>> load() {
-                return (List<Tuple2<String, Dataset<T>>>) new Tuple2<Integer, Integer>(ztriURI.getDefaultPort(),1);
-            };
+            protected List<Tuple2<String, Dataset<Rmap>>> load() {
+                return null;
+            }
         }, "_id");
 
 
+        conn.open();
 
+        String ser = conn.ser();
 
+        String format = conn.format();
 
-        sparkJoinInput.open();
-
-        sparkJoinInput.close();
-
-
-
-
-
+        System.out.println(ser +"\t"+format);
     }
 }

@@ -24,7 +24,8 @@ import net.butfly.albatis.spark.impl.SparkConf.SparkConfItems;
 
 public abstract class SparkIO implements IO, Serializable {
 	private static final long serialVersionUID = 3265459356239387878L;
-	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS //
+//  这个map是scan注解装载的
+	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS
 			= Maps.of(Input.class, Maps.of(), Output.class, Maps.of());
 
 	public final SparkSession spark;
@@ -40,7 +41,7 @@ public abstract class SparkIO implements IO, Serializable {
 	}
 
 	public String format() {
-		return null;
+		return this.name();
 	}
 
 	public static <V, O extends Output<V>> O output(SparkSession spark, URISpec uri, TableDesc... table) {
@@ -63,13 +64,13 @@ public abstract class SparkIO implements IO, Serializable {
 	}
 
 	public static <V, I extends SparkInput<Rmap>> I input(SparkSession spark, URISpec uri, TableDesc... table) {
-		String s = uri.getScheme();
-		while (!s.isEmpty()) {
+		String scheme = uri.getScheme();
+		while (!scheme.isEmpty()) {
 			@SuppressWarnings("unchecked")
-			Class<I> cls = (Class<I>) ADAPTERS.get(Input.class).get(s);
+			Class<I> cls = (Class<I>) ADAPTERS.get(Input.class).get(scheme);
 			if (null == cls) {
-				int c = s.lastIndexOf(":");
-				if (c >= 0) s = s.substring(0, c);
+				int c = scheme.lastIndexOf(":");
+				if (c >= 0) scheme = scheme.substring(0, c);
 				else break;
 			} else try {
 				return cls.getConstructor(SparkSession.class, URISpec.class, TableDesc[].class).newInstance(spark, uri, table);
@@ -80,13 +81,16 @@ public abstract class SparkIO implements IO, Serializable {
 				throw new RuntimeException(e.getTargetException());
 			}
 		}
-		throw new RuntimeException("No matched adapter with scheme: " + s);
+		throw new RuntimeException("No matched adapter with scheme: " + scheme);
 	}
 
+
+//
 	public static void scan() {
 		for (Class<? extends SparkIO> cls : Reflections.getSubClasses(SparkIO.class)) {
 			Schema schema = cls.getAnnotation(Schema.class);
 			if (null != schema) {
+//			    把拿到的schema注册到环境中
 				if (Input.class.isAssignableFrom(cls)) reg(Input.class, schema, cls);
 				else if (Output.class.isAssignableFrom(cls)) reg(Output.class, schema, cls);
 			}
@@ -94,36 +98,38 @@ public abstract class SparkIO implements IO, Serializable {
 		Logger.getLogger(SparkIO.class).debug("Spark adaptors scanned.");
 	}
 
+//	传入io反射对象,schema对象,反射对象cls
 	private static void reg(Class<? extends IO> io, Schema schema, Class<? extends SparkIO> cls) {
-		Logger l = Logger.getLogger(cls);
-		l.debug("Spark" + io.getSimpleName() + " driver loaded: " + cls.getName() + " as schema [" + String.join(", ", schema.value())
+		Logger log = Logger.getLogger(cls);
+		log.debug("Spark" + io.getSimpleName() + " driver loaded: " + cls.getName() + " as schema [" + String.join(", ", schema.value())
 				+ "]");
 		SparkConf[] confs;
 		SparkConfItems extra = cls.getAnnotation(SparkConfItems.class);
 		if (null != extra) confs = extra.value();
 		else if (null != cls.getAnnotation(SparkConf.class)) confs = new SparkConf[] { cls.getAnnotation(SparkConf.class) };
 		else confs = new SparkConf[0];
-		for (SparkConf c : confs) {
-			l.info("SparkConf defined: " + c.toString());
-			if ("".equals(c.key())) {
-				String[] kv = c.value().split("=", 2);
-				if (kv.length == 1) throw new RuntimeException("No key attr defined for " + c.toString()
+
+		for (SparkConf conf : confs) {
+			log.info("SparkConf defined: " + conf.toString());
+			if ("".equals(conf.key())) {
+				String[] kv = conf.value().split("=", 2);
+				if (kv.length == 1) throw new RuntimeException("No key attr defined for " + conf.toString()
 						+ ", and value attr shoule be key=value");
 				SparkConnection.extra(kv[0], kv[1]);
-			} else SparkConnection.extra(c.key(), c.value());
+			} else SparkConnection.extra(conf.key(), conf.value());
 		}
-		for (String s : schema.value())
-			ADAPTERS.get(io).compute(s, (ss, existed) -> {
+		for (String schemaValue : schema.value())
+			ADAPTERS.get(io).compute(schemaValue, (ss, existed) -> {
 				if (null == existed) {
 					return cls;
 				} else {
 					Schema s0 = existed.getAnnotation(Schema.class);
 					if (s0.priority() > schema.priority()) {
-						l.warn("Spark[Output] schema [" + ss + "] conflicted and ingored for class:  " + cls.toString() //
+						log.warn("Spark[Output] schema [" + ss + "] conflicted and ingored for class:  " + cls.toString() //
 								+ "\n\t(existed: " + existed.getName() + ")");
 						return existed;
 					} else {
-						l.warn("Spark[Output] schema [" + ss + "] conflicted and ingored for class:  " + existed.toString() //
+						log.warn("Spark[Output] schema [" + ss + "] conflicted and ingored for class:  " + existed.toString() //
 								+ "\n\t(priority: " + cls.getName() + ")");
 						return cls;
 					}
