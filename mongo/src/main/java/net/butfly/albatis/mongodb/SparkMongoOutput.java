@@ -101,8 +101,6 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
         return atomicInteger.get();
     }
 
-
-
 //  传入一个rmap，返回一个WriteModel
     protected WriteModel<Document> write(Rmap rmap) {
 //      传入rmap创建doc对象
@@ -123,13 +121,19 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
         Document docResult = null;
         if (null != rmap.keyField()) docResult = new Document(rmap.keyField(), rmap.key());
         else if (rmap.containsKey("_id")) docResult = new Document("_id", rmap.get("_id"));
-        Document qq = docResult;
+        Document doc2 = docResult;
         AtomicLong atom = new AtomicLong();
         s().statsOut(rmap, rr -> {
             try {
-                if (null != qq) {
-                    UpdateResult u = col.replaceOne(qq, doc, new ReplaceOptions().upsert(true));
+                if (null != doc2) {
+                    ReplaceOptions upsert = new ReplaceOptions().upsert(true);
+
+                    UpdateResult u = col.replaceOne(doc2, doc, upsert);
+
+//                    UpdateResult updateResult = col.replaceOne(doc2, doc, new ReplaceOptions().upsert(true));
+
                     atom.set(u.getModifiedCount());
+
                 } else {
                     col.insertOne(doc);
                     atom.set(1);
