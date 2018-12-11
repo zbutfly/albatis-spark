@@ -94,30 +94,30 @@
 					<artifactId>jsr305</artifactId>
 					<groupId>com.google.code.findbugs</groupId>
 				</exclusion>
-                <exclusion>
-                    <artifactId>mongo-spark-connector_2.11</artifactId>
-                    <groupId>org.mongodb.spark</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>albatis-core</artifactId>
-                    <groupId>net.butfly.albatis</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>albacore-core</artifactId>
-                    <groupId>net.butfly.albacore</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>spark-core_2.11</artifactId>
-                    <groupId>org.apache.spark</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>spark-sql_2.11</artifactId>
-                    <groupId>org.apache.spark</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>spark-streaming_2.11</artifactId>
-                    <groupId>org.apache.spark</groupId>
-                </exclusion>
+				<exclusion>
+					<artifactId>mongo-spark-connector_2.11</artifactId>
+					<groupId>org.mongodb.spark</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>albatis-core</artifactId>
+					<groupId>net.butfly.albatis</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>albacore-core</artifactId>
+					<groupId>net.butfly.albacore</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spark-core_2.11</artifactId>
+					<groupId>org.apache.spark</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spark-sql_2.11</artifactId>
+					<groupId>org.apache.spark</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spark-streaming_2.11</artifactId>
+					<groupId>org.apache.spark</groupId>
+				</exclusion>
 				<exclusion>
 					<artifactId>zookeeper</artifactId>
 					<groupId>org.apache.zookeeper</groupId>
@@ -131,6 +131,11 @@
 					<groupId>org.apache.kafka</groupId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>net.butfly.albacore</groupId>
+			<artifactId>albacore-core</artifactId>
+			<version>${version.albacore}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
@@ -158,7 +163,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
 		<dependency>
 			<groupId>org.mongodb.spark</groupId>
 			<artifactId>mongo-spark-connector_${version.scala.main}</artifactId>
@@ -169,11 +173,5 @@
 			<artifactId>mongodb-driver</artifactId>
 			<version>${version.mongodb.fat}</version>
 		</dependency>
-		<!--<dependency>-->
-			<!--<groupId>net.butfly.albacore</groupId>-->
-			<!--<artifactId>albacore-core</artifactId>-->
-			<!--<version>RELEASE</version>-->
-			<!--<scope>compile</scope>-->
-		<!--</dependency>-->
 	</dependencies>
 </project>
