@@ -96,7 +96,6 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		};
 	}
 
-	@SuppressWarnings("deprecation")
 	@Deprecated
 	@Override
 	public <V0> Output<V0> priors(Function<Sdream<V0>, Sdream<V>> conv, int parallelism) {

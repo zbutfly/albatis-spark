@@ -158,7 +158,6 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public <V1> SparkInput<V1> thens(Function<Sdream<V>, Sdream<V1>> conv, int parallelism) {
 		return thens(conv);
 	}

@@ -1,26 +1,14 @@
 package com.hzcominfo.dataggr.spark.integrate.kafka.test;
 
-import net.butfly.albacore.io.URISpec;
-import net.butfly.albacore.utils.collection.Maps;
-import net.butfly.albatis.ddl.TableDesc;
-import net.butfly.albatis.kafka.SparkKafkaInput;
-import net.butfly.albatis.kafka.SparkKafkaOutput;
+import java.util.Map;
+
+import org.apache.spark.SparkConf;
 //import net.butfly.albatis.spark.impl.SparkConf;
 import org.apache.spark.sql.SparkSession;
 
-
-import java.util.Map;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.ddl.TableDesc;
-import net.butfly.albatis.kafka.SparkKafkaInput;
-import org.apache.spark.SparkConf;
-
-import net.butfly.albacore.utils.collection.Maps;
-
-import org.apache.spark.sql.*;
-
-import java.util.Map;
+import net.butfly.albatis.kafka.SparkKafkaOutput;
 
 /**
  * Created by 党楚翔 on 2018/11/28.

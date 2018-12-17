@@ -1,11 +1,8 @@
 package net.butfly.albatis.spark.input;
 
 import net.butfly.albacore.io.URISpec;
-import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.SparkInput;
 
 public class SparkInnerJoinInputRefactor extends SparkJoinInputRefactor {
-	private static final long serialVersionUID = 377289278732441635L;
     /**
      * @param thisUri   表a
      * @param thatUri   表b

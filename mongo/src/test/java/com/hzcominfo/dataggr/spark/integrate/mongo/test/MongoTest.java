@@ -2,19 +2,13 @@ package com.hzcominfo.dataggr.spark.integrate.mongo.test;
 
 import java.util.Map;
 
+import org.apache.spark.SparkConf;
+import org.apache.spark.sql.SparkSession;
+
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
-import net.butfly.albatis.mongodb.SparkMongoOutput;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.SparkSession;
-import org.bson.Document;
-
-import com.mongodb.spark.MongoSpark;
-import com.mongodb.spark.config.ReadConfig;
-import com.mongodb.spark.rdd.api.java.JavaMongoRDD;
-
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.mongodb.SparkMongoOutput;
 
 public class MongoTest {
 

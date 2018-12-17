@@ -90,7 +90,6 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public <R> Sdream<R> map(Function<Sdream<Rmap>, Sdream<R>> conv, int maxBatchSize) {
 		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>)  m -> (Iterator<Rmap>) conv.apply(Sdream.of1(m)).list().iterator(), ENC_RMAP);

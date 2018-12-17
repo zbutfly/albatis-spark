@@ -4,12 +4,14 @@ import java.util.List;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
 import scala.Tuple2;
 
 public class SparkJoinInput extends SparkInput<Rmap> {
+	private static final long serialVersionUID = -4870210186801499L;
 	protected final SparkInput<Rmap> input;
 	protected final String col;
 	protected final SparkInput<Rmap> joined;

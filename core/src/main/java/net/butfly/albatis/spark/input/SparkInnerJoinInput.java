@@ -1,6 +1,5 @@
 package net.butfly.albatis.spark.input;
 
-import net.butfly.albacore.io.URISpec;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
 
