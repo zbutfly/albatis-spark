@@ -137,7 +137,7 @@ public class SparkConnection implements EnvironmentConnection {
 
 	@Override
 	@Deprecated
-	public <M extends Rmap> Output<M> output(TableDesc... table) throws IOException {
+	public <M extends Rmap> Output<M> createOutput(TableDesc... table) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
