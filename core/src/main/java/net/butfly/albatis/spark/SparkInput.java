@@ -199,7 +199,6 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	private <T> Dataset<T> limit(Dataset<T> ds) {
 		if (null != ds && Systems.isDebug()) {
-			@SuppressWarnings("deprecation")
 			int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1"));
 			if (limit > 0) {
 				ds = ds.limit(limit);

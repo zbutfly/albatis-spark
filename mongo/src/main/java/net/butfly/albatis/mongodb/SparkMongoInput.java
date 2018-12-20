@@ -56,7 +56,6 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 
 			JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, rc);
 			if (Systems.isDebug()) {
-				@SuppressWarnings("deprecation")
 				int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1")) / rdd.getNumPartitions() + 1;
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
