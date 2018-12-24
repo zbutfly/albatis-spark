@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bus>
+	<router class="net.butfly.bus.policy.SimpleRouter" />
+	<filter title="logger-filter" class="net.butfly.bus.filter.LoggerFilter" />
+	<!-- <filter title="auth-filter" class="net.butfly.bus.filter.AuthFilter" 
+		/> -->
+	<invoker tx="SEARCH_*" class="net.butfly.bus.invoker.SpringInvoker">
+		<module>search-collision-new</module>
+		<files>com/hzcominfo/search/collision/spring/beans.xml</files>
+	</invoker>
+</bus>

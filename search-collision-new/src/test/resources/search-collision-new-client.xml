@@ -1,0 +1,10 @@
+<bus id="bus-subscribe-client">
+	<filter title="logger-filter" class="net.butfly.bus.filter.LoggerFilter"
+		enabled="true" />
+	<router class="net.butfly.bus.policy.SimpleRouter" />
+	<invoker id="bus-dataggr-hessian" tx="*"
+		class="net.butfly.bus.invoker.WebServiceInvoker">
+		<path>http://127.0.0.1:19080/bus</path>
+		<serializer>net.butfly.bus.serialize.HessianSerializer</serializer>
+	</invoker>
+</bus>

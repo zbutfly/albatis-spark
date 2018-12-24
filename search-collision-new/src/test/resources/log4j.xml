@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN"
+	"http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/doc-files/log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+	<appender name="log-console-stdout" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.SimpleLayout" />
+		<!-- <layout class="net.butfly.albacore.logger.ANSIColorPatternLayout"> -->
+		<!-- <param name="ConversionPattern" value="%d{ABSOLUTE}[%5p][%c{1}][%t]: %m%n" /> -->
+		<!-- </layout> -->
+	</appender>
+	<logger name="com.hzcominfo" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="log-console-stdout" />
+	</logger>
+	<logger name="net.butfly" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="log-console-stdout" />
+	</logger>
+	<logger name="org.reflections" additivity="false">
+		<level value="error" />
+		<appender-ref ref="log-console-stdout" />
+	</logger>
+	<root>
+		<level value="warn" />
+		<appender-ref ref="log-console-stdout" />
+	</root>
+	<logger name="org.spark_project" additivity="false">
+		<level value="warn" />
+		<appender-ref ref="log-console-stdout" />
+	</logger>
+	<logger name="org.apache" additivity="false">
+		<level value="warn" />
+		<appender-ref ref="log-console-stdout" />
+	</logger>
+	<logger name="com.hzcominfo.dataggr.spark" additivity="false">
+		<level value="trace" />
+		<appender-ref ref="log-console-stdout" />
+	</logger>
+</log4j:configuration>
