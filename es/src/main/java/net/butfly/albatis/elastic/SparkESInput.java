@@ -30,7 +30,11 @@ public class SparkESInput extends SparkRowInput {
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
-		options.put("es.port", targetUri.getParameter(HTTP_PORT));
+		if ( !targetUri.getParameter(HTTP_PORT).isEmpty() && null != targetUri.getParameter(HTTP_PORT) ){
+			options.put("es.port", targetUri.getParameter(HTTP_PORT));
+		}else {
+			options.put("es.port","29300");
+		}
 		options.put("es.resource", table().name);
 		return options;
 	}
