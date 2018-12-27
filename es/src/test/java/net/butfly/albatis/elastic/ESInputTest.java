@@ -7,9 +7,6 @@ import org.apache.spark.sql.*;
 import java.util.Map;
 
 
-/**
- * Created by 党楚翔 on 2018/11/29.
- */
 public class ESInputTest {
     public static void main(String[] args) {
         SparkConf conf = new SparkConf();
@@ -18,9 +15,6 @@ public class ESInputTest {
         SparkSession session = SparkSession.builder().config(conf).getOrCreate();
 
         URISpec uri = new URISpec("es://hzcominfo@172.30.10.31:39200/test_phga_search/M2ES_CZRK");
-
-//        @NotNull
-//        URISpec uri = new URISpec("es://hzcominfo@172.30.10.31:39200/xsga_dpc_test");
 
         SparkESInput esInput = new SparkESInput(session,uri);
 

@@ -30,6 +30,7 @@ public class SparkESInput extends SparkRowInput {
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
+//		默认是tcp的port
 		options.put("es.port", targetUri.getParameter(HTTP_PORT, "29930"));
 		options.put("es.resource", table().name);
 		return options;

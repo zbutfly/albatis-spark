@@ -9,7 +9,7 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.output.SparkSinkOutput;
 
-class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
+public class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 	private static final long serialVersionUID = -6842560101323305087L;
 	private final SparkInput<Rmap> input;
 	private final SparkOutput<Rmap> output;

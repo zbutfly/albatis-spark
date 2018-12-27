@@ -12,11 +12,11 @@ import scala.Tuple2;
 
 public class SparkJoinInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = -4870210186801499L;
-	protected final SparkInput<Rmap> input;
-	protected final String col;
-	protected final SparkInput<Rmap> joined;
-	protected final String joinedCol;
-	protected final String joinType;
+	public final SparkInput<Rmap> input;
+	public final String col;
+	public final SparkInput<Rmap> joined;
+	public final String joinedCol;
+	public final String joinType;
 
 	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType) {
 		super(input.spark, input.targetUri);
