@@ -13,7 +13,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.albatis.Albatis;
+import net.butfly.albatis.Albatis;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;

@@ -15,7 +15,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import org.bson.Document;
 
-import com.hzcominfo.albatis.Albatis;
+import net.butfly.albatis.Albatis;
 import com.mongodb.spark.MongoSpark;
 import com.mongodb.spark.config.ReadConfig;
 import com.mongodb.spark.rdd.api.java.JavaMongoRDD;

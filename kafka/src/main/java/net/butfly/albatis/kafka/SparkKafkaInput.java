@@ -8,7 +8,7 @@ import java.util.Map;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.streaming.DataStreamReader;
-import com.hzcominfo.albatis.nosql.Connection;
+import net.butfly.albatis.Connection;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Function;
 import net.butfly.albacore.utils.collection.Colls;

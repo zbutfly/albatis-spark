@@ -6,7 +6,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.albatis.nosql.Connection;
+import net.butfly.albatis.Connection;
 
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albatis.ddl.TableDesc;

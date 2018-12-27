@@ -8,7 +8,7 @@ import java.util.Map;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import com.hzcominfo.albatis.nosql.Connection;
+import net.butfly.albatis.Connection;
 
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albatis.ddl.TableDesc;

@@ -24,9 +24,8 @@ import net.butfly.albatis.spark.impl.SparkConf.SparkConfItems;
 
 public abstract class SparkIO implements IO, Serializable {
 	private static final long serialVersionUID = 3265459356239387878L;
-//  这个map是scan注解装载的
-	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS
-			= Maps.of(Input.class, Maps.of(), Output.class, Maps.of());
+	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS = Maps.of(Input.class, Maps.of(),
+			Output.class, Maps.of());
 
 	public final SparkSession spark;
 	public final URISpec targetUri;
@@ -37,7 +36,6 @@ public abstract class SparkIO implements IO, Serializable {
 		this.targetUri = targetUri;
 
 		if (table.length > 0) schema(table);
-		// else if (null != targetUri && null != targetUri.getFile()) schema(TableDesc.dummy(targetUri.getFile()));
 	}
 
 	public String format() {
@@ -84,13 +82,10 @@ public abstract class SparkIO implements IO, Serializable {
 		throw new RuntimeException("No matched adapter with scheme: " + scheme);
 	}
 
-
-//
 	public static void scan() {
 		for (Class<? extends SparkIO> cls : Reflections.getSubClasses(SparkIO.class)) {
 			Schema schema = cls.getAnnotation(Schema.class);
 			if (null != schema) {
-//			    把拿到的schema注册到环境中
 				if (Input.class.isAssignableFrom(cls)) reg(Input.class, schema, cls);
 				else if (Output.class.isAssignableFrom(cls)) reg(Output.class, schema, cls);
 			}
@@ -98,7 +93,6 @@ public abstract class SparkIO implements IO, Serializable {
 		Logger.getLogger(SparkIO.class).debug("Spark adaptors scanned.");
 	}
 
-//	传入io反射对象,schema对象,反射对象cls
 	private static void reg(Class<? extends IO> io, Schema schema, Class<? extends SparkIO> cls) {
 		Logger log = Logger.getLogger(cls);
 		log.debug("Spark" + io.getSimpleName() + " driver loaded: " + cls.getName() + " as schema [" + String.join(", ", schema.value())

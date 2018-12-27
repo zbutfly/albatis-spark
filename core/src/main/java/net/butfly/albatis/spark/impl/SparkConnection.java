@@ -17,7 +17,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import com.hzcominfo.albatis.nosql.EnvironmentConnection;
+import net.butfly.albatis.EnvironmentConnection;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.IOs;
@@ -232,7 +232,7 @@ public class SparkConnection implements EnvironmentConnection {
 		return spark.sql(sql);
 	}
 
-	public static class Driver implements com.hzcominfo.albatis.nosql.Connection.Driver<SparkConnection> {
+	public static class Driver implements net.butfly.albatis.Connection.Driver<SparkConnection> {
 		static {
 			DriverManager.register(new Driver());
 		}
