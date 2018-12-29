@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 
-import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.IO;

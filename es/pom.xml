@@ -8,31 +8,8 @@
 		<version>1.5.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>albatis-spark-io-es</artifactId>
-	<version>1.5.2-SNAPSHOT</version>
-	<packaging>jar</packaging>
 	<dependencies>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.11</artifactId>
-            <version>2.4.0</version>
-        </dependency>
-
-
-        <dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
-		</dependency>
-
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>3.2.2</version>
-        </dependency>
-
-        <dependency>
+		<dependency>
 			<groupId>net.butfly.albatis</groupId>
 			<artifactId>albatis-spark-io-core</artifactId>
 			<version>${project.version}</version>

@@ -15,7 +15,6 @@ import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 import net.butfly.albatis.spark.output.WriteHandler;
 import net.butfly.albatis.spark.util.DSdream;
-import static net.butfly.albatis.spark.impl.Sparks.alias;
 
 @Schema({ "hdfs", "file" })
 public class ParquetSaveOutput extends SparkSinkSaveOutput {
@@ -46,10 +45,10 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 	public void enqueue(Sdream<Rmap> s) {
 		if (!(s instanceof DSdream)) throw new UnsupportedOperationException("Can only save dataset");
 		DSdream d = (DSdream) s;
-		write(d.ds);
+		write(d.table, d.ds);
 	}
 
-	protected void write(Dataset<Row> ds) {
+	protected void write(String t, Dataset<Row> ds) {
 		long n = System.currentTimeMillis();
 		Map<String, String> opts = options(t);
 		try (WriteHandler w = WriteHandler.of(ds)) {

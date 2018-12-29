@@ -41,21 +41,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		return targetUri;
 	}
 
-	public abstract void save(Dataset<Row> ds);
-
-	public final void saver(Dataset<Rmap> rs) {
-		String table = alias(rs);
-		TableDesc td = schema(table);
-		if (null == td) {
-			Map<String, TableDesc> ss = schemaAll();
-			if (ss.size() == 1) {
-				td = ss.values().iterator().next();
-				logger().warn("Table [" + table + "] not found in schemas, using first: " + td + " and register it.");
-				schema(td);
-			} else throw new UnsupportedOperationException(
-					"Table name variable, and multiple destination tables. Can's guess default table");
-		}
-		save(rmap2row(td, rs).alias(td.name));
+	public abstract void save(String table, Dataset<Row> ds);
 
 	public Map<String, String> options(String table) {
 		return Maps.of();
@@ -73,7 +59,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			private static final long serialVersionUID = -1680036215116179632L;
 
 			@Override
-			public void save(Dataset<Row> ds0) {
+			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).map((MapFunction<Rmap, Rmap>)  v0 -> (Rmap) conv.apply((V0) v0), ENC_RMAP);
 				save(table, rmap2row(schema(table), ds));
@@ -87,7 +73,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			private static final long serialVersionUID = 5079963400315523098L;
 
 			@Override
-			public void save(Dataset<Row> ds0) {
+			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
 						(FlatMapFunction<Rmap, Rmap>)  v0 -> ((Sdream<Rmap>) conv.apply(Sdream.of1((V0) v0))).list().iterator(), ENC_RMAP);
@@ -108,7 +94,7 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 			private static final long serialVersionUID = -2887496205884721038L;
 
 			@Override
-			public void save(Dataset<Row> ds0) {
+			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")
 				Dataset<Rmap> ds = row2rmap(ds0).flatMap(//
 						(FlatMapFunction<Rmap, Rmap>) v0 -> ((Sdream<Rmap>) conv.apply((V0) v0)).list().iterator(), ENC_RMAP);

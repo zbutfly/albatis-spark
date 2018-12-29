@@ -39,7 +39,7 @@ public abstract class SparkSinkOutputBase extends SparkOutput<Rmap> {
 	}
 
 	@Override
-	public abstract void save(Dataset<Row> ds);
+	public abstract void save(String table, Dataset<Row> ds);
 
 	@Override
 	public String format() {

@@ -1,6 +1,5 @@
 package net.butfly.albatis.spark.plugin;
 
-import static net.butfly.albatis.spark.impl.Sparks.alias;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.max;
