@@ -25,15 +25,15 @@ public class MongoTest {
 
 		URISpec uriSpec = new URISpec("mongodb://devdb:Devdb1234@172.30.10.31:40012/devdb");
 
+		try (SparkMongoOutput mongoOutput = new SparkMongoOutput(spark, uriSpec);) {
+			mongoOutput.enqueue(Sdream.of());
+		}
 
-		SparkMongoOutput mongoOutput = new SparkMongoOutput(spark,uriSpec);
-		mongoOutput.enqueue(Sdream.of());
-
-//		JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
-//		ReadConfig readConfig = ReadConfig.create(jsc).withOptions(options);
-//
-//		// Dataset<R> dataset = MongoSpark.load(jsc, readConfig).toDF();
-//		JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, readConfig);// ZJHM
-//		System.out.println(rdd.first().toJson());
+		// JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
+		// ReadConfig readConfig = ReadConfig.create(jsc).withOptions(options);
+		//
+		// // Dataset<R> dataset = MongoSpark.load(jsc, readConfig).toDF();
+		// JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, readConfig);// ZJHM
+		// System.out.println(rdd.first().toJson());
 	}
 }

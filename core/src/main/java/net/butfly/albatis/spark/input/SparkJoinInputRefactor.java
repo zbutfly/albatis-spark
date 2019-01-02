@@ -37,7 +37,7 @@ public class SparkJoinInputRefactor {
 			// todo 拿到dataset,做join处理
 			// 压平,后边好处理数据
 			// return Colls.flat(lll);
+			return null;
 		}
-		return null;
 	}
 }

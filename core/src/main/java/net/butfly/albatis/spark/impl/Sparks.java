@@ -98,7 +98,6 @@ public interface Sparks {
 			DataTypes.TimestampType.typeName(), ValType.DATE//
 	);
 
-	@SuppressWarnings("deprecation")
 	static ValType valType(DataType t) {
 		if (null == t) return ValType.UNKNOWN;
 		ValType vt = DATA_VAL_TYPE_MAPPING.get(t.typeName());
