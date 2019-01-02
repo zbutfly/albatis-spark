@@ -47,7 +47,8 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
         opts.put("replaceDocument", "true");
         opts.put("maxBatchSize", Integer.toString(BATCH_SIZE));
         opts.put("localThreshold", "0");
-        opts.put("writeConcern", "majority");
+        opts.put("writeConcern.w", "majority");
+        opts.put("collection","spark");
         if (null != table) opts.put("collection", table);
         return opts;
     }
