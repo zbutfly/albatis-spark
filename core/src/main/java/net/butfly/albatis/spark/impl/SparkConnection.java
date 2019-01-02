@@ -254,7 +254,7 @@ public class SparkConnection implements EnvironmentConnection {
 		if (null == paral) paral = "*";
 		if (null != host) host = host + "[" + paral + "]";
 		else host = uriSpec.getHost();
-		if (null == host || host.isEmpty()) host = DEFAULT_HOST;
+		if (Colls.empty(host)) host = DEFAULT_HOST;
 		logger.debug("Spark host detected: " + host);
 		return host;
 	}

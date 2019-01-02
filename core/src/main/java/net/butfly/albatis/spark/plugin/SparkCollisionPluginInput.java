@@ -17,7 +17,7 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	public SparkCollisionPluginInput(SparkInput<Row> input, PluginConfig pc) {
 		super(input, pc);
 		Map<SparkInput<Row>, String> cInputs = pc.getCollisionInputs();
-		if (cInputs == null || cInputs.isEmpty()) throw new RuntimeException("Not conforming to the conditions of collision plugin");
+		if (Colls.empty(cInputs)) throw new RuntimeException("Not conforming to the conditions of collision plugin");
 		this.cInputs = cInputs;
 	}
 
