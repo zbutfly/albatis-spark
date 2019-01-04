@@ -35,20 +35,18 @@ public class SparkJoinInput extends SparkRowInput {
 		super.open();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-//  在sparkinput的构造器中调用了load()
+	// 在sparkinput的构造器中调用了load()
 	public List<Tuple2<String, Dataset<Row>>> load() {
-//		创建一个List对象,用来存放tupleList
+		// 创建一个List对象,用来存放tupleList
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(input.rows(),
-//				//传入一个迭代器,一个function
-//				创建t1,t2.通过DataSet的join方法,做一个碰撞, col就是t1的条件字段,joinedCol就是t2的条件字段. 使用distinct拿到join后新的的Dataset
-				table1 -> Colls.list(joined.rows(), table2 -> new Tuple2<>(table1._1 + "*" + table2._1,
-						table1._2.join(table2._2, table1._2.col(col).equalTo(table2._2.col(joinedCol)), joinType).distinct())));
-//      压平,后边好处理数据
-        return Colls.flat(lll);
+				// //传入一个迭代器,一个function
+				// 创建t1,t2.通过DataSet的join方法,做一个碰撞, col就是t1的条件字段,joinedCol就是t2的条件字段. 使用distinct拿到join后新的的Dataset
+				table1 -> Colls.list(joined.rows(), table2 -> new Tuple2<>(table1._1 + "*" + table2._1, table1._2.join(table2._2, table1._2
+						.col(col).equalTo(table2._2.col(joinedCol)), joinType).distinct())));
+		// 压平,后边好处理数据
+		return Colls.flat(lll);
 	}
-
 
 	@Override
 	public void close() {
