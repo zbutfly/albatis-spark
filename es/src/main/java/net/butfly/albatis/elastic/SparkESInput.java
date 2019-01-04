@@ -4,16 +4,24 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import net.butfly.albacore.utils.collection.Colls;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.storage.StorageLevel;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 import scala.Tuple2;
+
+import static net.butfly.albatis.spark.impl.Sparks.split;
 
 @Schema({ "es", "elasticsearch" })
 public class SparkESInput extends SparkRowInput {
@@ -43,6 +51,11 @@ public class SparkESInput extends SparkRowInput {
 
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
-		return null;
+		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
+			Map<String, String> options = options();
+			Dataset<Row> rowDataset = JavaEsSparkSQL.esDF(spark, "es://es632@172.30.10.31:29300/ztry_1219/ztry_1219_01", options);
+			return Colls.list(split(rowDataset, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
+		});
+		return Colls.flat(list);
 	}
 }

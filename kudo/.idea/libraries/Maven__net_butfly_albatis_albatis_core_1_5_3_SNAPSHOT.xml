@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.butfly.albatis:albatis-core:1.5.3-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://D:/apache-maven-3.6.0/repository/net/butfly/albatis/albatis-core/1.5.3-SNAPSHOT/albatis-core-1.5.3-20190102.132744-4.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://D:/apache-maven-3.6.0/repository/net/butfly/albatis/albatis-core/1.5.3-SNAPSHOT/albatis-core-1.5.3-20190102.132744-4-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://D:/apache-maven-3.6.0/repository/net/butfly/albatis/albatis-core/1.5.3-SNAPSHOT/albatis-core-1.5.3-20190102.132744-4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

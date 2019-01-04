@@ -2,6 +2,7 @@ package net.butfly.albatis.spark.input;
 
 import java.util.List;
 
+import net.butfly.albatis.spark.SparkRowInput;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -10,7 +11,7 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
 import scala.Tuple2;
 
-public class SparkJoinInput extends SparkInput<Rmap> {
+public class SparkJoinInput extends SparkRowInput {
 	private static final long serialVersionUID = -4870210186801499L;
 	public final SparkInput<Rmap> input;
 	public final String col;
@@ -47,8 +48,6 @@ public class SparkJoinInput extends SparkInput<Rmap> {
 //      压平,后边好处理数据
         return Colls.flat(lll);
 	}
-
-
 
 
 	@Override

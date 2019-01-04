@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/albatis-spark-io.iml" filepath="$PROJECT_DIR$/albatis-spark-io.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/albatis-spark-io-core.iml" filepath="$PROJECT_DIR$/core/albatis-spark-io-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/es/albatis-spark-io-es.iml" filepath="$PROJECT_DIR$/es/albatis-spark-io-es.iml" />
+      <module fileurl="file://$PROJECT_DIR$/hive/albatis-spark-io-hive.iml" filepath="$PROJECT_DIR$/hive/albatis-spark-io-hive.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kafka/albatis-spark-io-kafka.iml" filepath="$PROJECT_DIR$/kafka/albatis-spark-io-kafka.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mongo/albatis-spark-io-mongo.iml" filepath="$PROJECT_DIR$/mongo/albatis-spark-io-mongo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/solr/albatis-spark-io-solr.iml" filepath="$PROJECT_DIR$/solr/albatis-spark-io-solr.iml" />
+    </modules>
+  </component>
+</project>

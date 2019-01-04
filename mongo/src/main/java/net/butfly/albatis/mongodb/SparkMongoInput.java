@@ -67,4 +67,8 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 		});
 		return Colls.flat(l);
 	}
+
+
+
+
 }
