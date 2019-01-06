@@ -1,27 +1,24 @@
 package net.butfly.albatis.elastic;
 
+import static net.butfly.albatis.spark.impl.Sparks.split;
+
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
-import net.butfly.albacore.utils.collection.Colls;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.storage.StorageLevel;
-import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
+import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 import scala.Tuple2;
-
-import static net.butfly.albatis.spark.impl.Sparks.split;
 
 @Schema({ "es", "elasticsearch" })
 public class SparkESInput extends SparkRowInput {
@@ -38,7 +35,7 @@ public class SparkESInput extends SparkRowInput {
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
-//		默认是tcp的port
+		// 默认是tcp的port
 		options.put("es.port", targetUri.getParameter(HTTP_PORT, "29930"));
 		options.put("es.resource", table().name);
 		return options;

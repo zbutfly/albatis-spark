@@ -1,26 +1,22 @@
 package net.butfly.albatis.solr;
 
+import static net.butfly.albatis.spark.impl.Sparks.split;
+
 import java.util.List;
 import java.util.Map;
 
-import net.butfly.albacore.utils.collection.Colls;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import com.lucidworks.spark.rdd.SolrJavaRDD;
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.storage.StorageLevel;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
-
-import static net.butfly.albatis.spark.impl.Sparks.split;
 
 @Schema("solr")
 public class SparkSolrInput extends SparkRowInput {
