@@ -7,21 +7,29 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import net.butfly.albacore.io.URISpec;
+import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import scala.Tuple2;
 
 public abstract class SparkRowInput extends SparkInput<Row> {
 	private static final long serialVersionUID = -2144747945365613002L;
 
-	protected SparkRowInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
-		super(spark, targetUri, table);
+	protected SparkRowInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
+		super(spark, targetUri, context, table);
+	}
+
+	protected List<Tuple2<String, Dataset<Row>>> load() {
+		return load(Maps.of());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected abstract List<Tuple2<String, Dataset<Row>>> load();
+	protected <T> List<Tuple2<String, Dataset<T>>> load(Object context) {
+		return Colls.list(load(), t -> new Tuple2<>(t._1, (Dataset<T>) t._2));
+	}
 
-//	当这个RowInput调用super父类构造器时,就传入这个mode()
+	// 当这个RowInput调用super父类构造器时,就传入这个mode()
 	@Override
 	protected final DatasetMode mode() {
 		return DatasetMode.ROW;

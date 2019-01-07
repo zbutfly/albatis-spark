@@ -26,7 +26,7 @@ public class SparkESInput extends SparkRowInput {
 	private static String HTTP_PORT = "httpport";
 
 	public SparkESInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri, TableDesc.dummy(targetUri.getPath()));
+		super(spark, targetUri, null, TableDesc.dummy(targetUri.getPath()));
 	}
 
 	@Override

@@ -23,7 +23,7 @@ public class SparkPluginInput extends SparkInput<Row> {
 	protected final static String MAX_SCORE = PluginElement.max_score.name();
 
 	public SparkPluginInput(SparkInput<Row> input, PluginConfig pc) {
-		super(input.spark, input.targetUri);
+		super(input.spark, input.targetUri, null);
 		this.input = input;
 		this.pc = pc;
 	}
@@ -36,7 +36,7 @@ public class SparkPluginInput extends SparkInput<Row> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected List<Tuple2<String, Dataset<Row>>> load() {
+	protected List<Tuple2<String, Dataset<Row>>> load(Object context) {
 //		拿到maxscore,压平PluginConfig, 传入table1对象,返回一个list
 		String maxScore = pc.getMaxScore();
 		return Colls.flat(Colls.list(pc.getKeys(), (Function<String, List<Tuple2<String, Dataset<Row>>>>) table1 -> Colls.list(input.rows(),

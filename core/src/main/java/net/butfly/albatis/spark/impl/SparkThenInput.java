@@ -18,13 +18,13 @@ public final class SparkThenInput extends SparkInput<Rmap> implements Wrapper<Sp
 	private final SparkInput<?> base;
 
 	public SparkThenInput(SparkInput<?> s, List<Tuple2<String, Dataset<Rmap>>> ds) {
-		super(s.spark, s.targetUri);
+		super(s.spark, s.targetUri, Maps.of());
 		this.base = s;
 		ds.forEach(t -> vals(t._1, t._2));
 	}
 
 	@Override
-	protected <T> List<Tuple2<String, Dataset<T>>> load() {
+	protected <T> List<Tuple2<String, Dataset<T>>> load(Object context) {
 		return null;
 	}
 

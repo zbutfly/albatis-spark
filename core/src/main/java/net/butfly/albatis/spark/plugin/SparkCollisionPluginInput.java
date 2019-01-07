@@ -29,8 +29,8 @@ public class SparkCollisionPluginInput extends SparkPluginInput {
 	}
 
 	@Override
-	protected List<Tuple2<String, Dataset<Row>>> load() {
-		List<List<List<Tuple2<String, Dataset<Row>>>>> list = Colls.list(super.load(), //
+	protected List<Tuple2<String, Dataset<Row>>> load(Object context) {
+		List<List<List<Tuple2<String, Dataset<Row>>>>> list = Colls.list(super.load(context), //
 				t -> Colls.list(cInputs.entrySet(), e -> Colls.list(e.getKey().rows(), //
 						t1 -> new Tuple2<>(t._1 + "*" + t1._1, //
 								t._2.join(t1._2, t._2.col(PLUGIN_KEY).equalTo(t1._2.col(e.getValue())), "inner")))));

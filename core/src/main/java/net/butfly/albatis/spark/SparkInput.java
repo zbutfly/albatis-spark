@@ -38,16 +38,16 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	final List<Tuple2<String, Dataset<V>>> vals = Colls.list();
 	final List<Tuple2<String, Dataset<Row>>> rows = Colls.list();
 
-	protected SparkInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
 		super(spark, targetUri, table);
 //		控制mode为RMAP,要用SparkMapInput去调用
 		switch (mode()) {
 		case RMAP:
-			List<Tuple2<String, Dataset<V>>> ds = load();
+			List<Tuple2<String, Dataset<V>>> ds = load(context);
 			ds.forEach(t -> vals(t._1, limit(t._2)));
 			return;
 		case ROW:
-			List<Tuple2<String, Dataset<Row>>> rs = load();
+			List<Tuple2<String, Dataset<Row>>> rs = load(context);
 			rs.forEach(t -> rows(t._1, limit(t._2)));
 			return;
 		default:
@@ -62,7 +62,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 //	protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
 
 
-	protected abstract <T> List<Tuple2<String,Dataset<T>>> load();
+	protected abstract <T> List<Tuple2<String,Dataset<T>>> load(Object context);
 
 	public enum DatasetMode {
 		NONE, RMAP, ROW

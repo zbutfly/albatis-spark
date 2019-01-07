@@ -36,7 +36,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	private static final long serialVersionUID = 2110132305482403155L;
 
 	public SparkMongoInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
-		super(spark, targetUri, table);
+		super(spark, targetUri, null, table);
 	}
 
 	@Override

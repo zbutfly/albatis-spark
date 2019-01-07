@@ -23,7 +23,7 @@ public class SparkSolrInput extends SparkRowInput {
 	private static final long serialVersionUID = -5201381842972371471L;
 
 	public SparkSolrInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
-		super(spark, targetUri, table);
+		super(spark, targetUri, null, table);
 	}
 
 	@Override
