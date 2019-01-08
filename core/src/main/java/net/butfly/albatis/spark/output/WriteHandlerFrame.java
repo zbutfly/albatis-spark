@@ -35,7 +35,6 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 
 	@Override
 	public void save(String table, Output<Rmap> output) {
-//		传入table名,Output对象.如果output对象是SparkOutput的实例,就直接把DSdream对象放入output对象里,否则就要把dataset用purge处理遍历后
 		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, purge(ds)));
 		else {// should not be touch
 			purge(ds).foreachPartition(it -> {
@@ -48,19 +47,4 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 			});
 		}
 	}
-
-//	public void save(String table,Output<Rmap> output){
-//		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table,purge(ds)));
-//		else {
-//			purge(ds).foreachPartition(it -> {
-//				try(Connection cc = output.connect()){
-//					output.enqueue(Sdream.of(it).map(Schemas::row2rmap));
-//				}catch (Exception e){
-//					throw new RuntimeException(e);
-//				}
-//			});
-//		}
-//	}
-
-
 }
