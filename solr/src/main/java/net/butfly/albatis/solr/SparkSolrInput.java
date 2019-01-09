@@ -19,7 +19,7 @@ import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import scala.Tuple2;
 
 @Schema("solr")
-public class SparkSolrInput extends SparkRowInput {
+public class SparkSolrInput extends SparkRowInput implements SparkSolr {
 	private static final long serialVersionUID = -5201381842972371471L;
 
 	public SparkSolrInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
@@ -28,7 +28,7 @@ public class SparkSolrInput extends SparkRowInput {
 
 	@Override
 	public Map<String, String> options() {
-		Map<String, String> options = Maps.of();
+		Map<String, String> options = solrOpts(targetUri);
 		options.put("collection", table().name);
 		options.put("zkhost", targetUri.getHost());
 		options.put("query", "*:*");

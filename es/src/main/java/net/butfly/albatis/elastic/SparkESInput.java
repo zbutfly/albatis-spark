@@ -21,7 +21,7 @@ import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import scala.Tuple2;
 
 @Schema({ "es", "elasticsearch" })
-public class SparkESInput extends SparkRowInput {
+public class SparkESInput extends SparkRowInput implements SparkESInterface {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
 
@@ -31,7 +31,7 @@ public class SparkESInput extends SparkRowInput {
 
 	@Override
 	public Map<String, String> options() {
-		Map<String, String> options = Maps.of();
+		Map<String, String> options = esOpts(targetUri);
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());

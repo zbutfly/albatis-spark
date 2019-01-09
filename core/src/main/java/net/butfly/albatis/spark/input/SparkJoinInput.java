@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark.input;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +13,10 @@ import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.SparkRowInput;
-import scala.Tuple2;
+import scala.*;
+import scala.collection.*;
+import scala.collection.mutable.ArraySeq;
+import scala.collection.mutable.Seq;
 
 public class SparkJoinInput extends SparkRowInput {
 	private static final long serialVersionUID = -4870210186801499L;
@@ -38,17 +42,20 @@ public class SparkJoinInput extends SparkRowInput {
 		super.open();
 	}
 
+
+	public scala.collection.Seq<String> convertListToSeq(List<String> inputList) {
+		return JavaConverters.asScalaIteratorConverter(inputList.iterator()).asScala().toSeq();
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	// 在sparkinput的构造器中调用了load()
 	public List<Tuple2<String, Dataset<Row>>> load(Object context) {
 		Map<String, Object> ctx = (Map<String, Object>) context;
 		SparkInput<Rmap> i = (SparkInput<Rmap>) ctx.get("i");
 		SparkInput<Rmap> j = (SparkInput<Rmap>) ctx.get("j");
 		String ic = (String) ctx.get("ic");
 		String jc = (String) ctx.get("jc");
-		String t = (String) ctx.get("t");
-		// 创建一个List对象,用来存放tupleList
+		String type = (String) ctx.get("t");
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(i.rows(), //
 				new Function<Tuple2<String, Dataset<Row>>, List<Tuple2<String, Dataset<Row>>>>() {
 					@Override
@@ -56,15 +63,21 @@ public class SparkJoinInput extends SparkRowInput {
 						return Colls.list(j.rows(), new Function<Tuple2<String, Dataset<Row>>, Tuple2<String, Dataset<Row>>>() {
 							@Override
 							public Tuple2<String, Dataset<Row>> apply(Tuple2<String, Dataset<Row>> jds) {
-								String s = ids._1 + "*" + jds._1;
-								Dataset<Row> ds = ids._2.join(jds._2, ids._2.col(ic).equalTo(jds._2.col(jc)), t).distinct();
-								logger().debug("Dataset joined into [" + s + "]: " + ds);
-								return new Tuple2<>(s, ds);
+								Dataset<Row> main = ids._2;
+								Dataset<Row> sub = jds._2;
+								String joinName = main + "*" + sub;
+								Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
+//								ds.show(1);
+//								todo drop副表的字段和条件 动态处理
+								Dataset<Row> drop1 = ds.drop(sub.col("___table")).drop(sub.col("___key_value")).drop(sub.col("_id"))
+										.drop(sub.col("GMSFHM_s")).drop(sub.col("HYZT")).drop(sub.col("XB")).drop(sub.col("NAME"));
+								drop1.show(1);
+//								logger().debug("Dataset joined into [" + s + "]: " + ds);
+								return new Tuple2<>(joinName, drop1);
 							}
 						});
 					}
 				});
-		// 压平,后边好处理数据
 		return Colls.flat(lll);
 	}
 

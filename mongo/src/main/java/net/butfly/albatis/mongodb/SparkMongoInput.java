@@ -49,7 +49,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
 		JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
-		List<List<Tuple2<String, Dataset<Row>>>> l = Colls.list(schemaAll().values(), t -> {
+		List<List<Tuple2<String, Dataset<Row>>>> resultList = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> opts = options();
 			opts.put("collection", t.name);
 			ReadConfig rc = ReadConfig.create(opts);
@@ -65,10 +65,6 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 					"_id.oid"));
 			return Colls.list(split(d, false), ds -> new Tuple2<>(t.name, ds.persist(StorageLevel.OFF_HEAP())));
 		});
-		return Colls.flat(l);
+		return Colls.flat(resultList);
 	}
-
-
-
-
 }

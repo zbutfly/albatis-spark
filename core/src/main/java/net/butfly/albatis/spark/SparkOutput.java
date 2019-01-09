@@ -52,7 +52,6 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 		throw new UnsupportedOperationException();
 	}
 
-	// ============================
 	@Override
 	public <V0> Output<V0> prior(Function<V0, V> conv) {
 		return new SparkOutput<V0>(spark, targetUri, tables()) {
