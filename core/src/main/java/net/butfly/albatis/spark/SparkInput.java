@@ -13,8 +13,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import net.butfly.albatis.Albatis;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.io.lambda.Function;
@@ -24,6 +22,7 @@ import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.Albatis;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
@@ -31,6 +30,10 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.impl.SparkIO;
 import net.butfly.albatis.spark.impl.SparkThenInput;
+import net.butfly.albatis.spark.input.SparkInnerJoinInput;
+import net.butfly.albatis.spark.input.SparkJoinInput;
+import net.butfly.albatis.spark.input.SparkNonJoinInput;
+import net.butfly.albatis.spark.input.SparkOrJoinInput;
 import scala.Tuple2;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
@@ -40,7 +43,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
 		super(spark, targetUri, table);
-//		控制mode为RMAP,要用SparkMapInput去调用
+		// 控制mode为RMAP,要用SparkMapInput去调用
 		switch (mode()) {
 		case RMAP:
 			List<Tuple2<String, Dataset<V>>> ds = load(context);
@@ -54,15 +57,13 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		}
 	}
 
-
 	/**
 	 * @return Dataset of Rmap or Row, based on data source type (fix schema db like mongodb, or schemaless data like kafka)
-     *
+	 *
 	 */
-//	protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
+	// protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
 
-
-	protected abstract <T> List<Tuple2<String,Dataset<T>>> load(Object context);
+	protected abstract <T> List<Tuple2<String, Dataset<T>>> load(Object context);
 
 	public enum DatasetMode {
 		NONE, RMAP, ROW
@@ -146,7 +147,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
 		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
-			Dataset<Rmap> ds1 = t._2.map((MapFunction<V, Rmap>)  r -> (Rmap) conv.apply(r), ENC_RMAP);
+			Dataset<Rmap> ds1 = t._2.map((MapFunction<V, Rmap>) r -> (Rmap) conv.apply(r), ENC_RMAP);
 			return new Tuple2<>(t._1, ds1);
 		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);
@@ -157,6 +158,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		return thenFlat(v -> conv.apply(Sdream.of1(v)));
 	}
 
+	@Deprecated
 	@Override
 	public <V1> SparkInput<V1> thens(Function<Sdream<V>, Sdream<V1>> conv, int parallelism) {
 		return thens(conv);
@@ -167,17 +169,14 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-//  传入一个function,输入是动态类型V,输出是Sdream对象
+	// 传入一个function,输入是动态类型V,输出是Sdream对象
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
-			Dataset<Rmap> ds1 = t._2.flatMap((FlatMapFunction<V, Rmap>)  v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);
+			Dataset<Rmap> ds1 = t._2.flatMap((FlatMapFunction<V, Rmap>) v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);
 			return new Tuple2<>(t._1, ds1);
 		});
 		return (SparkInput<V1>) new SparkThenInput(this, dss1);
 	}
-
-
-
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -211,4 +210,18 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		return ds;
 	}
 
+	@SuppressWarnings("unchecked")
+	public SparkJoinInput join(SparkInput<Rmap> right, String leftCol, String rightCol, String as) {
+		return new SparkInnerJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as);
+	}
+
+	@SuppressWarnings("unchecked")
+	public SparkJoinInput orJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as) {
+		return new SparkOrJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as);
+	}
+
+	@SuppressWarnings("unchecked")
+	public SparkJoinInput nonJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as) {
+		return new SparkNonJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as);
+	}
 }

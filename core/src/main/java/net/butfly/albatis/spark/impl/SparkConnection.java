@@ -17,24 +17,19 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import net.butfly.albatis.EnvironmentConnection;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.IOs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
+import net.butfly.albatis.EnvironmentConnection;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.input.JoinType;
-import net.butfly.albatis.spark.input.SparkInnerJoinInput;
-import net.butfly.albatis.spark.input.SparkInnerJoinInputRefactor;
 import net.butfly.albatis.spark.input.SparkJoinInput;
-import net.butfly.albatis.spark.input.SparkJoinInputRefactor;
 import net.butfly.albatis.spark.input.SparkNonJoinInput;
 import net.butfly.albatis.spark.input.SparkOrJoinInput;
 import net.butfly.albatis.spark.plugin.PluginConfig;
@@ -141,20 +136,13 @@ public class SparkConnection implements EnvironmentConnection {
 		return (I) SparkIO.input(spark(), uri, table);
 	}
 
-	public <V> SparkJoinInput innerJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
-		return new SparkInnerJoinInput(input, col, joined, joinedCol);
+
+	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as) {
+		return new SparkOrJoinInput(input, col, joined, joinedCol, as);
 	}
 
-	public <V> SparkJoinInputRefactor innerJoinNew(URISpec thisU, URISpec thatU, String condiThis, String condiThat, JoinType type) {
-		return new SparkInnerJoinInputRefactor(thisU, thatU, condiThis, condiThat, type);
-	}
-
-	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
-		return new SparkOrJoinInput(input, col, joined, joinedCol);
-	}
-
-	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol) {
-		return new SparkNonJoinInput(input, col, joined, joinedCol);
+	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as) {
+		return new SparkNonJoinInput(input, col, joined, joinedCol, as);
 	}
 
 	@SuppressWarnings("unchecked")
