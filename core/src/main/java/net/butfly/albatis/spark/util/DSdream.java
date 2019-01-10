@@ -28,6 +28,7 @@ import net.butfly.albacore.utils.Pair;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.impl.Schemas;
 import net.butfly.albatis.spark.output.SparkSinkOutput;
 
 @SuppressWarnings("unchecked")
@@ -92,19 +93,21 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 
 	@Override
 	public <R> Sdream<R> map(Function<Rmap, R> conv) {
-		Dataset<Rmap> dds = row2rmap(ds).map((MapFunction<Rmap, Rmap>)  m -> (Rmap) conv.apply(m), ENC_RMAP);
+		Dataset<Rmap> dds = row2rmap(ds).map((MapFunction<Rmap, Rmap>) m -> (Rmap) conv.apply(m), ENC_RMAP);
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 
 	@Override
 	public <R> Sdream<R> map(Function<Sdream<Rmap>, Sdream<R>> conv, int maxBatchSize) {
-		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>)  m -> (Iterator<Rmap>) conv.apply(Sdream.of1(m)).list().iterator(), ENC_RMAP);
+		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>) m -> (Iterator<Rmap>) conv.apply(Sdream.of1(m)).list()
+				.iterator(), ENC_RMAP);
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 
 	@Override
 	public <R> Sdream<R> mapFlat(Function<Rmap, Sdream<R>> flat) {
-		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>) m -> (Iterator<Rmap>) flat.apply(m).list().iterator(), ENC_RMAP);
+		Dataset<Rmap> dds = row2rmap(ds).flatMap((FlatMapFunction<Rmap, Rmap>) m -> (Iterator<Rmap>) flat.apply(m).list().iterator(),
+				ENC_RMAP);
 		return (Sdream<R>) ofMap(dds, build(ds.schema()));
 	}
 
@@ -125,9 +128,13 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 	/** Using spliterator sequencially */
 	@Override
 	public void eachs(Consumer<Rmap> using) {
+		// if (ds.isStreaming())
 		try (SparkSinkOutput o = new SparkSinkOutput(ds.sparkSession(), (Consumer<Rmap>) using);) {
 			o.save(table, ds);
 		}
+		// else ds.foreach(row -> {
+		// using.accept(Schemas.row2rmap(row));
+		// });
 	}
 
 	/**
@@ -177,5 +184,10 @@ public final class DSdream implements Sdream<Rmap>/* , Dataset<T> */ {
 	@Override
 	public <K, V> Map<K, V> partition(Function<Rmap, K> keying, Function<Rmap, V> valuing, BinaryOperator<V> reducing) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<Rmap> list() {
+		return Colls.list(ds.collectAsList(), Schemas::row2rmap);
 	}
 }
