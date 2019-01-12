@@ -6,6 +6,7 @@ import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.MapFunction;
@@ -89,13 +90,13 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		return rows;
 	}
 
-	protected final SparkInput<V> vals(String table, Dataset<V> rmaps) {
+	public final SparkInput<V> vals(String table, Dataset<V> rmaps) {
 		this.vals.add(new Tuple2<>(table, rmaps));
 		this.rows.clear();
 		return this;
 	}
 
-	protected final SparkInput<V> rows(String table, Dataset<Row> rows) {
+	public final SparkInput<V> rows(String table, Dataset<Row> rows) {
 		this.rows.add(new Tuple2<>(table, rows));
 		this.vals.clear();
 		return this;
@@ -211,17 +212,17 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput join(SparkInput<Rmap> right, String leftCol, String rightCol, String as) {
-		return new SparkInnerJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as);
+	public SparkInnerJoinInput join(SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet) {
+		return new SparkInnerJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput orJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as) {
-		return new SparkOrJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as);
+	public SparkJoinInput orJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet) {
+		return new SparkOrJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput nonJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as) {
-		return new SparkNonJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as);
+	public SparkJoinInput nonJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet) {
+		return new SparkNonJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet);
 	}
 }

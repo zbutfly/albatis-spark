@@ -1,7 +1,6 @@
 package net.butfly.albatis.spark.input;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -22,8 +21,8 @@ public class SparkJoinInput extends SparkRowInput {
 	public final String joinedCol;
 	public final String joinType;
 
-	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable) {
-		super(input.spark, input.targetUri, Maps.of("i", input, "j", joined, "ic", col, "jc", joinedCol, "t", joinType, "as", asTable));
+	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable, Set<String> leftSet, Set<String> rightSet) {
+		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type", joinType, "as", asTable,"leftSet",leftSet,"rightSet",rightSet));
 		this.input = input;
 		this.col = col;
 		this.joined = joined;
@@ -46,26 +45,65 @@ public class SparkJoinInput extends SparkRowInput {
 	@Override
 	public List<Tuple2<String, Dataset<Row>>> load(Object context) {
 		Map<String, Object> ctx = (Map<String, Object>) context;
-		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(((SparkInput<Rmap>) ctx.get("i")).rows(), //
-				left -> Colls.list(((SparkInput<Rmap>) ctx.get("j")).rows(), //
-						right -> doJoin(left, right, (String) ctx.get("ic"), (String) ctx.get("jc"), (String) ctx.get("t"), (String) ctx
-								.get("as"))));
+//		拿到fieldSet 拿到leftInput的全字段; 对ctx.get(i)做drop
+		SparkInput<Rmap> leftInput = (SparkInput<Rmap>) ctx.get("leftInput");
+		Set<String> leftSet = (Set) ctx.get("leftSet");
+		String leftjoinCol = (String) ctx.get("leftCol");
+//		拿到input的表名
+		String tableName = leftInput.targetUri.getFile();
+		Dataset<Row> purgedLeftDS = getPurgedDS(leftInput, leftSet, leftjoinCol);
+		long count = purgedLeftDS.count();
+		SparkInput<Row> leftResult = rows(tableName, purgedLeftDS);
+
+		SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
+		Set rightSet = (Set) ctx.get("rightSet");
+		String rightCol = (String) ctx.get("rightCol");
+		Dataset<Row> purgedRightDS = getPurgedDS(rightInput, rightSet, rightCol);
+		long count1 = purgedRightDS.count();
+		String rightName = rightInput.targetUri.getFile();
+		SparkInput<Row> rightResult = rows(rightName, purgedRightDS);
+
+		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(leftResult.rows(), //
+				left -> Colls.list(rightResult.rows(), //
+						right -> doJoin(left, right, (String) ctx.get("leftCol"), (String) ctx.get("rightCol"),
+								(String) ctx.get("type"), (String) ctx.get("as"))));
 		return Colls.flat(lll);
 	}
 
+	private Dataset<Row> getPurgedDS(SparkInput<Rmap> input, Set<String> fields, String joincol) {
+		Dataset<Row> ds = input.rows().get(0)._2;
+		Set<String> addFields = new HashSet<>();
+		String[] columns = ds.columns();
+		for (int i=0; i< columns.length; i++){
+			addFields.add(columns[i]);
+		}
+		addFields.remove(joincol);
+//		存放非展示字段
+		Set<String> resultSet = new HashSet<>();
+		resultSet.clear();
+		resultSet.addAll(addFields);
+		resultSet.removeAll(fields);
+		Dataset<Row> purgeDS = purge(ds, resultSet);
+		return purgeDS;
+	}
+
+	private Dataset<Row> purge(Dataset<Row> ds,Set<String> fields_list) {
+		Dataset<Row> d = ds;
+		for (String f : fields_list)
+			if (ds.schema().getFieldIndex(f).nonEmpty()) d = d.drop(ds.col(f));
+		return d;
+	}
+
 	public Tuple2<String, Dataset<Row>> doJoin(Tuple2<String, Dataset<Row>> ids, Tuple2<String, Dataset<Row>> jds, String ic, String jc,
-			String type, String asTable) {
+											   String type, String asTable) {
 		Dataset<Row> main = ids._2;
 		Dataset<Row> sub = jds._2;
 		String joinName = asTable; // ids._1 + "*" + jds._1;
 		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
-		// ds.show(1);
-		// todo drop副表的字段和条件 动态处理
-		Dataset<Row> drop1 = ds.drop(sub.col("___table")).drop(sub.col("___key_value")).drop(sub.col("_id")).drop(sub.col("GMSFHM_s")).drop(
-				sub.col("HYZT")).drop(sub.col("XB")).drop(sub.col("NAME"));
-		drop1.show(1);
+		long count = ds.count();
+//		ds.show(1);
 		// logger().debug("Dataset joined into [" + s + "]: " + ds);
-		return new Tuple2<>(joinName, drop1);
+		return new Tuple2<>(joinName, ds);
 	}
 
 	@Override

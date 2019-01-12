@@ -114,14 +114,10 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 		return atomicInteger.get();
 	}
 
-	// 传入一个rmap，返回一个WriteModel
 	protected WriteModel<Document> write(Rmap rmap) {
-		// 传入rmap创建doc对象
 		Document doc = new Document(rmap);
-		// 如果rmap的key是空并且rmap不包含_id,就返回InsertOneModel对象,同时传入上一步的doc对象
 		if (null == rmap.keyField() && !rmap.containsKey("_id")) return new InsertOneModel<Document>(doc);
 		Document newDoc = null;
-		// 如果rmap的key属性不空,就传入keyfield和key用来创建doc对象.否则,如果rmap包含_id,就创建doc对象,只传入_id的映射
 		if (null != rmap.keyField()) newDoc = new Document(rmap.keyField(), rmap.key());
 		else if (rmap.containsKey("_id")) newDoc = new Document("_id", rmap.get("_id"));
 		// 返回replaceOneModel对象

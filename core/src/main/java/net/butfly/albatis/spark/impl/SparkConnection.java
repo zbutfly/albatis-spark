@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
@@ -137,12 +138,12 @@ public class SparkConnection implements EnvironmentConnection {
 	}
 
 
-	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as) {
-		return new SparkOrJoinInput(input, col, joined, joinedCol, as);
+	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as,Set<String> leftSet, Set<String> rightSet) {
+		return new SparkOrJoinInput(input, col, joined, joinedCol, as,leftSet,rightSet);
 	}
 
-	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as) {
-		return new SparkNonJoinInput(input, col, joined, joinedCol, as);
+	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as,Set<String> leftSet, Set<String> rightSet) {
+		return new SparkNonJoinInput(input, col, joined, joinedCol, as,leftSet,rightSet);
 	}
 
 	@SuppressWarnings("unchecked")
