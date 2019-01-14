@@ -1,14 +1,12 @@
 package net.butfly.albatis.spark.output;
 
-import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.SchemaExtraField.purge;
+import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-
-import net.butfly.albatis.Connection;
 
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albatis.ddl.TableDesc;
@@ -37,13 +35,6 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 	public void save(String table, Output<Rmap> output) {
 		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, purge(ds)));
 		// else should not be touch
-		else purge(ds).foreachPartition(it -> {
-			try (Connection cc = output.connect()) {
-				// TODO: split
-				output.enqueue(Sdream.of(it).map(Schemas::row2rmap));
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		});
+		else purge(ds).foreachPartition(it -> output.enqueue(Sdream.of(it).map(Schemas::row2rmap))/* TODO: split */);
 	}
 }

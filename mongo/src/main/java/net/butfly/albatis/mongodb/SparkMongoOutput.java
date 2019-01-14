@@ -140,13 +140,9 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 			try {
 				if (null != doc2) {
 					ReplaceOptions upsert = new ReplaceOptions().upsert(true);
-
 					UpdateResult u = col.replaceOne(doc2, doc, upsert);
-
 					// UpdateResult updateResult = col.replaceOne(doc2, doc, new ReplaceOptions().upsert(true));
-
 					atom.set(u.getModifiedCount());
-
 				} else {
 					col.insertOne(doc);
 					atom.set(1);
