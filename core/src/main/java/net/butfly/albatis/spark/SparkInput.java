@@ -46,15 +46,15 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		super(spark, targetUri, table);
 		// 控制mode为RMAP,要用SparkMapInput去调用
 		switch (mode()) {
-		case RMAP:
-			List<Tuple2<String, Dataset<V>>> ds = load(context);
-			ds.forEach(t -> vals(t._1, limit(t._2)));
-			return;
-		case ROW:
-			List<Tuple2<String, Dataset<Row>>> rs = load(context);
-			rs.forEach(t -> rows(t._1, limit(t._2)));
-			return;
-		default:
+			case RMAP:
+				List<Tuple2<String, Dataset<V>>> ds = load(context);
+				ds.forEach(t -> vals(t._1, limit(t._2)));
+				return;
+			case ROW:
+				List<Tuple2<String, Dataset<Row>>> rs = load(context);
+				rs.forEach(t -> rows(t._1, limit(t._2)));
+				return;
+			default:
 		}
 	}
 

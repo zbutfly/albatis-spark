@@ -24,8 +24,7 @@ import net.butfly.albatis.spark.impl.SparkConf.SparkConfItems;
 
 public abstract class SparkIO implements IO, Serializable {
 	private static final long serialVersionUID = 3265459356239387878L;
-	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS = Maps.of(Input.class, Maps.of(),
-			Output.class, Maps.of());
+	private static final Map<Class<? extends IO>, Map<String, Class<? extends SparkIO>>> ADAPTERS = Maps.of(Input.class, Maps.of(), Output.class, Maps.of());
 
 	public final SparkSession spark;
 	public final URISpec targetUri;
@@ -85,6 +84,7 @@ public abstract class SparkIO implements IO, Serializable {
 	public static void scan() {
 		for (Class<? extends SparkIO> cls : Reflections.getSubClasses(SparkIO.class)) {
 			Schema schema = cls.getAnnotation(Schema.class);
+//			String[] value = schema.value();
 			if (null != schema) {
 				if (Input.class.isAssignableFrom(cls)) reg(Input.class, schema, cls);
 				else if (Output.class.isAssignableFrom(cls)) reg(Output.class, schema, cls);

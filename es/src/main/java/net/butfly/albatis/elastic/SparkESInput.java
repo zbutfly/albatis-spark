@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import net.butfly.albatis.spark.impl.SparkConf;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -19,7 +20,8 @@ import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import scala.Tuple2;
 
-@Schema({ "es", "elasticsearch" })
+@Schema("es")
+@SparkConf(key = "spark.es.input.uri", value = "es://127.0.0.1/FxxkMongoSpark.FakeCollection")
 public class SparkESInput extends SparkRowInput implements SparkESInterface {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
@@ -30,7 +32,7 @@ public class SparkESInput extends SparkRowInput implements SparkESInterface {
 
 	@Override
 	public Map<String, String> options() {
-		Map<String, String> options = esOpts(targetUri);
+        Map<String, String> options = esOpts(targetUri);
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
@@ -49,7 +51,7 @@ public class SparkESInput extends SparkRowInput implements SparkESInterface {
 	protected List<Tuple2<String, Dataset<Row>>> load() {
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
 			Map<String, String> options = options();
-			Dataset<Row> rowDataset = JavaEsSparkSQL.esDF(spark, "es://es632@172.30.10.31:29300/ztry_1219/ztry_1219_01", options);
+			Dataset<Row> rowDataset = JavaEsSparkSQL.esDF(spark, options.get("uri"), options);
 			return Colls.list(split(rowDataset, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
 		});
 		return Colls.flat(list);

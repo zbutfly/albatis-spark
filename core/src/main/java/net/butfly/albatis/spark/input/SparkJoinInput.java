@@ -21,10 +21,8 @@ public class SparkJoinInput extends SparkRowInput {
 	public final String joinedCol;
 	public final String joinType;
 
-	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable,
-			Set<String> leftSet, Set<String> rightSet) {
-		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type",
-				joinType, "as", asTable, "leftSet", leftSet, "rightSet", rightSet));
+	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable, Set<String> leftSet, Set<String> rightSet) {
+		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type", joinType, "as", asTable,"leftSet",leftSet,"rightSet",rightSet));
 		this.input = input;
 		this.col = col;
 		this.joined = joined;
@@ -57,10 +55,16 @@ public class SparkJoinInput extends SparkRowInput {
 		// SparkInput<Row> leftResult = rows(tableName, purgedLeftDS);
 		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(tableName, purgedLeftDS));
 
+//		purgedLeftDS.show(1);
+
 		SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
 		Set<String> rightSet = (Set<String>) ctx.get("rightSet");
 		String rightCol = (String) ctx.get("rightCol");
 		Dataset<Row> purgedRightDS = getPurgedDS(rightInput, rightSet, rightCol);
+
+//		purgedRightDS.show(1);
+
+
 		String rightName = rightInput.targetUri.getFile();
 		// SparkInput<Row> rightResult = rows(rightName, purgedRightDS);
 		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightName, purgedRightDS));
@@ -72,20 +76,21 @@ public class SparkJoinInput extends SparkRowInput {
 	}
 
 	private Dataset<Row> getPurgedDS(SparkInput<Rmap> input, Set<String> fields, String joincol) {
-		Dataset<Row> ds = input.rows().get(0)._2;
-		Set<String> addFields = new HashSet<>();
-		String[] columns = ds.columns();
-		for (int i = 0; i < columns.length; i++) {
-			addFields.add(columns[i]);
-		}
-		addFields.remove(joincol);
-		// 存放非展示字段
-		Set<String> resultSet = new HashSet<>();
-		resultSet.clear();
-		resultSet.addAll(addFields);
-		resultSet.removeAll(fields);
-		Dataset<Row> purgeDS = purge(ds, resultSet);
-		return purgeDS;
+			Dataset<Row> ds = input.rows().get(0)._2;
+			Set<String> addFields = new HashSet<>();
+			String[] columns = ds.columns();
+			for (int i = 0; i < columns.length; i++) {
+				addFields.add(columns[i]);
+			}
+//			不drop碰撞字段
+			addFields.remove(joincol);
+			// 存放非展示字段
+			Set<String> resultSet = new HashSet<>();
+			resultSet.clear();
+			resultSet.addAll(addFields);
+			resultSet.removeAll(fields);
+			Dataset<Row> purgeDS = purge(ds, resultSet);
+			return purgeDS;
 	}
 
 	private Dataset<Row> purge(Dataset<Row> ds, Set<String> fields_list) {
@@ -101,6 +106,7 @@ public class SparkJoinInput extends SparkRowInput {
 		Dataset<Row> sub = jds._2;
 		String joinName = asTable; // ids._1 + "*" + jds._1;
 		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
+//		ds.show(1);
 		// ds.show(1);
 		// logger().debug("Dataset joined into [" + s + "]: " + ds);
 		return new Tuple2<>(joinName, ds);

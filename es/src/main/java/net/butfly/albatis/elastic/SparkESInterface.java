@@ -13,7 +13,7 @@ public interface SparkESInterface {
 		String esuri = targetUri.getScheme() + "://" + targetUri.getAuthority() + "/" + esdbn;
 		Logger.getLogger(getClass()).info("ESSpark connecting to: " + targetUri.toString());
 		return Maps.of("uri", esuri //
-				, "database", esuri//
+				, "database", esdbn//
 				, "collection", null == escol ? "" : escol //
 		);
 	}

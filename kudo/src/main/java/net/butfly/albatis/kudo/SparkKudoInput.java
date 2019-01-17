@@ -43,7 +43,7 @@ public class SparkKudoInput extends SparkRowInput {
 
 	@Override
 	public String format() {
-		return "es";
+		return "kudo";
 	}
 
 	@Override
@@ -51,7 +51,11 @@ public class SparkKudoInput extends SparkRowInput {
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
 			Map<String, String> options = options();
 
+			KuduContext kuduContext = new KuduContext(options.get("kudu.master"), spark.sparkContext());
+
 			DataFrameReader opt = spark.read().options(options);
+
+
 
 			Dataset<Row> rdd = opt.load(options.get("path"));
 

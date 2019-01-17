@@ -65,6 +65,13 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 					"_id.oid"));
 			return Colls.list(split(d, false), ds -> new Tuple2<>(t.name, ds.persist(StorageLevel.OFF_HEAP())));
 		});
-		return Colls.flat(resultList);
+		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);
+		return flat;
 	}
+	static <E> List<E> flat(Iterable<List<E>> l) {
+		List<E> ll = Colls.list();
+		l.forEach(l0 -> ll.addAll(l0));
+		return ll;
+	}
+
 }
