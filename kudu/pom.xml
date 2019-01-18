@@ -7,7 +7,7 @@
 		<artifactId>albatis-spark-io</artifactId>
 		<version>1.5.3-SNAPSHOT</version>
 	</parent>
-	<artifactId>albatis-spark-io-kudo</artifactId>
+	<artifactId>albatis-spark-io-kudu</artifactId>
 	<dependencies>
 		<dependency>
 			<groupId>net.butfly.albatis</groupId>
@@ -101,17 +101,14 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.kudu</groupId>
-			<artifactId>kudu-client</artifactId>
-			<version>1.1.0</version>
+			<groupId>net.butfly.albatis</groupId>
+			<artifactId>albatis-kudu-io</artifactId>
+			<version>1.5.3-SNAPSHOT</version>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/org.apache.kudu/kudu-spark -->
 		<dependency>
 			<groupId>org.apache.kudu</groupId>
-			<artifactId>kudu-spark_2.10</artifactId>
-			<version>1.5.0</version>
+			<artifactId>kudu-spark2_2.11</artifactId>
+			<version>1.8.0</version>
 		</dependency>
-
 	</dependencies>
 </project>
