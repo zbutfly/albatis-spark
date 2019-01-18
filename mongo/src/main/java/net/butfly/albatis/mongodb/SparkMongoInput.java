@@ -5,6 +5,7 @@ import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_NAME;
 import static net.butfly.albatis.spark.impl.Sparks.split;
 import static org.apache.spark.sql.functions.lit;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +50,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
 		JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
+		Collection<TableDesc> test = schemaAll().values();
 		List<List<Tuple2<String, Dataset<Row>>>> resultList = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> opts = options();
 			opts.put("collection", t.name);

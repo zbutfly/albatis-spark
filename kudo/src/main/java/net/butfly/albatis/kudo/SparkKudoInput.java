@@ -1,5 +1,6 @@
 package net.butfly.albatis.kudo;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -8,11 +9,13 @@ import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 
 import org.apache.kudu.spark.kudu.*;
 import org.apache.kudu.client.*;
-
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Maps;
@@ -24,7 +27,7 @@ import scala.Tuple2;
 import static net.butfly.albatis.spark.impl.Sparks.split;
 
 @Schema("kudo")
-public class SparkKudoInput extends SparkRowInput {
+public class SparkKudoInput extends SparkRowInput implements SparkKudu {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
 
@@ -35,15 +38,14 @@ public class SparkKudoInput extends SparkRowInput {
 	@Override
 	public Map<String, String> options() {
 		Map<String, String> options = Maps.of();
-		options.put("kudu.master", "kudu://172.30.10.31:7051,172.30.10.32:7051,172.30.10.33:7051");
+		options.put("kudu.master", targetUri.getPath());
 		options.put("kudu.table", table().name);
-		options.put("path", targetUri.getPath());
 		return options;
 	}
 
 	@Override
 	public String format() {
-		return "kudo";
+		return "org.apache.kudu.spark.kudu";
 	}
 
 	@Override
@@ -51,16 +53,11 @@ public class SparkKudoInput extends SparkRowInput {
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
 			Map<String, String> options = options();
 
-			KuduContext kuduContext = new KuduContext(options.get("kudu.master"), spark.sparkContext());
+			Dataset<Row> rowDataset = spark.read().format(format()).options(options).load();
 
-			DataFrameReader opt = spark.read().options(options);
-
-
-
-			Dataset<Row> rdd = opt.load(options.get("path"));
-
-			return Colls.list(split(rdd, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
+			return Colls.list(split(rowDataset, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
 		});
 		return Colls.flat(list);
 	}
+
 }
