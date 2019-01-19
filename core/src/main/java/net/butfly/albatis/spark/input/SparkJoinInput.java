@@ -52,21 +52,24 @@ public class SparkJoinInput extends SparkRowInput {
 		// 拿到input的表名
 		String tableName = leftInput.targetUri.getFile();
 		Dataset<Row> purgedLeftDS = getPurgedDS(leftInput, leftSet, leftjoinCol);
-		// SparkInput<Row> leftResult = rows(tableName, purgedLeftDS);
+
+//        purgedLeftDS.Tables[0].Columns.Remove("Username")
+
 		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(tableName, purgedLeftDS));
-
 //		purgedLeftDS.show(1);
+//       todo 给leftds加入左边_字段的别名
+//        String[] columns = purgedLeftDS.columns();
+//        for (int i = 0; i < columns.length; i++) {
+//            addFields.add(columns[i]);
+//        }
 
-		SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
+
+        SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
 		Set<String> rightSet = (Set<String>) ctx.get("rightSet");
 		String rightCol = (String) ctx.get("rightCol");
 		Dataset<Row> purgedRightDS = getPurgedDS(rightInput, rightSet, rightCol);
-
 //		purgedRightDS.show(1);
-
-
 		String rightName = rightInput.targetUri.getFile();
-		// SparkInput<Row> rightResult = rows(rightName, purgedRightDS);
 		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightName, purgedRightDS));
 
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(leftRows, left -> Colls.list(rightRows, //
@@ -107,8 +110,6 @@ public class SparkJoinInput extends SparkRowInput {
 		String joinName = asTable; // ids._1 + "*" + jds._1;
 		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
 //		ds.show(1);
-		// ds.show(1);
-		// logger().debug("Dataset joined into [" + s + "]: " + ds);
 		return new Tuple2<>(joinName, ds);
 	}
 

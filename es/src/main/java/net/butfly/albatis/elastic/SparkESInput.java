@@ -26,19 +26,22 @@ public class SparkESInput extends SparkRowInput implements SparkESInterface {
 	private static final long serialVersionUID = 5472880102313131224L;
 	private static String HTTP_PORT = "httpport";
 
-	public SparkESInput(SparkSession spark, URISpec targetUri) {
-		super(spark, targetUri, null, TableDesc.dummy(targetUri.getPath()));
-	}
+
+    public SparkESInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+        super(spark, targetUri, null, table);
+    }
+
 
 	@Override
 	public Map<String, String> options() {
         Map<String, String> options = esOpts(targetUri);
 		InetSocketAddress addr = targetUri.getInetAddrs()[0];
+		String resourceStr = options.get("database") +"/"+ table().name;
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", addr.getHostName());
 		// 默认是tcp的port
-		options.put("es.port", targetUri.getParameter(HTTP_PORT, "29930"));
-		options.put("es.resource", table().name);
+		options.put("es.port", targetUri.getParameter(HTTP_PORT, "29200"));
+		options.put("es.resource", resourceStr);
 		return options;
 	}
 
@@ -51,8 +54,9 @@ public class SparkESInput extends SparkRowInput implements SparkESInterface {
 	protected List<Tuple2<String, Dataset<Row>>> load() {
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
 			Map<String, String> options = options();
-			Dataset<Row> rowDataset = JavaEsSparkSQL.esDF(spark, options.get("uri"), options);
-			return Colls.list(split(rowDataset, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
+            Dataset<Row> rowDataset = JavaEsSparkSQL.esDF(spark, options.get("es.resource"),options);
+
+            return Colls.list(split(rowDataset, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
 		});
 		return Colls.flat(list);
 	}
