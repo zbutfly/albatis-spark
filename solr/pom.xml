@@ -26,7 +26,7 @@
 			</exclusions>
 		</dependency>
 
-		<!-- 解决solr部署到linux,kryo冲突问题. 与albacore版本保持一致-->
+		<!-- 解决solr部署到linux,kryo冲突问题. 要与albacore版本保持一致-->
 		<dependency>
 			<groupId>com.esotericsoftware</groupId>
 			<artifactId>kryo-shaded</artifactId>
