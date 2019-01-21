@@ -47,34 +47,31 @@ public class SparkJoinInput extends SparkRowInput {
 		Map<String, Object> ctx = (Map<String, Object>) context;
 		// 拿到fieldSet 拿到leftInput的全字段; 对ctx.get(i)做drop
 		SparkInput<Rmap> leftInput = (SparkInput<Rmap>) ctx.get("leftInput");
+		String leftTableName = leftInput.rows().get(0)._1;
 		Set<String> leftSet = (Set<String>) ctx.get("leftSet");
 		String leftjoinCol = (String) ctx.get("leftCol");
-		// 拿到input的表名
-		String tableName = leftInput.targetUri.getFile();
+		// 拿到input的表名 tableName应该是table()
+
+//		String tableName = leftInput.targetUri.getFile();
 		Dataset<Row> purgedLeftDS = getPurgedDS(leftInput, leftSet, leftjoinCol);
+//		要拿到表名,ds,传入
+//		Dataset<Row> renameDS = renameDS(purgedLeftDS, leftTableName);
 
-//        purgedLeftDS.Tables[0].Columns.Remove("Username")
-
-		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(tableName, purgedLeftDS));
+		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(leftTableName, purgedLeftDS));
 //		purgedLeftDS.show(1);
-//       todo 给leftds加入左边_字段的别名
-//        String[] columns = purgedLeftDS.columns();
-//        for (int i = 0; i < columns.length; i++) {
-//            addFields.add(columns[i]);
-//        }
-
 
         SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
+		String rightTableName = rightInput.rows().get(0)._1;
 		Set<String> rightSet = (Set<String>) ctx.get("rightSet");
 		String rightCol = (String) ctx.get("rightCol");
 		Dataset<Row> purgedRightDS = getPurgedDS(rightInput, rightSet, rightCol);
 //		purgedRightDS.show(1);
-		String rightName = rightInput.targetUri.getFile();
-		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightName, purgedRightDS));
+
+		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightTableName, purgedRightDS));
 
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(leftRows, left -> Colls.list(rightRows, //
 				right -> doJoin(left, right, (String) ctx.get("leftCol"), (String) ctx.get("rightCol"), //
-						(String) ctx.get("type"), (String) ctx.get("as"))));
+						(String) ctx.get("type"), (String) ctx.get("as"),leftTableName,rightTableName)));
 		return Colls.flat(lll);
 	}
 
@@ -103,13 +100,28 @@ public class SparkJoinInput extends SparkRowInput {
 		return d;
 	}
 
+//	需要传入旧的ds clume,新的column,然后去遍历旧的ds,
+	private Dataset<Row> renameDS(Dataset<Row> ds, String tableName) {
+		Dataset<Row> d = ds;
+		String[] columns = ds.columns();
+		for (String oldCol : columns)
+			 d = d.withColumnRenamed(oldCol,addPrefix(tableName,oldCol));
+		return d;
+	}
+
+	private String addPrefix(String tableName,String oldC) {
+		String resultName = tableName + "_" + oldC;
+		return resultName;
+	}
+
+
 	public Tuple2<String, Dataset<Row>> doJoin(Tuple2<String, Dataset<Row>> ids, Tuple2<String, Dataset<Row>> jds, String ic, String jc,
-			String type, String asTable) {
+											   String type, String asTable,String leftName, String rightName) {
 		Dataset<Row> main = ids._2;
 		Dataset<Row> sub = jds._2;
 		String joinName = asTable; // ids._1 + "*" + jds._1;
+//		如果在最后处理
 		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
-//		ds.show(1);
 		return new Tuple2<>(joinName, ds);
 	}
 

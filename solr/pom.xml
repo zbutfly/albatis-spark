@@ -18,17 +18,25 @@
 			<groupId>com.lucidworks.spark</groupId>
 			<artifactId>spark-solr</artifactId>
 			<version>3.6.0</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>kryo-shaded</artifactId>
+					<groupId>com.esotericsoftware</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
+
+		<!-- 解决solr部署到linux,kryo冲突问题. 与albacore版本保持一致-->
+		<dependency>
+			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo-shaded</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.codehaus.janino</groupId>
 			<artifactId>janino</artifactId>
 			<version>3.0.8</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryo</artifactId>
-			<version>5.0.0-RC1</version>
 		</dependency>
 
 	</dependencies>

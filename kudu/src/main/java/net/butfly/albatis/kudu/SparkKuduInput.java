@@ -48,7 +48,6 @@ public class SparkKuduInput extends SparkRowInput implements SparkKudu {
     protected List<Tuple2<String, Dataset<Row>>> load() {
         List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
             Map<String, String> options = options();
-//            Dataset<Row> rowDataset = spark.read().format(format()).options(options).load();
 
             Dataset<Row> rowDataset =  spark.read().format(format()).option("kudu.master",options.get("kudu.master")).option("kudu.table",options.get("kudu.table")).load();
 

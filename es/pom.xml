@@ -105,11 +105,5 @@
 			<artifactId>elasticsearch-spark-20_${version.scala.main}</artifactId>
 			<version>${version.elastic}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryo</artifactId>
-			<version>5.0.0-RC1</version>
-		</dependency>
 	</dependencies>
 </project>
