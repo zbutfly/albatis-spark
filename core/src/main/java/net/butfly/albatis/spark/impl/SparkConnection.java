@@ -138,14 +138,6 @@ public class SparkConnection implements EnvironmentConnection {
 	}
 
 
-	public SparkJoinInput orJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as,Set<String> leftSet, Set<String> rightSet) {
-		return new SparkOrJoinInput(input, col, joined, joinedCol, as,leftSet,rightSet);
-	}
-
-	public SparkJoinInput nonJoin(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as,Set<String> leftSet, Set<String> rightSet) {
-		return new SparkNonJoinInput(input, col, joined, joinedCol, as,leftSet,rightSet);
-	}
-
 	@SuppressWarnings("unchecked")
 	public SparkPluginInput plugin(String className, SparkInput<Rmap> input, PluginConfig pc) {
 		try {

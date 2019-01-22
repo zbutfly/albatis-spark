@@ -2,6 +2,7 @@ package net.butfly.albatis.spark.input;
 
 import java.util.*;
 
+import net.butfly.albatis.ddl.TableDesc;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -12,6 +13,7 @@ import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.SparkRowInput;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
+import static org.apache.spark.sql.functions.lit;
 
 public class SparkJoinInput extends SparkRowInput {
 	private static final long serialVersionUID = -4870210186801499L;
@@ -21,8 +23,8 @@ public class SparkJoinInput extends SparkRowInput {
 	public final String joinedCol;
 	public final String joinType;
 
-	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable, Set<String> leftSet, Set<String> rightSet) {
-		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type", joinType, "as", asTable,"leftSet",leftSet,"rightSet",rightSet));
+	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable, Set<String> leftSet, Set<String> rightSet, String taskId) {
+		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type", joinType, "as", asTable,"leftSet",leftSet,"rightSet",rightSet,"taskId",taskId));
 		this.input = input;
 		this.col = col;
 		this.joined = joined;
@@ -45,6 +47,8 @@ public class SparkJoinInput extends SparkRowInput {
 	@Override
 	public List<Tuple2<String, Dataset<Row>>> load(Object context) {
 		Map<String, Object> ctx = (Map<String, Object>) context;
+
+		String taskId = (String) ctx.get("taskId");
 		// 拿到fieldSet 拿到leftInput的全字段; 对ctx.get(i)做drop
 		SparkInput<Rmap> leftInput = (SparkInput<Rmap>) ctx.get("leftInput");
 		String leftTableName = leftInput.rows().get(0)._1;
@@ -71,7 +75,8 @@ public class SparkJoinInput extends SparkRowInput {
 
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(leftRows, left -> Colls.list(rightRows, //
 				right -> doJoin(left, right, (String) ctx.get("leftCol"), (String) ctx.get("rightCol"), //
-						(String) ctx.get("type"), (String) ctx.get("as"),leftTableName,rightTableName)));
+						(String) ctx.get("type"), (String) ctx.get("as"),leftTableName,rightTableName,taskId)));
+//		todo 要传入多个表
 		return Colls.flat(lll);
 	}
 
@@ -109,19 +114,24 @@ public class SparkJoinInput extends SparkRowInput {
 		return d;
 	}
 
-	private String addPrefix(String tableName,String oldC) {
-		String resultName = tableName + "_" + oldC;
+	private String addPrefix(String tableName,String oldColumn) {
+		String resultName = tableName + "_" + oldColumn;
 		return resultName;
 	}
 
-
+//	todo 需要判断是否是最后一次的join,如果是就配置prefix
 	public Tuple2<String, Dataset<Row>> doJoin(Tuple2<String, Dataset<Row>> ids, Tuple2<String, Dataset<Row>> jds, String ic, String jc,
-											   String type, String asTable,String leftName, String rightName) {
+											   String type, String asTable, String leftName, String rightName, String taskId) {
 		Dataset<Row> main = ids._2;
 		Dataset<Row> sub = jds._2;
 		String joinName = asTable; // ids._1 + "*" + jds._1;
 //		如果在最后处理
 		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
+		if (null != asTable){
+//			最后一次join
+			Dataset<Row> resultDS = ds.withColumn("TASKID", lit(taskId));
+			return new Tuple2<>(joinName, resultDS);
+		}
 		return new Tuple2<>(joinName, ds);
 	}
 

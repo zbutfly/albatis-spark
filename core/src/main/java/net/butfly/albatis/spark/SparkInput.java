@@ -212,17 +212,17 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkInnerJoinInput join(SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet) {
-		return new SparkInnerJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet);
+	public SparkInnerJoinInput join(String taskId, SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet) {
+		return new SparkInnerJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput orJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet) {
-		return new SparkOrJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet);
+	public SparkJoinInput orJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet,String taskId) {
+		return new SparkOrJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput nonJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet) {
-		return new SparkNonJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet);
+	public SparkJoinInput nonJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet,String taskId) {
+		return new SparkNonJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
 	}
 }

@@ -8,7 +8,7 @@ import java.util.Set;
 public class SparkInnerJoinInput extends SparkJoinInput {
 	private static final long serialVersionUID = 377289278732441635L;
 
-	public SparkInnerJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as, Set<String> leftSet, Set<String> rightSet) {
-		super(input, col, joined, joinedCol, "inner", as,leftSet,rightSet);
+	public SparkInnerJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String as, Set<String> leftSet, Set<String> rightSet, String taskId) {
+		super(input, col, joined, joinedCol, "inner", as,leftSet,rightSet,taskId);
 	}
 }
