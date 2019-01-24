@@ -33,14 +33,16 @@ import net.butfly.albatis.spark.impl.SparkIO;
 import net.butfly.albatis.spark.impl.SparkThenInput;
 import net.butfly.albatis.spark.input.SparkInnerJoinInput;
 import net.butfly.albatis.spark.input.SparkJoinInput;
-import net.butfly.albatis.spark.input.SparkNonJoinInput;
-import net.butfly.albatis.spark.input.SparkOrJoinInput;
+import net.butfly.albatis.spark.input.SparkleftAntiJoinInput;
+import net.butfly.albatis.spark.input.SparkFullJoinInput;
 import scala.Tuple2;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
 	final List<Tuple2<String, Dataset<V>>> vals = Colls.list();
 	final List<Tuple2<String, Dataset<Row>>> rows = Colls.list();
+	private String joinCol;
+
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
 		super(spark, targetUri, table);
@@ -65,6 +67,18 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	// protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
 
 	protected abstract <T> List<Tuple2<String, Dataset<T>>> load(Object context);
+
+	public void setJoinCOl(String idDefineName) {
+		setJoinCol(idDefineName);
+	}
+
+	public String getJoinCol() {
+		return joinCol;
+	}
+
+	public void setJoinCol(String joinCol) {
+		this.joinCol = joinCol;
+	}
 
 	public enum DatasetMode {
 		NONE, RMAP, ROW
@@ -217,12 +231,12 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput orJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet,String taskId) {
-		return new SparkOrJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
+	public SparkJoinInput fullJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet, String taskId) {
+		return new SparkFullJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
 	}
 
 	@SuppressWarnings("unchecked")
-	public SparkJoinInput nonJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as,Set<String> leftSet, Set<String> rightSet,String taskId) {
-		return new SparkNonJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
+	public SparkJoinInput leftAntiJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet, String taskId) {
+		return new SparkleftAntiJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
 	}
 }

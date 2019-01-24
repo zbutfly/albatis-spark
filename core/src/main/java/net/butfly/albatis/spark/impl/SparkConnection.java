@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
@@ -30,9 +29,6 @@ import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.input.SparkJoinInput;
-import net.butfly.albatis.spark.input.SparkNonJoinInput;
-import net.butfly.albatis.spark.input.SparkOrJoinInput;
 import net.butfly.albatis.spark.plugin.PluginConfig;
 import net.butfly.albatis.spark.plugin.SparkPluginInput;
 import scala.collection.JavaConverters;

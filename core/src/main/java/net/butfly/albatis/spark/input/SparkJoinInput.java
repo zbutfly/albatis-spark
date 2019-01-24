@@ -2,7 +2,7 @@ package net.butfly.albatis.spark.input;
 
 import java.util.*;
 
-import net.butfly.albatis.ddl.TableDesc;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -13,6 +13,8 @@ import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.SparkRowInput;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
+import scala.collection.Seq;
+
 import static org.apache.spark.sql.functions.lit;
 
 public class SparkJoinInput extends SparkRowInput {
@@ -39,9 +41,6 @@ public class SparkJoinInput extends SparkRowInput {
 		super.open();
 	}
 
-	public scala.collection.Seq<String> convertListToSeq(List<String> inputList) {
-		return JavaConverters.asScalaIteratorConverter(inputList.iterator()).asScala().toSeq();
-	}
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -49,34 +48,42 @@ public class SparkJoinInput extends SparkRowInput {
 		Map<String, Object> ctx = (Map<String, Object>) context;
 
 		String taskId = (String) ctx.get("taskId");
-		// 拿到fieldSet 拿到leftInput的全字段; 对ctx.get(i)做drop
+		String leftCol = (String) ctx.get("leftCol");
+		String rightCol = (String) ctx.get("rightCol");
+
 		SparkInput<Rmap> leftInput = (SparkInput<Rmap>) ctx.get("leftInput");
 		String leftTableName = leftInput.rows().get(0)._1;
-		Set<String> leftSet = (Set<String>) ctx.get("leftSet");
-		String leftjoinCol = (String) ctx.get("leftCol");
-		// 拿到input的表名 tableName应该是table()
 
-//		String tableName = leftInput.targetUri.getFile();
-		Dataset<Row> purgedLeftDS = getPurgedDS(leftInput, leftSet, leftjoinCol);
-//		要拿到表名,ds,传入
-//		Dataset<Row> renameDS = renameDS(purgedLeftDS, leftTableName);
+		Dataset<Row> leftDS = null;
+		if (null != ctx.get("leftSet")){
+			Set<String> leftSet = (Set<String>) ctx.get("leftSet");
+			leftDS = getPurgedDS(leftInput, leftSet, leftCol);
+		}else {
+//			joinInput的处理逻辑
+			leftDS = leftInput.rows().get(0)._2;
+//			leftDS.show();
+		}
 
-		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(leftTableName, purgedLeftDS));
-//		purgedLeftDS.show(1);
+		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(leftTableName, leftDS));
 
         SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
 		String rightTableName = rightInput.rows().get(0)._1;
-		Set<String> rightSet = (Set<String>) ctx.get("rightSet");
-		String rightCol = (String) ctx.get("rightCol");
-		Dataset<Row> purgedRightDS = getPurgedDS(rightInput, rightSet, rightCol);
-//		purgedRightDS.show(1);
 
-		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightTableName, purgedRightDS));
+		Dataset<Row> rightDS = null;
+		if (null != ctx.get("rightSet")){
+			Set<String> rightSet = (Set<String>) ctx.get("rightSet");
+			rightDS = getPurgedDS(rightInput, rightSet, rightCol);
+		}else{
+//			joinInput处理逻辑
+			rightDS = rightInput.rows().get(0)._2;
+//			rightDS.show();
+		}
+
+		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightTableName, rightDS));
 
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(leftRows, left -> Colls.list(rightRows, //
 				right -> doJoin(left, right, (String) ctx.get("leftCol"), (String) ctx.get("rightCol"), //
 						(String) ctx.get("type"), (String) ctx.get("as"),leftTableName,rightTableName,taskId)));
-//		todo 要传入多个表
 		return Colls.flat(lll);
 	}
 
@@ -84,10 +91,10 @@ public class SparkJoinInput extends SparkRowInput {
 			Dataset<Row> ds = input.rows().get(0)._2;
 			Set<String> addFields = new HashSet<>();
 			String[] columns = ds.columns();
-			for (int i = 0; i < columns.length; i++) {
-				addFields.add(columns[i]);
+			for (String col : columns){
+				addFields.add(col);
 			}
-//			不drop碰撞字段
+//			不drop碰撞字段   如果碰撞字段是重复的,就drop
 			addFields.remove(joincol);
 			// 存放非展示字段
 			Set<String> resultSet = new HashSet<>();
@@ -119,20 +126,44 @@ public class SparkJoinInput extends SparkRowInput {
 		return resultName;
 	}
 
-//	todo 需要判断是否是最后一次的join,如果是就配置prefix
 	public Tuple2<String, Dataset<Row>> doJoin(Tuple2<String, Dataset<Row>> ids, Tuple2<String, Dataset<Row>> jds, String ic, String jc,
 											   String type, String asTable, String leftName, String rightName, String taskId) {
 		Dataset<Row> main = ids._2;
+		String[] columnsMain = main.columns();
+
 		Dataset<Row> sub = jds._2;
-		String joinName = asTable; // ids._1 + "*" + jds._1;
-//		如果在最后处理
+		String[] columnsSub = sub.columns();
+
+//		可以判断是否最后一次join
+		String joinName = asTable;
+
 		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
+
+		Dataset<Row> selectDS = null;
+		if (null != leftName && null != rightName){
+			//		构造别名
+			List<Column> list = new ArrayList<>();
+			for(String colStr : columnsMain){
+				list.add(main.col(colStr).as(addPrefix(leftName, colStr)));
+			}
+			for(String colStr : columnsSub){
+				list.add(sub.col(colStr).as(addPrefix(rightName, colStr)));
+			}
+			selectDS = ds.select(convertListToSeq(list));
+		}else{
+			selectDS = ds;
+		}
+
 		if (null != asTable){
-//			最后一次join
-			Dataset<Row> resultDS = ds.withColumn("TASKID", lit(taskId));
+			assert selectDS != null;
+			Dataset<Row> resultDS = selectDS.withColumn("TASKID", lit(taskId));
 			return new Tuple2<>(joinName, resultDS);
 		}
-		return new Tuple2<>(joinName, ds);
+		return new Tuple2<>(joinName, selectDS);
+	}
+
+	public Seq<Column> convertListToSeq(List<Column> inputList) {
+		return JavaConverters.asScalaIteratorConverter(inputList.iterator()).asScala().toSeq();
 	}
 
 	@Override
