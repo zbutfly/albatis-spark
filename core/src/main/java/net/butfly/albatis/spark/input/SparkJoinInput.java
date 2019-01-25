@@ -1,19 +1,18 @@
 package net.butfly.albatis.spark.input;
 
-import java.util.*;
-
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.spark.SparkInput;
 import net.butfly.albatis.spark.SparkRowInput;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
+
+import java.util.*;
 
 import static org.apache.spark.sql.functions.lit;
 
@@ -25,8 +24,8 @@ public class SparkJoinInput extends SparkRowInput {
 	public final String joinedCol;
 	public final String joinType;
 
-	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String asTable, Set<String> leftSet, Set<String> rightSet, String taskId) {
-		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type", joinType, "as", asTable,"leftSet",leftSet,"rightSet",rightSet,"taskId",taskId));
+	public SparkJoinInput(SparkInput<Rmap> input, String col, SparkInput<Rmap> joined, String joinedCol, String joinType, String finallyJoinName, Set<String> leftSet, Set<String> rightSet, String taskId) {
+		super(input.spark, input.targetUri, Maps.of("leftInput", input, "rightInput", joined, "leftCol", col, "rightCol", joinedCol, "type", joinType, "as", finallyJoinName,"leftSet",leftSet,"rightSet",rightSet,"taskId",taskId));
 		this.input = input;
 		this.col = col;
 		this.joined = joined;
@@ -64,12 +63,14 @@ public class SparkJoinInput extends SparkRowInput {
 //			leftDS.show();
 		}
 
+
 		List<Tuple2<String, Dataset<Row>>> leftRows = Colls.list(new Tuple2<>(leftTableName, leftDS));
 
         SparkInput<Rmap> rightInput = (SparkInput<Rmap>) ctx.get("rightInput");
 		String rightTableName = rightInput.rows().get(0)._1;
 
 		Dataset<Row> rightDS = null;
+//		todo 测试完drop cancel注释
 		if (null != ctx.get("rightSet")){
 			Set<String> rightSet = (Set<String>) ctx.get("rightSet");
 			rightDS = getPurgedDS(rightInput, rightSet, rightCol);
@@ -79,6 +80,7 @@ public class SparkJoinInput extends SparkRowInput {
 //			rightDS.show();
 		}
 
+
 		List<Tuple2<String, Dataset<Row>>> rightRows = Colls.list(new Tuple2<>(rightTableName, rightDS));
 
 		List<List<Tuple2<String, Dataset<Row>>>> lll = Colls.list(leftRows, left -> Colls.list(rightRows, //
@@ -86,6 +88,61 @@ public class SparkJoinInput extends SparkRowInput {
 						(String) ctx.get("type"), (String) ctx.get("as"),leftTableName,rightTableName,taskId)));
 		return Colls.flat(lll);
 	}
+
+	public Tuple2<String, Dataset<Row>> doJoin(Tuple2<String, Dataset<Row>> ids, Tuple2<String, Dataset<Row>> jds, String ic, String jc,
+											   String type, String asTable, String leftName, String rightName, String taskId){
+		Dataset<Row> main = ids._2;
+		String[] columnsMain = main.columns();
+
+		Dataset<Row> sub = jds._2;
+		String[] columnsSub = sub.columns();
+
+		String joinName = asTable;//判断最后一次join
+
+		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
+
+		Dataset<Row> selectDS = null; //构造别名
+		if (null != leftName || null != rightName){
+			List<Column> list = new ArrayList<>();
+			if (null != leftName && null != rightName){ //如果leftName是空,就执行right的加别名逻辑; 如果都不空,就都执行;
+				for(String colStr : columnsMain){
+					list.add(main.col(colStr).as(addPrefix(leftName, colStr)));
+				}
+				for(String colStr : columnsSub){
+					list.add(sub.col(colStr).as(addPrefix(rightName, colStr)));
+				}
+			}else{  //进来的是普通input和joinInput的数据;
+				if (null == leftName){
+					oddDSPrefix(rightName, main, columnsMain, sub, columnsSub, list);
+				}
+				if (null == rightName){
+					oddDSPrefix(leftName, sub, columnsSub, main, columnsMain, list);
+				}
+			}
+			selectDS = ds.select(convertListToSeq(list));
+		}else{
+			selectDS = ds;  //中间数据碰撞不加别名
+//			selectDS.show(1);
+		}
+
+		if (null != asTable){
+			assert selectDS != null;
+			Dataset<Row> resultDS = selectDS.withColumn("TASKID", lit(taskId));
+			resultDS.show(1);
+			return new Tuple2<>(joinName, resultDS);
+		}
+		return new Tuple2<>(joinName, ds);
+	}
+
+	private void oddDSPrefix(String rightName, Dataset<Row> main, String[] columnsMain, Dataset<Row> sub, String[] columnsSub, List<Column> list) {
+		for(String colStr : columnsSub){
+			list.add(sub.col(colStr).as(addPrefix(rightName, colStr)));//给右表加prefix
+		}
+		for(String colStr : columnsMain){
+			list.add(main.col(colStr)); //左表不加
+		}
+	}
+
 
 	private Dataset<Row> getPurgedDS(SparkInput<Rmap> input, Set<String> fields, String joincol) {
 			Dataset<Row> ds = input.rows().get(0)._2;
@@ -112,54 +169,10 @@ public class SparkJoinInput extends SparkRowInput {
 		return d;
 	}
 
-//	需要传入旧的ds clume,新的column,然后去遍历旧的ds,
-	private Dataset<Row> renameDS(Dataset<Row> ds, String tableName) {
-		Dataset<Row> d = ds;
-		String[] columns = ds.columns();
-		for (String oldCol : columns)
-			 d = d.withColumnRenamed(oldCol,addPrefix(tableName,oldCol));
-		return d;
-	}
 
 	private String addPrefix(String tableName,String oldColumn) {
 		String resultName = tableName + "_" + oldColumn;
 		return resultName;
-	}
-
-	public Tuple2<String, Dataset<Row>> doJoin(Tuple2<String, Dataset<Row>> ids, Tuple2<String, Dataset<Row>> jds, String ic, String jc,
-											   String type, String asTable, String leftName, String rightName, String taskId) {
-		Dataset<Row> main = ids._2;
-		String[] columnsMain = main.columns();
-
-		Dataset<Row> sub = jds._2;
-		String[] columnsSub = sub.columns();
-
-//		可以判断是否最后一次join
-		String joinName = asTable;
-
-		Dataset<Row> ds = main.join(sub, main.col(ic).equalTo(sub.col(jc)), type).distinct();
-
-		Dataset<Row> selectDS = null;
-		if (null != leftName && null != rightName){
-			//		构造别名
-			List<Column> list = new ArrayList<>();
-			for(String colStr : columnsMain){
-				list.add(main.col(colStr).as(addPrefix(leftName, colStr)));
-			}
-			for(String colStr : columnsSub){
-				list.add(sub.col(colStr).as(addPrefix(rightName, colStr)));
-			}
-			selectDS = ds.select(convertListToSeq(list));
-		}else{
-			selectDS = ds;
-		}
-
-		if (null != asTable){
-			assert selectDS != null;
-			Dataset<Row> resultDS = selectDS.withColumn("TASKID", lit(taskId));
-			return new Tuple2<>(joinName, resultDS);
-		}
-		return new Tuple2<>(joinName, selectDS);
 	}
 
 	public Seq<Column> convertListToSeq(List<Column> inputList) {

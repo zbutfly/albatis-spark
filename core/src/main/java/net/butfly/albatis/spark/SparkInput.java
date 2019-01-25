@@ -42,6 +42,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	final List<Tuple2<String, Dataset<V>>> vals = Colls.list();
 	final List<Tuple2<String, Dataset<Row>>> rows = Colls.list();
 	private String joinCol;
+	private Map<String, Object> fieldSet;
 
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
@@ -72,15 +73,27 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		setJoinCol(idDefineName);
 	}
 
-	public String getJoinCol() {
-		return joinCol;
-	}
 
 	public void setJoinCol(String joinCol) {
 		this.joinCol = joinCol;
 	}
 
-	public enum DatasetMode {
+	public String getJoinCol() {
+		return joinCol;
+	}
+
+
+	public void setFieldSet(Map<String, Object> fieldSet) {
+		this.fieldSet = fieldSet;
+	}
+
+	public Map<String, Object> getFieldSet() {
+		return fieldSet;
+	}
+
+
+
+    public enum DatasetMode {
 		NONE, RMAP, ROW
 	}
 
