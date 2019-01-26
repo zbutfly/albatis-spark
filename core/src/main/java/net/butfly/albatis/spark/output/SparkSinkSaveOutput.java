@@ -21,7 +21,7 @@ public abstract class SparkSinkSaveOutput extends SparkSinkOutputBase {
 
 	@Override
 	public final void save(String table, Dataset<Row> ds) {
-		logger().info("Dataset [" + ds.toString() + "] saving into output [" + getClass().getSimpleName() + "].");
+		logger().info("Dataset saving into output [" + getClass().getSimpleName() + "]: " + ds.schema().treeString());
 		try (WriteHandler w = WriteHandler.of(ds)) {
 			w.save(table, this);
 		}

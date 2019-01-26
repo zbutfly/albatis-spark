@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.spark.api.java.JavaSparkContext;
@@ -36,7 +35,6 @@ import net.butfly.albatis.spark.util.DSdream;
 @Schema("mongodb")
 public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWriting, SparkMongo {
 	private static final long serialVersionUID = -887072515139730517L;
-	private static final int BATCH_SIZE = 250;
 	private final String mongodbn;
 	private final MongoSpark mongo;
 
@@ -50,7 +48,7 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	public Map<String, String> options(String table) {
 		Map<String, String> opts = mongoOpts(targetUri);
 		opts.put("replaceDocument", "true");
-		opts.put("maxBatchSize", Integer.toString(BATCH_SIZE));
+		opts.put("maxBatchSize", Integer.toString(batchSize()));
 		opts.put("localThreshold", "0");
 		opts.put("writeConcern.w", "majority");
 		opts.put("collection", "spark");
@@ -72,42 +70,43 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 			Map<String, BlockingQueue<Rmap>> m = Maps.ofQ(s, Rmap::table);
 			for (String t : m.keySet())
 				write(t, m.get(t));
-		};
+		} ;
 	}
 
-	private void write(String t, Collection<Rmap> docs) {
+	private void write(String table, Collection<Rmap> docs) {
+		if (Colls.empty(docs)) return;
 		LinkedBlockingQueue<Rmap> l;
 		if (docs instanceof BlockingQueue) l = (LinkedBlockingQueue<Rmap>) docs;
 		else l = new LinkedBlockingQueue<>(docs);
 
-		long total = l.size();
-		logger().trace("MongoSpark upsert [" + total + "] to [" + t + "] with batch [" + BATCH_SIZE + "] starting.");
-		long now = System.currentTimeMillis();
-		MongoCollection<Document> col = mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(t);
+		MongoCollection<Document> col = mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(table);
 		AtomicLong succ = new AtomicLong();
-		List<Rmap> fails = Colls.list();
 		while (!l.isEmpty()) {
 			List<Rmap> batch = Colls.list();
-			l.drainTo(batch, BATCH_SIZE);
+			l.drainTo(batch, batchSize());
 			if (!batch.isEmpty()) succ.addAndGet(write(col, batch));
 		}
-		logger().trace("MongoSpark upsert [" + total + "] to [" + t + "] with batch [" + BATCH_SIZE + "] finished, successed [" + succ.get()
-				+ "], failed [" + fails.size() + "], spent: " + now / 1000 + " ms.");
 	}
 
-	private int write(MongoCollection<Document> col, List<Rmap> rmapList) {
-		AtomicInteger atomicInteger = new AtomicInteger();
-		// 调用statsOuts方法,传入list,和一个函数.
+	private long write(MongoCollection<Document> col, List<Rmap> rmapList) {
+		AtomicLong c = new AtomicLong();
 		s().statsOuts(rmapList, rs -> {
 			List<WriteModel<Document>> ws = Colls.list(rs, this::write);
-			// 调用MOngoCollection的bulkWrite方法,传入上边的List
-			BulkWriteResult result = col.bulkWrite(ws);
-			// 调用result的Count,求和
-			int cc = result.getInsertedCount() + (result.isModifiedCountAvailable() ? result.getModifiedCount() : 0) + result.getUpserts()
-					.size();
-			atomicInteger.addAndGet(cc);
+			long now = System.currentTimeMillis();
+			int cc = 0;
+			try {
+				BulkWriteResult result = col.bulkWrite(ws);
+				cc = result.isModifiedCountAvailable() ? result.getModifiedCount() : 0;
+				cc = result.getInsertedCount() + cc + result.getUpserts().size();
+				c.addAndGet(cc);
+			} finally {
+				long spent = System.currentTimeMillis() - now;
+				long ccc = cc;
+				logger().trace(() -> "MongoSpark upsert [" + ws.size() + "] to [" + col + "] with batch [" + batchSize()
+						+ "] finished, successed [" + ccc + "], spent: " + spent + " ms.");
+			}
 		});
-		return atomicInteger.get();
+		return c.get();
 	}
 
 	protected WriteModel<Document> write(Rmap rmap) {

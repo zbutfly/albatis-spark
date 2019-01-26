@@ -17,13 +17,13 @@ import net.butfly.albatis.io.Rmap;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 
-public class SparkJoinInput extends SparkRowInput {
+public final class SparkJoinInput extends SparkRowInput {
 	private static final long serialVersionUID = -4870210186801499L;
+	public final String joinCol; // col to upper joining, not the finished join
 	private final SparkInput<Rmap> left;
-	public final String leftCol;
 	private final SparkInput<Rmap> right;
-	private final String rightCol;
-	private final JoinType type;
+//	private final String rightCol;
+//	private final JoinType type;
 
 	public enum JoinType {
 		INNER("inner"), LEFT("left"), LEFT_ANTI("left_anti"), FULL("full"), // implemented
@@ -64,10 +64,10 @@ public class SparkJoinInput extends SparkRowInput {
 		super(left.spark, left.targetUri, Maps.of("leftInput", left, "rightInput", right, "leftCol", leftCol, "rightCol", rightCol, "type",
 				type, "as", finallyJoinName, "leftSet", leftSet, "rightSet", rightSet, "taskId", taskId));
 		this.left = left;
-		this.leftCol = leftCol;
+		this.joinCol = leftCol;
 		this.right = right;
-		this.rightCol = rightCol;
-		this.type = type;
+//		this.rightCol = rightCol;
+//		this.type = type;
 	}
 
 	@Override
@@ -100,7 +100,9 @@ public class SparkJoinInput extends SparkRowInput {
 		if (null != as) ds = ds.withColumn("TASKID", lit((String) ctx.get("taskId")));
 		// ds = filterCols(ds, leftTable, left, rightTable, right);
 
-		logger().info("Join [" + type + "]: " + left + " -> " + right + " => " + ds.toString());
+		logger().info("Join [" + t + "]: \n<left:>" + left.schema().treeString() + //
+				"\t<right:>" + right.schema().treeString() + //
+				"\t<result:>" + ds.schema().treeString());
 		// logger().debug("Dataset joined, checkpoint will be set.");
 		// ds = ds.cache().checkpoint();
 		logger().debug("Dataset loaded.");

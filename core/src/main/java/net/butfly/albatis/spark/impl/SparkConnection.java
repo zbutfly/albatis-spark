@@ -1,7 +1,6 @@
 package net.butfly.albatis.spark.impl;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -29,9 +28,6 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
-import net.butfly.albatis.spark.SparkInput;
-import net.butfly.albatis.spark.plugin.PluginConfig;
-import net.butfly.albatis.spark.plugin.SparkPluginInput;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
@@ -133,19 +129,6 @@ public class SparkConnection implements EnvironmentConnection {
 	@Override
 	public <V, I extends Input<V>> I input(URISpec uri, TableDesc... table) {
 		return (I) SparkIO.input(spark(), uri, table);
-	}
-
-	@SuppressWarnings("unchecked")
-	public SparkPluginInput plugin(String className, SparkInput<Rmap> input, PluginConfig pc) {
-		try {
-			Class<? extends SparkPluginInput> clazz = (Class<? extends SparkPluginInput>) Class.forName(className);
-			return clazz.getConstructor(SparkInput.class, PluginConfig.class).newInstance(input, pc);
-		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
-				| IllegalArgumentException e) {
-			throw new RuntimeException(e);
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e.getTargetException());
-		}
 	}
 
 	@Override
