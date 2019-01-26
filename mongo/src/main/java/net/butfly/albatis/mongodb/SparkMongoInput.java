@@ -65,7 +65,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 			Dataset<Row> d = rdd.toDF();
 			d = d.withColumn(FIELD_TABLE_NAME, lit(t.name)).withColumn(FIELD_KEY_VALUE, d.col("_id.oid")).withColumn("_id", d.col(
 					"_id.oid"));
-			return Colls.list(split(d, false), ds -> new Tuple2<>(t.name, ds.persist(StorageLevel.OFF_HEAP())));
+			return Colls.list(split(d, false), ds -> new Tuple2<>(t.name, ds));
 		});
 		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);
 		return flat;

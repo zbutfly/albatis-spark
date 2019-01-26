@@ -6,7 +6,6 @@ import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.MapFunction;
@@ -31,33 +30,26 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.impl.SparkIO;
 import net.butfly.albatis.spark.impl.SparkThenInput;
-import net.butfly.albatis.spark.input.SparkInnerJoinInput;
-import net.butfly.albatis.spark.input.SparkJoinInput;
-import net.butfly.albatis.spark.input.SparkleftAntiJoinInput;
-import net.butfly.albatis.spark.input.SparkFullJoinInput;
 import scala.Tuple2;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
 	final List<Tuple2<String, Dataset<V>>> vals = Colls.list();
 	final List<Tuple2<String, Dataset<Row>>> rows = Colls.list();
-	private String joinCol;
-	private Map<String, Object> fieldSet;
-
 
 	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
 		super(spark, targetUri, table);
 		// 控制mode为RMAP,要用SparkMapInput去调用
 		switch (mode()) {
-			case RMAP:
-				List<Tuple2<String, Dataset<V>>> ds = load(context);
-				ds.forEach(t -> vals(t._1, limit(t._2)));
-				return;
-			case ROW:
-				List<Tuple2<String, Dataset<Row>>> rs = load(context);
-				rs.forEach(t -> rows(t._1, limit(t._2)));
-				return;
-			default:
+		case RMAP:
+			List<Tuple2<String, Dataset<V>>> ds = load(context);
+			ds.forEach(t -> vals(t._1, limit(t._2)));
+			return;
+		case ROW:
+			List<Tuple2<String, Dataset<Row>>> rs = load(context);
+			rs.forEach(t -> rows(t._1, limit(t._2)));
+			return;
+		default:
 		}
 	}
 
@@ -69,31 +61,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 
 	protected abstract <T> List<Tuple2<String, Dataset<T>>> load(Object context);
 
-	public void setJoinCOl(String idDefineName) {
-		setJoinCol(idDefineName);
-	}
-
-
-	public void setJoinCol(String joinCol) {
-		this.joinCol = joinCol;
-	}
-
-	public String getJoinCol() {
-		return joinCol;
-	}
-
-
-	public void setFieldSet(Map<String, Object> fieldSet) {
-		this.fieldSet = fieldSet;
-	}
-
-	public Map<String, Object> getFieldSet() {
-		return fieldSet;
-	}
-
-
-
-    public enum DatasetMode {
+	public enum DatasetMode {
 		NONE, RMAP, ROW
 	}
 
@@ -236,20 +204,5 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 					+ "\", if presented and positive.");
 		}
 		return ds;
-	}
-
-	@SuppressWarnings("unchecked")
-	public SparkInnerJoinInput join(String taskId, SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet) {
-		return new SparkInnerJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
-	}
-
-	@SuppressWarnings("unchecked")
-	public SparkJoinInput fullJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet, String taskId) {
-		return new SparkFullJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
-	}
-
-	@SuppressWarnings("unchecked")
-	public SparkJoinInput leftAntiJoin(SparkInput<Rmap> right, String leftCol, String rightCol, String as, Set<String> leftSet, Set<String> rightSet, String taskId) {
-		return new SparkleftAntiJoinInput((SparkInput<Rmap>) this, leftCol, right, rightCol, as,leftSet,rightSet,taskId);
 	}
 }

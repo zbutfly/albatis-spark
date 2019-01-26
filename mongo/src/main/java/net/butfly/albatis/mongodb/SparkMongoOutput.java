@@ -20,12 +20,14 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.spark.MongoSpark;
+
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Rmap;
+import net.butfly.albatis.spark.impl.Schemas;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.output.SparkSinkSaveOutput;
 import net.butfly.albatis.spark.output.SparkWriting;
@@ -64,20 +66,14 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
-		if (s instanceof DSdream) write(((DSdream) s).table, ((DSdream) s).list());
+		if (s instanceof DSdream) //
+			((DSdream) s).ds.foreachPartition(rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap)));
 		else {
 			Map<String, BlockingQueue<Rmap>> m = Maps.ofQ(s, Rmap::table);
 			for (String t : m.keySet())
 				write(t, m.get(t));
-		}
+		};
 	}
-
-	// protected void write(Row row) {
-	// Rmap r = row2rmap(row);
-	// long rr = write(mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(r.table()), r);
-	// if (rr > 0) succeeded(rr);
-	// else failed(Sdream.of());
-	// }
 
 	private void write(String t, Collection<Rmap> docs) {
 		LinkedBlockingQueue<Rmap> l;

@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ForkJoinPool;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
@@ -65,6 +66,7 @@ public class SparkConnection implements EnvironmentConnection {
 			sparkConf.registerKryoClasses(new Class[] { Rmap.class });
 			logger().info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
 			spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
+			spark.sparkContext().setCheckpointDir("checkpoint");// TODO
 			paramHadoop().forEach(spark.sparkContext().hadoopConfiguration()::set);
 		}
 		return spark;
@@ -132,7 +134,6 @@ public class SparkConnection implements EnvironmentConnection {
 	public <V, I extends Input<V>> I input(URISpec uri, TableDesc... table) {
 		return (I) SparkIO.input(spark(), uri, table);
 	}
-
 
 	@SuppressWarnings("unchecked")
 	public SparkPluginInput plugin(String className, SparkInput<Rmap> input, PluginConfig pc) {
@@ -227,9 +228,9 @@ public class SparkConnection implements EnvironmentConnection {
 
 	private String host(Map<String, String> params) {
 		String host = params.remove("spark.host");
-		String paral = params.get("spark.default.parallelism");
-		if (null == paral) paral = "*";
-		if (null != host) host = host + "[" + paral + "]";
+		int paral = Integer.parseInt(params.getOrDefault("spark.default.parallelism", "0"));
+		if (paral < 0) paral = ForkJoinPool.getCommonPoolParallelism();
+		if (null != host) host = host + "[" + (paral <= 0 ? "*" : paral) + "]";
 		else host = uriSpec.getHost();
 		if (Colls.empty(host)) host = DEFAULT_HOST;
 		logger.debug("Spark host detected: " + host);

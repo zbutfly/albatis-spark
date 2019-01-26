@@ -47,7 +47,7 @@ public class SparkSolrInput extends SparkRowInput implements SparkSolr {
 			Map<String, String> options = options();
 			options.put("collection", item.name);
 			Dataset<Row> solr = spark.read().format("solr").options(options).load();
-			return Colls.list(split(solr, false), ds -> new Tuple2<>(item.name, ds.persist(StorageLevel.OFF_HEAP())));
+			return Colls.list(split(solr, false), ds -> new Tuple2<>(item.name, ds));
 		});
 		return Colls.flat(list);
 	}
