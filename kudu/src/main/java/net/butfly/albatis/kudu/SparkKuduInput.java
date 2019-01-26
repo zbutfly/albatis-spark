@@ -57,7 +57,7 @@ public class SparkKuduInput extends SparkRowInput {
 		StructType schema = build(opts.get("kudu.master"), table);
 		logger().debug("Loading from kudu as : " + opts + "\n\tschema: " + schema.toString());
 		Dataset<Row> ds = spark.read().format(format()).schema(schema).options(opts).load();
-		logger().trace(() -> "Loaded from kudu: \n" + ds.schema().treeString());
+		logger().trace(() -> "Loaded from kudu, schema: " + ds.schema().treeString());
 		return ds;
 	}
 

@@ -27,14 +27,8 @@ public class SparkESInput extends SparkRowInput {
 	@Override
 	public Map<String, String> options() {
 		Map<String, String> options = Maps.of();
-		String indexAndType;
-		indexAndType = targetUri.getPathAt(0);
-		if (table().name.split("/").length > 1 || null == indexAndType) indexAndType = table().name;
-		else indexAndType += ("/" + table().name);
 		options.put("cluster.name", targetUri.getUsername());
 		options.put("es.nodes", targetUri.getHost());
-		options.put("es.resource", indexAndType);
-		options.put("es.read.field.include", String.join(",", Colls.list(f -> f.name, table().fields())));
 		return options;
 	}
 
@@ -45,13 +39,23 @@ public class SparkESInput extends SparkRowInput {
 
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
-		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
+		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
+			options.put("es.resource", indexAndType(t.name));
+			if (t.fields().length > 0) options.put("es.read.field.include", String.join(",", Colls.list(f -> f.name, t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
 			Dataset<Row> ds = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
-			logger().trace(() -> "Loaded from elasticsearch: \n" + ds.schema().treeString());
-			return Colls.list(new Tuple2<>(item.name, ds));
+			logger().trace(() -> "Loaded from elasticsearch, schema: " + ds.schema().treeString());
+			return Colls.list(new Tuple2<>(t.name, ds));
 		});
 		return Colls.flat(list);
+	}
+
+	private String indexAndType(String tableName) {
+		String indexAndType;
+		indexAndType = targetUri.getPathAt(0);
+		if (tableName.split("/").length > 1 || null == indexAndType) indexAndType = tableName;
+		else indexAndType += ("/" + tableName);
+		return indexAndType;
 	}
 }

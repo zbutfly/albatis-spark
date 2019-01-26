@@ -1,24 +1,22 @@
 package net.butfly.albatis.solr;
 
-import static net.butfly.albatis.spark.impl.Sparks.split;
-
 import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.storage.StorageLevel;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
+import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import scala.Tuple2;
 
 @Schema("solr")
-public class SparkSolrInput extends SparkRowInput implements SparkSolr {
+public class SparkSolrInput extends SparkRowInput {
 	private static final long serialVersionUID = -5201381842972371471L;
 
 	public SparkSolrInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
@@ -27,13 +25,10 @@ public class SparkSolrInput extends SparkRowInput implements SparkSolr {
 
 	@Override
 	public Map<String, String> options() {
-		Map<String, String> options = solrOpts(targetUri);
-		options.put("collection", table().name);
-		options.put("zkhost", targetUri.getHost());
-		options.put("query", "*:*");
-		options.put("sort", "id asc");
-		options.put("qt", "/export");
-		return options;
+		String solrdbn = targetUri.getPathAt(0);
+		String solruri = targetUri.getScheme() + "://" + targetUri.getAuthority() + "/";
+		if (null != solrdbn) solruri += solrdbn;
+		return Maps.of("uri", solruri, "zkhost", targetUri.getHost(), "query", "*:*", "sort", "id asc", "qt", "/export");
 	}
 
 	@Override
@@ -43,12 +38,14 @@ public class SparkSolrInput extends SparkRowInput implements SparkSolr {
 
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
-		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), item -> {
+		return Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
-			options.put("collection", item.name);
-			Dataset<Row> solr = spark.read().format("solr").options(options).load();
-			return Colls.list(split(solr, false), ds -> new Tuple2<>(item.name, ds));
+			options.put("collection", t.name);
+			if (t.fields().length > 0) options.put("fields", String.join(",", Colls.list(f -> f.name, t.fields())));
+			logger().debug("Loading from solr as: " + options);
+			Dataset<Row> ds = spark.read().format("solr").options(options).load();
+			logger().trace(() -> "Loaded from solr, schema: " + ds.schema().treeString());
+			return new Tuple2<>(t.name, ds);
 		});
-		return Colls.flat(list);
 	}
 }
