@@ -35,10 +35,10 @@ public final class SparkJoinInput extends SparkRowInput {
 		OUTER("outer"), @Deprecated
 		FULL_OUTER("full_outer");
 
-		public final String spark;
+		public final String type;
 
-		private JoinType(String spark) {
-			this.spark = spark;
+		private JoinType(String type) {
+			this.type = type;
 		}
 
 		public static JoinType of(int value) {
@@ -55,7 +55,7 @@ public final class SparkJoinInput extends SparkRowInput {
 		}
 
 		private Dataset<Row> join(Dataset<Row> left, String leftCol, Dataset<Row> right, String rightCol) {
-			return left.distinct().join(right.distinct(), left.col(leftCol).equalTo(right.col(rightCol)), spark);
+			return left.distinct().join(right.distinct(), left.col(leftCol).equalTo(right.col(rightCol)), type);
 		}
 	}
 
