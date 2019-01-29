@@ -1,5 +1,6 @@
 package net.butfly.albatis.elastic;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
+import net.butfly.albatis.ddl.Desc;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
@@ -20,7 +22,7 @@ import scala.Tuple2;
 public class SparkESInput extends SparkRowInput {
 	private static final long serialVersionUID = 5472880102313131224L;
 
-	public SparkESInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	public SparkESInput(SparkSession spark, URISpec targetUri, TableDesc... table) throws IOException {
 		super(spark, targetUri, null, table);
 	}
 
@@ -42,7 +44,8 @@ public class SparkESInput extends SparkRowInput {
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
 			options.put("es.resource", indexAndType(t.name));
-			if (t.fields().length > 0) options.put("es.read.field.include", String.join(",", Colls.list(f -> f.name, t.fields())));
+			if (t.fields().length > 0) options.put("es.read.field.include", //
+					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
 			Dataset<Row> ds = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
 			logger().trace(() -> "Loaded from elasticsearch, schema: " + ds.schema().treeString());

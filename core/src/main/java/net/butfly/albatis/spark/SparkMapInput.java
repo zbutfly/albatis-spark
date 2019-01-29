@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.spark.sql.Dataset;
@@ -14,7 +15,7 @@ import scala.Tuple2;
 public abstract class SparkMapInput extends SparkInput<Rmap> {
 	private static final long serialVersionUID = -2144747945365613002L;
 
-	protected SparkMapInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	protected SparkMapInput(SparkSession spark, URISpec targetUri, TableDesc... table) throws IOException {
 		super(spark, targetUri, null, table);
 	}
 

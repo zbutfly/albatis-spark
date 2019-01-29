@@ -4,10 +4,11 @@ import net.butfly.albacore.io.URISpec;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.*;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class ESInputTest {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		SparkConf conf = new SparkConf();
 		conf.setMaster("local[*]").setAppName("esInput");
 

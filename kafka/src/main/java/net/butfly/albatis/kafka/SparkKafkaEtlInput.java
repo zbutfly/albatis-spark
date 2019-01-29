@@ -1,5 +1,6 @@
 package net.butfly.albatis.kafka;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.spark.sql.Row;
@@ -16,7 +17,7 @@ import net.butfly.albatis.spark.impl.SparkIO.Schema;
 public class SparkKafkaEtlInput extends SparkKafkaInput {
 	private static final long serialVersionUID = -8077483839198954L;
 
-	public SparkKafkaEtlInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	public SparkKafkaEtlInput(SparkSession spark, URISpec targetUri, TableDesc... table) throws IOException {
 		super(spark, targetUri, table);
 	}
 

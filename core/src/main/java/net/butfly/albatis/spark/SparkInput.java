@@ -1,9 +1,11 @@
 package net.butfly.albatis.spark;
 
+import static net.butfly.albacore.utils.collection.Colls.list;
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +14,7 @@ import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.StructField;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;
@@ -20,9 +23,10 @@ import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.Systems;
-import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.Albatis;
+import net.butfly.albatis.ddl.Desc;
+import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.OddInput;
 import net.butfly.albatis.io.Output;
@@ -34,32 +38,57 @@ import scala.Tuple2;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;
-	final List<Tuple2<String, Dataset<V>>> vals = Colls.list();
-	final List<Tuple2<String, Dataset<Row>>> rows = Colls.list();
+	final List<Tuple2<String, Dataset<V>>> vals = list();
+	final List<Tuple2<String, Dataset<Row>>> rows = list();
 
-	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) {
+	protected SparkInput(SparkSession spark, URISpec targetUri, Object context, TableDesc... table) throws IOException {
 		super(spark, targetUri, table);
-		// 控制mode为RMAP,要用SparkMapInput去调用
 		switch (mode()) {
 		case RMAP:
-			List<Tuple2<String, Dataset<V>>> ds = load(context);
-			ds.forEach(t -> vals(t._1, limit(t._2)));
+			List<Tuple2<String, Dataset<V>>> rmaptbls = load(context);
+			rmaptbls.forEach(t -> {
+				TableDesc td = schemaAll().get(t._1);
+				boolean proj = null == td ? false : td.attr(Desc.PROJECT_FROM);
+				if (proj) logger().warn("Non-schema dataset does not support field project (as name) now.");
+				vals(t._1, limit(t._2));
+			});
 			return;
 		case ROW:
-			List<Tuple2<String, Dataset<Row>>> rs = load(context);
-			rs.forEach(t -> rows(t._1, limit(t._2)));
+			List<Tuple2<String, Dataset<Row>>> rowtbls = load(context);
+			rowtbls.forEach(t -> {
+				Dataset<Row> ds = limit(t._2);
+				ds = cut(ds, t._1);
+				rows(t._1, ds);
+			});
 			return;
 		default:
 		}
 	}
 
+	private Dataset<Row> cut(Dataset<Row> ds, String table) {
+		if (null == table) return ds;
+		TableDesc td = schemaAll().get(table);
+		if (null == td) return ds;
+		if (td.attr(Desc.PROJECT_FROM, false)) {
+			for (StructField sf : ds.schema().fields()) {
+				boolean cut = true;
+				String dbField;
+				for (FieldDesc fd : td.fields())
+					if (null != (dbField = fd.attr(Desc.PROJECT_FROM)) && dbField.equals(sf.name())) { // rename col
+						ds = ds.withColumnRenamed(dbField, fd.name);
+						cut = false;
+					} else if (fd.name.equals(sf.name())) cut = false; // reserve column
+				if (cut) ds = ds.drop(sf.name()); // not in table fields, cut!
+			}
+			logger().info("Dataset projection into: " + ds.schema().treeString());
+		}
+		return ds;
+	}
+
 	/**
 	 * @return Dataset of Rmap or Row, based on data source type (fix schema db like mongodb, or schemaless data like kafka)
-	 *
 	 */
-	// protected abstract <T> List<Tuple2<String, Dataset<T>>> load();
-
-	protected abstract <T> List<Tuple2<String, Dataset<T>>> load(Object context);
+	protected abstract <T> List<Tuple2<String, Dataset<T>>> load(Object context) throws IOException;
 
 	public enum DatasetMode {
 		NONE, RMAP, ROW
@@ -126,8 +155,12 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public SparkInput<V> filter(Predicate<V> predicater) {
-		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals, t -> new Tuple2<>(t._1, (Dataset<Rmap>) t._2.filter(predicater::test)));
-		return (SparkInput<V>) new SparkThenInput(this, dss1);
+		List<Tuple2<String, Dataset<Rmap>>> dss1 = list(vals, t -> new Tuple2<>(t._1, (Dataset<Rmap>) t._2.filter(predicater::test)));
+		try {
+			return (SparkInput<V>) new SparkThenInput(this, dss1);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -142,11 +175,15 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <V1> SparkInput<V1> then(Function<V, V1> conv) {
-		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
+		List<Tuple2<String, Dataset<Rmap>>> dss1 = list(vals(), t -> {
 			Dataset<Rmap> ds1 = t._2.map((MapFunction<V, Rmap>) r -> (Rmap) conv.apply(r), ENC_RMAP);
 			return new Tuple2<>(t._1, ds1);
 		});
-		return (SparkInput<V1>) new SparkThenInput(this, dss1);
+		try {
+			return (SparkInput<V1>) new SparkThenInput(this, dss1);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
@@ -167,11 +204,15 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	@SuppressWarnings("unchecked")
 	// 传入一个function,输入是动态类型V,输出是Sdream对象
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
-		List<Tuple2<String, Dataset<Rmap>>> dss1 = Colls.list(vals(), t -> {
+		List<Tuple2<String, Dataset<Rmap>>> dss1 = list(vals(), t -> {
 			Dataset<Rmap> ds1 = t._2.flatMap((FlatMapFunction<V, Rmap>) v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);
 			return new Tuple2<>(t._1, ds1);
 		});
-		return (SparkInput<V1>) new SparkThenInput(this, dss1);
+		try {
+			return (SparkInput<V1>) new SparkThenInput(this, dss1);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@SuppressWarnings("unchecked")

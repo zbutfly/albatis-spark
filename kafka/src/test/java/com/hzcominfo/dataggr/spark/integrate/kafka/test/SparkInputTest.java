@@ -1,5 +1,6 @@
 package com.hzcominfo.dataggr.spark.integrate.kafka.test;
 
+import java.io.IOException;
 import java.util.Map;
 
 import net.butfly.albacore.io.URISpec;
@@ -11,7 +12,7 @@ import org.apache.spark.sql.*;
 
 public class SparkInputTest {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		SparkConf conf = new SparkConf();
 		conf.setMaster("local[*]");
 		conf.setAppName("Simulation");

@@ -36,7 +36,7 @@ public class SparkKafkaInput extends SparkMapInput {
 	private static final long serialVersionUID = 9003837433163351306L;
 	private final Function<byte[], Map<String, Object>> conv;
 
-	public SparkKafkaInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	public SparkKafkaInput(SparkSession spark, URISpec targetUri, TableDesc... table) throws IOException {
 		super(spark, targetUri, table);
 		conv = Connection.urider(targetUri);
 	}

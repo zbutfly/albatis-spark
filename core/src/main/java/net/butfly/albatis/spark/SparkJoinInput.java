@@ -2,10 +2,10 @@ package net.butfly.albatis.spark;
 
 import static org.apache.spark.sql.functions.lit;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -22,52 +22,18 @@ public final class SparkJoinInput extends SparkRowInput {
 	public final String joinCol; // col to upper joining, not the finished join
 	private final SparkInput<Rmap> left;
 	private final SparkInput<Rmap> right;
-//	private final String rightCol;
-//	private final JoinType type;
+	// private final String rightCol;
+	// private final JoinType type;
 
-	public enum JoinType {
-		INNER("inner"), LEFT("left"), LEFT_ANTI("left_anti"), FULL("full"), // implemented
-		@Deprecated
-		LEFT_OUTER("left_outer"), @Deprecated
-		LEFT_SEMI("left_semi"), @Deprecated
-		RIGHT("right"), @Deprecated
-		RIGHT_OUTER("right_outer"), @Deprecated
-		OUTER("outer"), @Deprecated
-		FULL_OUTER("full_outer");
-
-		public final String type;
-
-		private JoinType(String type) {
-			this.type = type;
-		}
-
-		public static JoinType of(int value) {
-			switch (value) {
-			case 1:
-				return INNER;
-			case 2:
-				return FULL;
-			case 3:
-				return LEFT_ANTI;
-			default:
-				throw new IllegalArgumentException("JoinType [" + value + "] is not supported.");
-			}
-		}
-
-		private Dataset<Row> join(Dataset<Row> left, String leftCol, Dataset<Row> right, String rightCol) {
-			return left.distinct().join(right.distinct(), left.col(leftCol).equalTo(right.col(rightCol)), type);
-		}
-	}
-
-	public SparkJoinInput(SparkInput<Rmap> left, String leftCol, SparkInput<Rmap> right, String rightCol, JoinType type,
-			String finallyJoinName, Set<String> leftSet, Set<String> rightSet, String taskId) {
+	public SparkJoinInput(SparkInput<Rmap> left, String leftCol, SparkInput<Rmap> right, String rightCol, SparkJoinType type,
+			String finallyJoinName, String taskId) throws IOException {
 		super(left.spark, left.targetUri, Maps.of("leftInput", left, "rightInput", right, "leftCol", leftCol, "rightCol", rightCol, "type",
-				type, "as", finallyJoinName, "leftSet", leftSet, "rightSet", rightSet, "taskId", taskId));
+				type, "as", finallyJoinName, taskId));
 		this.left = left;
 		this.joinCol = leftCol;
 		this.right = right;
-//		this.rightCol = rightCol;
-//		this.type = type;
+		// this.rightCol = rightCol;
+		// this.type = type;
 	}
 
 	@Override
@@ -94,13 +60,13 @@ public final class SparkJoinInput extends SparkRowInput {
 		Dataset<Row> right = rows.get(0)._2;
 		// String rightTable = rows.get(0)._1;
 
-		JoinType t = (JoinType) ctx.get("type");
+		SparkJoinType t = (SparkJoinType) ctx.get("type");
 		Dataset<Row> ds = t.join(left, (String) ctx.get("leftCol"), right, (String) ctx.get("rightCol"));
 		String as = (String) ctx.get("as");
 		if (null != as) ds = ds.withColumn("TASKID", lit((String) ctx.get("taskId")));
 		// ds = filterCols(ds, leftTable, left, rightTable, right);
 
-		logger().info("Join [" + t + "]: \n<left:>" + left.schema().treeString() + //
+		logger().info("Join [" + t + "]: \n\t<left:>" + left.schema().treeString() + //
 				"\t<right:>" + right.schema().treeString() + //
 				"\t<result:>" + ds.schema().treeString());
 		// logger().debug("Dataset joined, checkpoint will be set.");

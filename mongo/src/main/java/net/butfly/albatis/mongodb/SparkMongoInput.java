@@ -1,13 +1,12 @@
 package net.butfly.albatis.mongodb;
 
-import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
-import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_NAME;
 import static net.butfly.albatis.spark.impl.Sparks.split;
-import static org.apache.spark.sql.functions.lit;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import net.butfly.albatis.ddl.FieldDesc;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -15,7 +14,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
-import net.butfly.albatis.ddl.TableDesc;
 import com.mongodb.spark.MongoSpark;
 import com.mongodb.spark.config.ReadConfig;
 import com.mongodb.spark.rdd.api.java.JavaMongoRDD;
@@ -25,11 +23,11 @@ import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albatis.Albatis;
+import net.butfly.albatis.ddl.FieldDesc;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkConf;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
-import scala.Array;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
@@ -39,7 +37,7 @@ import scala.collection.Seq;
 public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	private static final long serialVersionUID = 2110132305482403155L;
 
-	public SparkMongoInput(SparkSession spark, URISpec targetUri, TableDesc... table) {
+	public SparkMongoInput(SparkSession spark, URISpec targetUri, TableDesc... table) throws IOException {
 		super(spark, targetUri, null, table);
 	}
 
@@ -61,7 +59,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 			FieldDesc[] fields = item.fields();
 
 			List<String> fieldList = new ArrayList<>();
-			for (FieldDesc desc : fields){
+			for (FieldDesc desc : fields) {
 				String name = desc.name;
 				fieldList.add(name);
 			}
@@ -75,11 +73,11 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 
 			Dataset<Row> ds = rdd.toDF();
 
-			fieldList.forEach( f -> columnList.add(ds.col(f)));
+			fieldList.forEach(f -> columnList.add(ds.col(f)));
 
 			Dataset<Row> resultDS = ds.select(convertListToSeq(columnList));
-//			d = d.withColumn(FIELD_TABLE_NAME, lit(t.name)).withColumn(FIELD_KEY_VALUE, d.col("_id.oid")).withColumn("_id", d.col(
-//					"_id.oid"));
+			// d = d.withColumn(FIELD_TABLE_NAME, lit(t.name)).withColumn(FIELD_KEY_VALUE, d.col("_id.oid")).withColumn("_id", d.col(
+			// "_id.oid"));
 			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
 		});
 		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);
@@ -89,9 +87,6 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 	public Seq<Column> convertListToSeq(List<Column> inputList) {
 		return JavaConverters.asScalaIteratorConverter(inputList.iterator()).asScala().toSeq();
 	}
-
-
-
 
 	static <E> List<E> flat(Iterable<List<E>> l) {
 		List<E> ll = Colls.list();

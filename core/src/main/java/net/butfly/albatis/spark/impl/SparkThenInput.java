@@ -1,5 +1,6 @@
 package net.butfly.albatis.spark.impl;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,7 @@ public final class SparkThenInput extends SparkInput<Rmap> implements Wrapper<Sp
 	private static final long serialVersionUID = 5957738224117308018L;
 	private final SparkInput<?> base;
 
-	public SparkThenInput(SparkInput<?> s, List<Tuple2<String, Dataset<Rmap>>> ds) {
+	public SparkThenInput(SparkInput<?> s, List<Tuple2<String, Dataset<Rmap>>> ds) throws IOException {
 		super(s.spark, s.targetUri, Maps.of());
 		this.base = s;
 		ds.forEach(t -> vals(t._1, t._2));
