@@ -28,7 +28,7 @@ public final class SparkJoinInput extends SparkRowInput {
 	public SparkJoinInput(SparkInput<Rmap> left, String leftCol, SparkInput<Rmap> right, String rightCol, SparkJoinType type,
 			String finallyJoinName, String taskId) throws IOException {
 		super(left.spark, left.targetUri, Maps.of("leftInput", left, "rightInput", right, "leftCol", leftCol, "rightCol", rightCol, "type",
-				type, "as", finallyJoinName, taskId));
+				type, "as", finallyJoinName, "taskId", taskId));
 		this.left = left;
 		this.joinCol = leftCol;
 		this.right = right;
