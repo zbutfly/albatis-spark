@@ -4,8 +4,10 @@ import static net.butfly.albacore.utils.collection.Colls.list;
 import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
 import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
+import static org.apache.spark.sql.functions.lit;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ import net.butfly.albacore.io.lambda.Predicate;
 import net.butfly.albacore.paral.Sdream;
 import net.butfly.albacore.utils.Configs;
 import net.butfly.albacore.utils.Systems;
+import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albatis.Albatis;
 import net.butfly.albatis.ddl.Desc;
@@ -245,5 +248,37 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 					+ "\", if presented and positive.");
 		}
 		return ds;
+	}
+
+	public SparkInput<V> with(String colname, Object value) {
+		List<Tuple2<String, Dataset<Row>>> originrows = new ArrayList<>(rows());
+		rows.clear();
+		vals.clear();
+		originrows.forEach(t -> rows.add(new Tuple2<>(t._1, t._2.withColumn(colname, lit(value)))));
+		originrows.clear();
+		return this;
+	}
+
+	public SparkInput<V> alias(String dsttbl) {
+		List<Tuple2<String, Dataset<Row>>> originrows = new ArrayList<>(rows());
+		rows.clear();
+		vals.clear();
+		originrows.forEach(t -> rows.add(new Tuple2<>(dsttbl, t._2)));
+		originrows.clear();
+		return this;
+	}
+
+	public String infoPlan() {
+		List<String> plans = Colls.list(rows(), t -> t._2.logicalPlan().prettyJson());
+		return String.join("\n", plans);
+	}
+
+	public String infoSchema() {
+		List<String> schemas = Colls.list(rows(), t -> t._1 + ":" + t._2.schema().treeString());
+		return String.join("\n", schemas);
+	}
+
+	public void infoData() {
+		rows.forEach(t -> t._2.show(true));
 	}
 }

@@ -1,7 +1,5 @@
 package net.butfly.albatis.spark;
 
-import static org.apache.spark.sql.functions.lit;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +20,12 @@ public final class SparkJoinInput extends SparkRowInput {
 	public final String joinCol; // col to upper joining, not the finished join
 	private final SparkInput<Rmap> left;
 	private final SparkInput<Rmap> right;
-	// private final String rightCol;
-	// private final JoinType type;
 
-	public SparkJoinInput(SparkInput<Rmap> left, String leftCol, SparkInput<Rmap> right, String rightCol, SparkJoinType type,
-			String finallyJoinName, String taskId) throws IOException {
-		super(left.spark, left.targetUri, Maps.of("leftInput", left, "rightInput", right, "leftCol", leftCol, "rightCol", rightCol, "type",
-				type, "as", finallyJoinName, "taskId", taskId));
+	public SparkJoinInput(SparkInput<Rmap> left, String lcol, SparkInput<Rmap> right, String rcol, SparkJoinType type) throws IOException {
+		super(left.spark, left.targetUri, Maps.of("left", left, "right", right, "lcol", lcol, "rcol", rcol, "type", type));
 		this.left = left;
-		this.joinCol = leftCol;
+		this.joinCol = lcol;
 		this.right = right;
-		// this.rightCol = rightCol;
-		// this.type = type;
 	}
 
 	@Override
@@ -47,33 +39,24 @@ public final class SparkJoinInput extends SparkRowInput {
 	@Override
 	public List<Tuple2<String, Dataset<Row>>> load(Object context) {
 		Map<String, Object> ctx = (Map<String, Object>) context;
-		List<Tuple2<String, Dataset<Row>>> rows;
 
-		rows = ((SparkInput<Rmap>) ctx.get("leftInput")).rows;
+		List<Tuple2<String, Dataset<Row>>> rows;
+		rows = ((SparkInput<Rmap>) ctx.get("left")).rows;
 		if (rows.size() > 1) //
 			logger().warn("Input with multiple datasets not support, only first joined and other is ignored.\n\t" + rows);
 		Dataset<Row> left = rows.get(0)._2;
-		// String leftTable = rows.get(0)._1;
-		rows = ((SparkInput<Rmap>) ctx.get("rightInput")).rows;
+		rows = ((SparkInput<Rmap>) ctx.get("right")).rows;
 		if (rows.size() > 1) //
 			logger().warn("Input with multiple datasets not support, only first joined and other is ignored.\n\t" + rows);
 		Dataset<Row> right = rows.get(0)._2;
-		// String rightTable = rows.get(0)._1;
 
 		SparkJoinType t = (SparkJoinType) ctx.get("type");
-		Dataset<Row> ds = t.join(left, (String) ctx.get("leftCol"), right, (String) ctx.get("rightCol"));
-		String as = (String) ctx.get("as");
-		if (null != as) ds = ds.withColumn("TASKID", lit((String) ctx.get("taskId")));
-		// ds = filterCols(ds, leftTable, left, rightTable, right);
-
+		Dataset<Row> ds = t.join(left, (String) ctx.get("lcol"), right, (String) ctx.get("rcol"));
 		logger().info("Join [" + t + "]: \n\t<left:>" + left.schema().treeString() + //
 				"\t<right:>" + right.schema().treeString() + //
 				"\t<result:>" + ds.schema().treeString());
-		// logger().debug("Dataset joined, checkpoint will be set.");
-		// ds = ds.cache().checkpoint();
 		logger().debug("Dataset loaded.");
-
-		return Colls.list(new Tuple2<>(as, ds));
+		return Colls.list(new Tuple2<>(null, ds));
 	}
 
 	@Deprecated

@@ -30,7 +30,7 @@ public class SparkESInput extends SparkRowInput {
 	public Map<String, String> options() {
 		Map<String, String> options = Maps.of();
 		options.put("cluster.name", targetUri.getUsername());
-		options.put("es.nodes", targetUri.getHostWithSecondaryPort(2));
+		options.put("es.nodes", targetUri.getHostWithSecondaryPort(1));
 		return options;
 	}
 
