@@ -5,6 +5,7 @@ import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 
 import java.util.Map;
 
+import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -35,6 +36,6 @@ class WriteHandlerFrame extends WriteHandlerBase<WriteHandlerFrame> {
 	public void save(String table, Output<Rmap> output) {
 		if (output instanceof SparkOutput) output.enqueue(DSdream.of(table, purge(ds)));
 		// else should not be touch
-		else purge(ds).foreachPartition(it -> output.enqueue(Sdream.of(it).map(Schemas::row2rmap))/* TODO: split */);
+		else purge(ds).foreachPartition((ForeachPartitionFunction<Row>) it -> output.enqueue(Sdream.of(it).map(Schemas::row2rmap))/* TODO: split */);
 	}
 }

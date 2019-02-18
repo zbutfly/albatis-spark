@@ -21,8 +21,8 @@ public final class SparkJoinInput extends SparkRowInput {
 	private final SparkInput<Rmap> left;
 	private final SparkInput<Rmap> right;
 
-	public SparkJoinInput(SparkInput<Rmap> left, String lcol, SparkInput<Rmap> right, String rcol, SparkJoinType type) throws IOException {
-		super(left.spark, left.targetUri, Maps.of("left", left, "right", right, "lcol", lcol, "rcol", rcol, "type", type));
+	public SparkJoinInput(SparkInput<Rmap> left, String lcol, SparkInput<Rmap> right, String rcol, SparkJoinType type, String as) throws IOException {
+		super(left.spark, left.targetUri, Maps.of("left", left, "right", right, "lcol", lcol, "rcol", rcol, "type", type,"targetTable",as));
 		this.left = left;
 		this.joinCol = lcol;
 		this.right = right;
@@ -56,7 +56,7 @@ public final class SparkJoinInput extends SparkRowInput {
 				"\t<right:>" + right.schema().treeString() + //
 				"\t<result:>" + ds.schema().treeString());
 		logger().debug("Dataset loaded.");
-		return Colls.list(new Tuple2<>(null, ds));
+		return Colls.list(new Tuple2<>((String) ctx.get("targetTable"), ds));
 	}
 
 	@Deprecated
