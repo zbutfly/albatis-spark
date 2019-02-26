@@ -14,6 +14,7 @@
 			<artifactId>albatis-spark-io-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>com.lucidworks.spark</groupId>
 			<artifactId>spark-solr</artifactId>
@@ -39,5 +40,19 @@
 			<artifactId>janino</artifactId>
 			<version>3.0.8</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.hzcominfo.dataggr.uniquery</groupId>
+			<artifactId>uniquery-solr</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.solr</groupId>
+			<artifactId>solr-solrj</artifactId>
+			<version>7.6.0</version>
+			<scope>compile</scope>
+		</dependency>
+
+
 	</dependencies>
 </project>

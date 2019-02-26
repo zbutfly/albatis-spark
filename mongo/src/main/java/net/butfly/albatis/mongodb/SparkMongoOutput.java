@@ -8,6 +8,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.ForeachPartitionFunction;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
 
@@ -65,7 +67,7 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
 		if (s instanceof DSdream) //
-			((DSdream) s).ds.foreachPartition(rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap)));
+			((DSdream) s).ds.foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap)));
 		else {
 			Map<String, BlockingQueue<Rmap>> m = Maps.ofQ(s, Rmap::table);
 			for (String t : m.keySet())

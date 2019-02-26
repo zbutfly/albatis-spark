@@ -1,23 +1,5 @@
 package net.butfly.albatis.spark;
 
-import static net.butfly.albacore.utils.collection.Colls.list;
-import static net.butfly.albatis.spark.impl.Schemas.ENC_RMAP;
-import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
-import static net.butfly.albatis.spark.impl.Schemas.row2rmap;
-import static org.apache.spark.sql.functions.lit;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.StructField;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.io.lambda.Consumer;
 import net.butfly.albacore.io.lambda.Function;
@@ -37,7 +19,22 @@ import net.butfly.albatis.io.Rmap;
 import net.butfly.albatis.io.pump.Pump;
 import net.butfly.albatis.spark.impl.SparkIO;
 import net.butfly.albatis.spark.impl.SparkThenInput;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.StructField;
 import scala.Tuple2;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static net.butfly.albacore.utils.collection.Colls.list;
+import static net.butfly.albatis.spark.impl.Schemas.*;
+import static org.apache.spark.sql.functions.lit;
 
 public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	private static final long serialVersionUID = 6966901980613011951L;

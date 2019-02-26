@@ -1,5 +1,7 @@
 package net.butfly.albatis.mongodb;
 
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_KEY_VALUE;
+import static net.butfly.albatis.spark.impl.SchemaExtraField.FIELD_TABLE_NAME;
 import static net.butfly.albatis.spark.impl.Sparks.split;
 
 import java.io.IOException;
@@ -17,6 +19,7 @@ import org.bson.Document;
 import com.mongodb.spark.MongoSpark;
 import com.mongodb.spark.config.ReadConfig;
 import com.mongodb.spark.rdd.api.java.JavaMongoRDD;
+import static org.apache.spark.sql.functions.lit;
 
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.Configs;
@@ -54,13 +57,15 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 		List<List<Tuple2<String, Dataset<Row>>>> resultList = Colls.list(schemaAll().values(), item -> {
 			Map<String, String> opts = options();
 			opts.put("collection", item.name);
+
 			ReadConfig rc = ReadConfig.create(opts);
 
 			FieldDesc[] fields = item.fields();
 
 			List<String> fieldList = new ArrayList<>();
+
 			for (FieldDesc desc : fields) {
-				String name = desc.name;
+				String name = desc.attr("asfrom");
 				fieldList.add(name);
 			}
 
@@ -69,16 +74,16 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 				int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1")) / rdd.getNumPartitions() + 1;
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
-			List<Column> columnList = new ArrayList<>();
 
 			Dataset<Row> ds = rdd.toDF();
 
-			fieldList.forEach(f -> columnList.add(ds.col(f)));
+			String table_queryparam = (String) item.attr("TABLE_QUERYPARAM");
 
-			Dataset<Row> resultDS = ds.select(convertListToSeq(columnList));
-			// d = d.withColumn(FIELD_TABLE_NAME, lit(t.name)).withColumn(FIELD_KEY_VALUE, d.col("_id.oid")).withColumn("_id", d.col(
-			// "_id.oid"));
-			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
+			Dataset<Row> resultDS = ds.where(table_queryparam);
+
+			ds = ds.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col(
+			 "_id.oid"));
+			return Colls.list(split(ds, false), ds1 -> new Tuple2<>(item.name, ds1));
 		});
 		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);
 		return flat;

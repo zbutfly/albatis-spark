@@ -105,5 +105,11 @@
 			<artifactId>elasticsearch-spark-20_${version.scala.main}</artifactId>
 			<version>${version.elastic}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.hzcominfo.dataggr.uniquery</groupId>
+			<artifactId>uniquery-es</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>

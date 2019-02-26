@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hzcominfo.dataggr.uniquery.Client;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -16,6 +19,8 @@ import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import scala.Tuple2;
+
+
 
 @Schema("solr")
 public class SparkSolrInput extends SparkRowInput {
@@ -43,9 +48,32 @@ public class SparkSolrInput extends SparkRowInput {
 		return Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
 			options.put("collection", t.name);
+			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
+
+			Client client = null;
+			try {
+				client = new Client(new SolrConnection(targetUri));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			SolrQuery solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", "");
+			String solrStr = solr.get("json");
+			ObjectMapper objectMapper = new ObjectMapper();
+			String queryCondition = null;
+			try {
+				Map<String,String> map = objectMapper.readValue(solrStr, Map.class);
+				queryCondition = map.get("query");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			options.put("query", queryCondition);
+
 			if (t.fields().length > 0) options.put("fields", String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from solr as: " + options);
+
 			Dataset<Row> ds = spark.read().format("solr").options(options).load();
+
 			logger().trace(() -> "Loaded from solr, schema: " + ds.schema().treeString());
 			return new Tuple2<>(t.name, ds);
 		});

@@ -4,9 +4,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.hzcominfo.dataggr.uniquery.Client;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 
 import net.butfly.albacore.io.URISpec;
@@ -16,6 +20,7 @@ import net.butfly.albatis.ddl.Desc;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
+import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL$;
 import scala.Tuple2;
 
 @Schema("es")
@@ -41,18 +46,47 @@ public class SparkESInput extends SparkRowInput {
 
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
+//		uniquery bug
+		System.setProperty("es.set.netty.runtime.available.processors", "false");
+
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
+
+			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
+
 			Map<String, String> options = options();
+
+			Client client = null;
+			try {
+				client = new Client(new ElasticConnection(targetUri));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			String indexType = targetUri.getFile() +"."+ t.dbname;
+
+			Object queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", "");
+
+			String jsonStr = queryCondition.toString();
+
+//			options.put("es.query", "?q="+table_queryparam+"");
+
+			options.put("es.query", jsonStr);
+
 			options.put("es.resource", indexAndType(t.name));
+
 			if (t.fields().length > 0) options.put("es.read.field.include", //
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
-			Dataset<Row> ds = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
-			logger().trace(() -> "Loaded from elasticsearch, schema: " + ds.schema().treeString());
-			return Colls.list(new Tuple2<>(t.name, ds));
+			Dataset<Row> reaultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
+			logger().trace(() -> "Loaded from elasticsearch, schema: " + reaultDS.schema().treeString());
+			return Colls.list(new Tuple2<>(t.name, reaultDS));
 		});
 		return Colls.flat(list);
 	}
+
+
+
+
+
 
 	private String indexAndType(String tableName) {
 		String indexAndType;

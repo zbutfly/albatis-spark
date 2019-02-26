@@ -59,9 +59,11 @@ public class SparkKuduInput extends SparkRowInput {
 		opts.put("kudu.table", table().name);
 		StructType schema = build(client, table);
 		logger().debug("Loading from kudu as : " + opts + "\n\tschema: " + schema.toString());
-		Dataset<Row> ds = spark.read().format(format()).schema(schema).options(opts).load();
-		logger().trace(() -> "Loaded from kudu, schema: " + ds.schema().treeString());
-		return ds;
+		Dataset<Row> cutedDS = spark.read().format(format()).schema(schema).options(opts).load();
+		String condition = (String) table().attr("TABLE_QUERYPARAM");
+		Dataset<Row> resultDs = cutedDS.where(condition);
+		logger().trace(() -> "Loaded from kudu, schema: " + resultDs.schema().treeString());
+		return resultDs;
 	}
 
 	private StructType build(KuduClient client, String table) throws KuduException {
