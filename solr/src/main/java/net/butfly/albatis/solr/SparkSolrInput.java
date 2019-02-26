@@ -51,21 +51,19 @@ public class SparkSolrInput extends SparkRowInput {
 			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
 
 			Client client = null;
-			try {
-				client = new Client(new SolrConnection(targetUri));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			SolrQuery solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", "");
-			String solrStr = solr.get("json");
+			SolrQuery solr = null;
 			ObjectMapper objectMapper = new ObjectMapper();
 			String queryCondition = null;
 			try {
+				client = new Client(new SolrConnection(targetUri));
+				solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", "");
+				String solrStr = solr.get("json");
 				Map<String,String> map = objectMapper.readValue(solrStr, Map.class);
 				queryCondition = map.get("query");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
 
 			options.put("query", queryCondition);
 

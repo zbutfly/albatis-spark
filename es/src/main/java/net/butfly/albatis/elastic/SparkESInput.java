@@ -56,23 +56,17 @@ public class SparkESInput extends SparkRowInput {
 			Map<String, String> options = options();
 
 			Client client = null;
+			Object queryCondition = null;
 			try {
 				client = new Client(new ElasticConnection(targetUri));
+				String indexType = targetUri.getFile() +"."+ t.dbname;
+				queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", "");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			String indexType = targetUri.getFile() +"."+ t.dbname;
 
-			Object queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", "");
-
-			String jsonStr = queryCondition.toString();
-
-//			options.put("es.query", "?q="+table_queryparam+"");
-
-			options.put("es.query", jsonStr);
-
+			options.put("es.query", String.valueOf(queryCondition));
 			options.put("es.resource", indexAndType(t.name));
-
 			if (t.fields().length > 0) options.put("es.read.field.include", //
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
