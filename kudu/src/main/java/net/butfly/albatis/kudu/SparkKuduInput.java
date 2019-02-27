@@ -61,8 +61,13 @@ public class SparkKuduInput extends SparkRowInput {
 		logger().debug("Loading from kudu as : " + opts + "\n\tschema: " + schema.toString());
 		Dataset<Row> cutedDS = spark.read().format(format()).schema(schema).options(opts).load();
 		String condition = (String) table().attr("TABLE_QUERYPARAM");
-		Dataset<Row> resultDs = cutedDS.where(condition);
-		logger().trace(() -> "Loaded from kudu, schema: " + resultDs.schema().treeString());
+        Dataset<Row> resultDs = null;
+		if (!condition.isEmpty()){
+            resultDs = cutedDS.where(condition);
+        }else{
+		    resultDs = cutedDS;
+        }
+		logger().trace(() -> "Loaded from kudu, schema: " + cutedDS.schema().treeString());
 		return resultDs;
 	}
 

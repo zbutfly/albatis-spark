@@ -79,11 +79,15 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 
 			String table_queryparam = (String) item.attr("TABLE_QUERYPARAM");
 
-			Dataset<Row> resultDS = ds.where(table_queryparam);
-
-			ds = ds.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col(
+			Dataset<Row> resultDS =null;
+			if (! table_queryparam.isEmpty()){
+				resultDS = ds.where(table_queryparam);
+			}else{
+				resultDS = ds;
+			}
+			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col(
 			 "_id.oid"));
-			return Colls.list(split(ds, false), ds1 -> new Tuple2<>(item.name, ds1));
+			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
 		});
 		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);
 		return flat;

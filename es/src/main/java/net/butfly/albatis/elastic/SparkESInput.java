@@ -50,22 +50,22 @@ public class SparkESInput extends SparkRowInput {
 		System.setProperty("es.set.netty.runtime.available.processors", "false");
 
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
-
-			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
-
 			Map<String, String> options = options();
 
-			Client client = null;
-			Object queryCondition = null;
-			try {
-				client = new Client(new ElasticConnection(targetUri));
-				String indexType = targetUri.getFile() +"."+ t.dbname;
-				queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", "");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 
-			options.put("es.query", String.valueOf(queryCondition));
+			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
+			if (!conditionExpr.isEmpty()){
+				Client client = null;
+				Object queryCondition = null;
+				try {
+					client = new Client(new ElasticConnection(targetUri));
+					String indexType = targetUri.getFile() +"."+ t.dbname;
+					queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", "");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				options.put("es.query", String.valueOf(queryCondition));
+			}
 			options.put("es.resource", indexAndType(t.name));
 			if (t.fields().length > 0) options.put("es.read.field.include", //
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));

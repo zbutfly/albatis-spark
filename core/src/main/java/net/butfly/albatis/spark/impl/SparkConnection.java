@@ -46,6 +46,7 @@ public class SparkConnection implements EnvironmentConnection {
 	}
 
 	public SparkConnection(URISpec uriSpec) {
+//		TODO juJudge livy
 		this.uriSpec = uriSpec;
 		sparkConf = new SparkConf();
 	}

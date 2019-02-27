@@ -48,24 +48,25 @@ public class SparkSolrInput extends SparkRowInput {
 		return Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
 			options.put("collection", t.name);
-			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
 
-			Client client = null;
-			SolrQuery solr = null;
-			ObjectMapper objectMapper = new ObjectMapper();
-			String queryCondition = null;
-			try {
-				client = new Client(new SolrConnection(targetUri));
-				solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", "");
-				String solrStr = solr.get("json");
-				Map<String,String> map = objectMapper.readValue(solrStr, Map.class);
-				queryCondition = map.get("query");
-			} catch (IOException e) {
-				e.printStackTrace();
+			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
+			if (!conditionExpr.isEmpty()){
+				Client client = null;
+				SolrQuery solr = null;
+				ObjectMapper objectMapper = new ObjectMapper();
+				String queryCondition = null;
+				try {
+					client = new Client(new SolrConnection(targetUri));
+					solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", "");
+					String solrStr = solr.get("json");
+					Map<String,String> map = objectMapper.readValue(solrStr, Map.class);
+					queryCondition = map.get("query");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				options.put("query", queryCondition);
 			}
 
-
-			options.put("query", queryCondition);
 
 			if (t.fields().length > 0) options.put("fields", String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from solr as: " + options);
