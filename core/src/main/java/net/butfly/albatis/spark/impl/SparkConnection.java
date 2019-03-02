@@ -1,10 +1,14 @@
 package net.butfly.albatis.spark.impl;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
@@ -31,6 +35,8 @@ import net.butfly.albatis.io.Rmap;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
+import org.apache.livy.*;
+
 @SparkIO.Schema({ "mongodb:basic", "file:basic" })
 public class SparkConnection implements EnvironmentConnection {
 	private static final long serialVersionUID = 5093686615279489589L;
@@ -45,10 +51,27 @@ public class SparkConnection implements EnvironmentConnection {
 		this(null);
 	}
 
-	public SparkConnection(URISpec uriSpec) {
-//		TODO juJudge livy
+	public SparkConnection(URISpec uriSpec)  {
 		this.uriSpec = uriSpec;
 		sparkConf = new SparkConf();
+//		TODO juJudge livy
+        if (!uriSpec.equals(new URISpec("spark://")) )
+        {
+			try {
+                Map<String, String> map = new HashMap<>();
+                map.put("kind", "spark");   //sql
+                map.put("name", "0302test");
+                LivyClientBuilder builder = new LivyClientBuilder();
+                builder.setAll(map);
+                builder.setConf("spark.cores.max", "4");
+                builder.setURI(new URI("http://172.30.10.31:8998"));
+                LivyClient client = builder.build();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public SparkSession spark() {
@@ -200,7 +223,7 @@ public class SparkConnection implements EnvironmentConnection {
 		}
 
 		@Override
-		public SparkConnection connect(URISpec uriSpec) throws IOException {
+		public SparkConnection connect(URISpec uriSpec) {
 			return new SparkConnection(uriSpec);
 		}
 

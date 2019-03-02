@@ -51,8 +51,6 @@ public class SparkESInput extends SparkRowInput {
 
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
-
-
 			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
 			if (!conditionExpr.isEmpty()){
 				Client client = null;
@@ -76,11 +74,6 @@ public class SparkESInput extends SparkRowInput {
 		});
 		return Colls.flat(list);
 	}
-
-
-
-
-
 
 	private String indexAndType(String tableName) {
 		String indexAndType;
