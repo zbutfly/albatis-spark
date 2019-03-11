@@ -55,23 +55,6 @@ public class SparkConnection implements EnvironmentConnection {
 		this.uriSpec = uriSpec;
 		sparkConf = new SparkConf();
 //		TODO juJudge livy
-        if (!uriSpec.equals(new URISpec("spark://")) )
-        {
-			try {
-                Map<String, String> map = new HashMap<>();
-                map.put("kind", "spark");   //sql
-                map.put("name", "0302test");
-                LivyClientBuilder builder = new LivyClientBuilder();
-                builder.setAll(map);
-                builder.setConf("spark.cores.max", "4");
-                builder.setURI(new URI("http://172.30.10.31:8998"));
-                LivyClient client = builder.build();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 
 	public SparkSession spark() {

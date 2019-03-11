@@ -36,22 +36,6 @@ public class SparkPump extends Namedly implements Pump<Rmap>, Serializable {
 		Pump.super.open();
 		(input.rows.isEmpty() ? output.compute(input.vals) : input.rows).forEach(t -> output.save(t._1, t._2));
 		close();
-
-		Map<String,String> map = Maps.of();
-		map.put("kind", "spark");
-		map.put("name", "0301test");
-		try {
-			LivyClientBuilder builder = new LivyClientBuilder();
-			builder.setAll(map);
-			builder.setConf("spark.cores.max", "4");
-			builder.setURI(new URI("http://172.30.10.31:8998/sessions/"));
-			LivyClient client  = builder.build();
-//			client.submit()
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
