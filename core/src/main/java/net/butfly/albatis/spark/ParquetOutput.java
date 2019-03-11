@@ -19,7 +19,7 @@ public class ParquetOutput extends SparkSaveOutput {
 	public ParquetOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 		if (table.length != 1) throw new IllegalArgumentException("ParquetOutput need one table, can be =Expression");
-		String[] schemas = targetUri.getScheme().split(":");
+		String[] schemas = targetUri.getSchemas();
 		if (schemas.length > 2) format = schemas[2];
 		else format = "parquet";
 

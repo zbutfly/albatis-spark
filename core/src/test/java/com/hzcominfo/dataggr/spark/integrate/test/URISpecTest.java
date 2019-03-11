@@ -17,7 +17,7 @@ public class URISpecTest {
 		} else {
 			db = path[0];
 			tbl = file;
-			uri = u.getScheme() + "://" +u.getAuthority() + "/" +db;
+			uri = u.getSchema() + "://" +u.getAuthority() + "/" +db;
 		}
 		System.out.println("db: " + db);
 		System.out.println("tbl: " + tbl);

@@ -1,14 +1,10 @@
 package net.butfly.albatis.spark.impl;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
@@ -35,8 +31,6 @@ import net.butfly.albatis.io.Rmap;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
-import org.apache.livy.*;
-
 @SparkIO.Schema({ "mongodb:basic", "file:basic" })
 public class SparkConnection implements EnvironmentConnection {
 	private static final long serialVersionUID = 5093686615279489589L;
@@ -51,7 +45,7 @@ public class SparkConnection implements EnvironmentConnection {
 		this(null);
 	}
 
-	public SparkConnection(URISpec uriSpec)  {
+	public SparkConnection(URISpec uriSpec) {
 		this.uriSpec = uriSpec;
 		sparkConf = new SparkConf();
 //		TODO juJudge livy

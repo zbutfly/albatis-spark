@@ -24,7 +24,7 @@ public class ParquetSaveOutput extends SparkSinkSaveOutput {
 
 	public ParquetSaveOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
-		String[] schemas = targetUri.getScheme().split(":");
+		String[] schemas = targetUri.getSchemas();
 		if (schemas.length > 1) format = schemas[1];
 		else format = "parquet";
 		root = path();

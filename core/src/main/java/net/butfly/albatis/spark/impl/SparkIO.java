@@ -42,7 +42,7 @@ public abstract class SparkIO implements IO, Serializable {
 	}
 
 	public static <V, O extends Output<V>> O output(SparkSession spark, URISpec uri, TableDesc... table) {
-		String s = uri.getScheme();
+		String s = uri.getSchema();
 		while (!s.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<O> cls = (Class<O>) ADAPTERS.get(Output.class).get(s);
@@ -61,7 +61,7 @@ public abstract class SparkIO implements IO, Serializable {
 	}
 
 	public static <V, I extends SparkInput<Rmap>> I input(SparkSession spark, URISpec uri, TableDesc... table) {
-		String scheme = uri.getScheme();
+		String scheme = uri.getSchema();
 		while (!scheme.isEmpty()) {
 			@SuppressWarnings("unchecked")
 			Class<I> cls = (Class<I>) ADAPTERS.get(Input.class).get(scheme);
