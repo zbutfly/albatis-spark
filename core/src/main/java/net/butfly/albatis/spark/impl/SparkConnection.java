@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ForkJoinPool;
 
+import net.butfly.albatis.Connection;
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.SparkListener;
 import org.apache.spark.scheduler.SparkListenerJobStart;
@@ -16,23 +17,21 @@ import org.apache.spark.scheduler.SparkListenerTaskStart;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.IOs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
-import net.butfly.albatis.EnvironmentConnection;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
+import net.butfly.albatis.Environment;
 
-@SparkIO.Schema({ "mongodb:basic", "file:basic" })
-public class SparkConnection implements EnvironmentConnection {
+public class SparkConnection implements Environment, Connection {
 	private static final long serialVersionUID = 5093686615279489589L;
 	private static final Logger logger = Logger.getLogger(SparkConnection.class);
 	private final static String DEFAULT_HOST = "local[*]";
@@ -61,7 +60,7 @@ public class SparkConnection implements EnvironmentConnection {
 			String name = Systems.getMainClass().getSimpleName();
 
 			sparkConf.registerKryoClasses(new Class[] { Rmap.class });
-			logger().info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
+			logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
 			spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
 			spark.sparkContext().setCheckpointDir("checkpoint");// TODO
 			paramHadoop().forEach(spark.sparkContext().hadoopConfiguration()::set);
@@ -121,13 +120,11 @@ public class SparkConnection implements EnvironmentConnection {
 		}
 	}
 
-	@Override
 	public <V, O extends Output<V>> O output(URISpec uri, TableDesc... table) {
 		return SparkIO.output(spark(), uri, table);
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override
 	public <V, I extends Input<V>> I input(URISpec uri, TableDesc... table) {
 		return (I) SparkIO.input(spark(), uri, table);
 	}
@@ -196,7 +193,7 @@ public class SparkConnection implements EnvironmentConnection {
 
 	public static class Driver implements net.butfly.albatis.Connection.Driver<SparkConnection> {
 		static {
-			DriverManager.register(new Driver());
+			Connection.DriverManager.register(new Driver());
 		}
 
 		@Override
