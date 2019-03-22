@@ -31,7 +31,7 @@ import scala.collection.JavaConverters;
 import scala.collection.Seq;
 import net.butfly.albatis.Environment;
 
-public class SparkConnection implements Environment, Connection {
+public class SparkConnection implements Environment {
 	private static final long serialVersionUID = 5093686615279489589L;
 	private static final Logger logger = Logger.getLogger(SparkConnection.class);
 	private final static String DEFAULT_HOST = "local[*]";
@@ -45,9 +45,8 @@ public class SparkConnection implements Environment, Connection {
 	}
 
 	public SparkConnection(URISpec uriSpec) {
-		this.uriSpec = uriSpec;
+   		this.uriSpec = uriSpec;
 		sparkConf = new SparkConf();
-//		TODO juJudge livy
 	}
 
 	public SparkSession spark() {
@@ -62,7 +61,6 @@ public class SparkConnection implements Environment, Connection {
 			sparkConf.registerKryoClasses(new Class[] { Rmap.class });
 			logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
 			spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
-			spark.sparkContext().setCheckpointDir("checkpoint");// TODO
 			paramHadoop().forEach(spark.sparkContext().hadoopConfiguration()::set);
 		}
 		return spark;
@@ -128,6 +126,7 @@ public class SparkConnection implements Environment, Connection {
 	public <V, I extends Input<V>> I input(URISpec uri, TableDesc... table) {
 		return (I) SparkIO.input(spark(), uri, table);
 	}
+
 
 	@Override
 	public String defaultSchema() {

@@ -11,6 +11,7 @@ abstract class WriteHandlerBase<T extends WriteHandlerBase<T>> implements WriteH
 	}
 
 	protected String checkpoint() {
+//		TODO if yarn mode,should use hdfs path.eg: hdfs://nameservice1/tmp/xxx
 		return "/tmp/" + ds.sparkSession().sparkContext().appName();
 	}
 }
