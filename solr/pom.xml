@@ -28,6 +28,18 @@
 					<groupId>org.apache.logging.log4j</groupId>
 					<artifactId>log4j-slf4j-impl</artifactId>
 				</exclusion>
+				<exclusion>
+					<artifactId>calcite-core</artifactId>
+					<groupId>org.apache.calcite</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>calcite-linq4j</artifactId>
+					<groupId>org.apache.calcite</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>gson</artifactId>
+					<groupId>com.google.code.gson</groupId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -52,7 +64,5 @@
 			<version>7.6.0</version>
 			<scope>compile</scope>
 		</dependency>
-
-
 	</dependencies>
 </project>
