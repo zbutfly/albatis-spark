@@ -56,7 +56,6 @@ public abstract class SparkOutput<V> extends SparkIO implements Output<V> {
 	public <V0> Output<V0> prior(Function<V0, V> conv) {
 		return new SparkOutput<V0>(spark, targetUri, tables()) {
 			private static final long serialVersionUID = -1680036215116179632L;
-
 			@Override
 			public void save(String table, Dataset<Row> ds0) {
 				@SuppressWarnings("unchecked")

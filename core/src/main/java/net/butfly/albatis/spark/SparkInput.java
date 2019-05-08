@@ -234,7 +234,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	}
 
 	private <T> Dataset<T> limit(Dataset<T> ds) {
-		if (null != ds && Systems.isDebug()) {
+		if (null != ds && Systems.isDebug()) { //TODO should cluster make limit
 			int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1"));
 			if (limit > 0) {
 				ds = ds.limit(limit);
@@ -245,6 +245,21 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 					+ "\", if presented and positive.");
 		}
 		return ds;
+	}
+
+    // give SparkInput,return Limited it
+	public SparkInput limitResult(int outMax){
+		List<Tuple2<String, Dataset<Row>>> originalList = this.rows();
+		if (originalList.size() == 1){
+			Dataset<Row> rowDataset = originalList.get(0)._2; //TODO  foreach it,list might has more ds
+			Dataset<Row> limitedDS = rowDataset.limit(outMax);
+			String tableName = this.rows.get(0)._1; //TODO to foreach
+			this.rows.clear(); //should clear old rows;
+			this.rows(tableName,limitedDS); //TODO should has add more ds method; give it list
+			return this;
+		}else{
+			throw new IllegalArgumentException("limitResult only support one ds one sparkInput");
+		}
 	}
 
 	public SparkInput<V> with(String colname, Object value) {

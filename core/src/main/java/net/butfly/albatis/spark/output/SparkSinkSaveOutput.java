@@ -26,7 +26,6 @@ public abstract class SparkSinkSaveOutput extends SparkSinkOutputBase {
 			w.save(table, this);
 		}
 	}
-
 	@Override
 	public abstract void enqueue(Sdream<Rmap> r);
 }
