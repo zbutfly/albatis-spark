@@ -35,7 +35,8 @@ public class SparkESInput extends SparkRowInput {
 	public Map<String, String> options() {
 		Map<String, String> options = Maps.of();
 		options.put("cluster.name", targetUri.getUsername());
-		options.put("es.nodes", targetUri.getHostWithSecondaryPort(1));
+//		options.put("es.nodes", targetUri.getHostWithSecondaryPort(1));//TODO direct give it http port; last : to last /
+		options.put("es.nodes", targetUri.getHost());
 		return options;
 	}
 
@@ -68,8 +69,12 @@ public class SparkESInput extends SparkRowInput {
 			if (t.fields().length > 0) options.put("es.read.field.include", //
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
+//			TODO add currentTime monitor
+			long start = System.currentTimeMillis();
 			Dataset<Row> reaultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
 			logger().trace(() -> "Loaded from elasticsearch, schema: " + reaultDS.schema().treeString());
+			long end = System.currentTimeMillis();
+			logger().info("JavaEsSparkSQL esDF use\t"+(end-start)/1000 + "s" );
 			return Colls.list(new Tuple2<>(t.name, reaultDS));
 		});
 		return Colls.flat(list);
