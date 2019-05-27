@@ -66,9 +66,12 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
-		if (s instanceof DSdream) //
-			((DSdream) s).ds.foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap)));
-		else {
+		if (s instanceof DSdream) {
+			long start = System.currentTimeMillis();
+			((DSdream) s).ds.foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap))); //TODO add time monitor
+			long end = System.currentTimeMillis();
+			logger().info("foreachPartition use:\t"+ (end-start)/1000 + "s" );
+		} else {
 			Map<String, BlockingQueue<Rmap>> m = Maps.ofQ(s, Rmap::table);
 			for (String t : m.keySet())
 				write(t, m.get(t));
@@ -121,7 +124,6 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 		return new ReplaceOneModel<>(newDoc, doc, new ReplaceOptions().upsert(true));
 	}
 
-	// 传入一个MongoC对象,一个rmap
 	protected long write(MongoCollection<Document> col, Rmap rmap) {
 		Document doc = new Document(rmap);
 		Document docResult = null;

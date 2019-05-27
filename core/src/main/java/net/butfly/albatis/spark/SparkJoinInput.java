@@ -49,12 +49,14 @@ public final class SparkJoinInput extends SparkRowInput {
 		if (rows.size() > 1) //
 			logger().warn("Input with multiple datasets not support, only first joined and other is ignored.\n\t" + rows);
 		Dataset<Row> right = rows.get(0)._2;
-
 		SparkJoinType t = (SparkJoinType) ctx.get("type");
+		long joinStart = System.currentTimeMillis();
 		Dataset<Row> ds = t.join(left, (String) ctx.get("lcol"), right, (String) ctx.get("rcol"));
 		logger().info("Join [" + t + "]: \n\t<left:>" + left.schema().treeString() + //
 				"\t<right:>" + right.schema().treeString() + //
 				"\t<result:>" + ds.schema().treeString());
+		long joinEnd = System.currentTimeMillis();
+		logger().info("Join operator use:\t"+(joinEnd - joinStart)/1000+"s");
 		logger().debug("Dataset loaded.");
 		return Colls.list(new Tuple2<>((String) ctx.get("targetTable"), ds));
 	}

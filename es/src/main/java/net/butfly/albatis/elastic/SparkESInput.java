@@ -74,7 +74,7 @@ public class SparkESInput extends SparkRowInput {
 			Dataset<Row> reaultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
 			logger().trace(() -> "Loaded from elasticsearch, schema: " + reaultDS.schema().treeString());
 			long end = System.currentTimeMillis();
-			logger().info("JavaEsSparkSQL esDF use\t"+(end-start)/1000 + "s" );
+			logger().info("JavaEsSparkSQL esDF use:\t"+(end-start)/1000 + "s" );
 			return Colls.list(new Tuple2<>(t.name, reaultDS));
 		});
 		return Colls.flat(list);
