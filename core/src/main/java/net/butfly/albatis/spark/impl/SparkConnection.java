@@ -51,17 +51,18 @@ public class SparkConnection implements Environment {
 
 	public SparkSession spark() {
 		if (null == spark) {
+			long startInit = System.currentTimeMillis();
 			SparkIO.scan();
 			Map<String, String> params = params();
 			String host = host(params);
 			params().forEach(sparkConf::set);
 			if (host.isEmpty()) host = DEFAULT_HOST;
 			String name = Systems.getMainClass().getSimpleName();
-
 			sparkConf.registerKryoClasses(new Class[] { Rmap.class });
 			logger.info("Spark [" + name + "] constructing with config: \n" + sparkConf.toDebugString() + "\n");
 			spark = SparkSession.builder().master(host).appName(name).config(sparkConf).getOrCreate();
 			paramHadoop().forEach(spark.sparkContext().hadoopConfiguration()::set);
+			logger.info("init sparkcontext use:\t"+(System.currentTimeMillis()-startInit)/1000+"s");
 		}
 		return spark;
 	}

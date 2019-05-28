@@ -39,7 +39,7 @@ public interface SparkOutputWriter<T> extends Serializable {
 			if (null == r) return;
 			Output<T> out = o.output();
 			if (null == out) o.process(r);
-			else o.output().s().statsOut(r, this);
+			else o.output().s().statsOutN(r, this);
 		}
 
 		@Override

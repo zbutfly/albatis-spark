@@ -38,8 +38,8 @@ public final class SparkJoinInput extends SparkRowInput {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Tuple2<String, Dataset<Row>>> load(Object context) {
-		Map<String, Object> ctx = (Map<String, Object>) context;
 
+		Map<String, Object> ctx = (Map<String, Object>) context;
 		List<Tuple2<String, Dataset<Row>>> rows;
 		rows = ((SparkInput<Rmap>) ctx.get("left")).rows;
 		if (rows.size() > 1) //
@@ -48,15 +48,14 @@ public final class SparkJoinInput extends SparkRowInput {
 		rows = ((SparkInput<Rmap>) ctx.get("right")).rows;
 		if (rows.size() > 1) //
 			logger().warn("Input with multiple datasets not support, only first joined and other is ignored.\n\t" + rows);
+        long joinStart = System.currentTimeMillis();
 		Dataset<Row> right = rows.get(0)._2;
 		SparkJoinType t = (SparkJoinType) ctx.get("type");
-		long joinStart = System.currentTimeMillis();
 		Dataset<Row> ds = t.join(left, (String) ctx.get("lcol"), right, (String) ctx.get("rcol"));
 		logger().info("Join [" + t + "]: \n\t<left:>" + left.schema().treeString() + //
 				"\t<right:>" + right.schema().treeString() + //
 				"\t<result:>" + ds.schema().treeString());
-		long joinEnd = System.currentTimeMillis();
-		logger().info("Join operator use:\t"+(joinEnd - joinStart)/1000+"s");
+		logger().info("Join operator use:\t"+(System.currentTimeMillis() - joinStart)/1000+"s");
 		logger().debug("Dataset loaded.");
 		return Colls.list(new Tuple2<>((String) ctx.get("targetTable"), ds));
 	}
