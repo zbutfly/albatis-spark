@@ -38,7 +38,7 @@ public class SparkConnection implements Environment {
 
 	private SparkSession spark = null;
 	private final URISpec uriSpec;
-	public final SparkConf sparkConf;
+	private final SparkConf sparkConf;
 
 	public SparkConnection() {
 		this(null);

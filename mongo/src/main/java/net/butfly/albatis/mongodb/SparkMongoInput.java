@@ -58,43 +58,32 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 		List<List<Tuple2<String, Dataset<Row>>>> resultList = Colls.list(schemaAll().values(), item -> {
 			Map<String, String> opts = options();
 			opts.put("collection", item.name);
-
 			ReadConfig rc = ReadConfig.create(opts);
-
 			FieldDesc[] fields = item.fields();
-
 			List<String> fieldList = new ArrayList<>();
-
 			for (FieldDesc desc : fields) {
 				String name = desc.attr("asfrom");
 				fieldList.add(name);
 			}
-//
 			long start = System.currentTimeMillis();
 			JavaMongoRDD<Document> rdd = MongoSpark.load(jsc, rc);
-
-
 			if (Systems.isDebug()) {
 				int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1")) / rdd.getNumPartitions() + 1;
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
-
 			Dataset<Row> ds = rdd.toDF();
-
 			String table_queryparam = (String) item.attr("TABLE_QUERYPARAM");
-
 			Dataset<Row> resultDS =null;
 			if (! table_queryparam.isEmpty()){
 				resultDS = ds.where(table_queryparam);
 			}else{
 				resultDS = ds;
 			}
-			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col(
-			 "_id.oid"));
-
-			long end = System.currentTimeMillis();
-			logger().info("MongoSpark load use:\t"+ (end-start)/1000 + "s" );
-
+			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col("_id.oid"));
+			resultDS.cache();
+			logger().info("mongo cache use:"+ (System.currentTimeMillis()-start)/1000 + "s");
+			long count = resultDS.count();
+			logger().info("MongoSpark load use:\t"+ (System.currentTimeMillis()-start)/1000 + "s"+"\n\tcount:\t"+count);
 			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
 		});
 		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);

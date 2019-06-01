@@ -57,7 +57,7 @@ public class SparkSolrInput extends SparkRowInput {
 				String queryCondition = null;
 				try {
 					client = new Client(new SolrConnection(targetUri));
-					solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", "");
+					solr = (SolrQuery)client.getQueryCondition("select * from "+t.dbname+" where " + conditionExpr + " ", null);
 					String solrStr = solr.get("json");
 					Map<String,String> map = objectMapper.readValue(solrStr, Map.class);
 					queryCondition = map.get("query");

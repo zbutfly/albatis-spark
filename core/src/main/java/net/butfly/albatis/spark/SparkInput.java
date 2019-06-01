@@ -54,7 +54,7 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 			});
 			return;
 		case ROW:
-			List<Tuple2<String, Dataset<Row>>> rowtbls = load(context);
+			List<Tuple2<String, Dataset<Row>>> rowtbls = load(context); //TODO add time monitor
 			rowtbls.forEach(t -> {
 				Dataset<Row> ds = limit(t._2);
 				ds = cut(ds, t._1);

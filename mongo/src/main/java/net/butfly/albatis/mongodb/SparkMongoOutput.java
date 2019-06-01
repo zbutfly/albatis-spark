@@ -68,7 +68,7 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	public void enqueue(Sdream<Rmap> s) {
 		if (s instanceof DSdream) {
 			long start = System.currentTimeMillis();
-			((DSdream) s).ds.repartition(2000).foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap))); //TODO add time monitor
+			((DSdream) s).ds.foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap))); //TODO add time monitor
 			logger().info("foreachPartition use:\t"+ (System.currentTimeMillis()-start)/1000 + "s" );
 		} else {
 			Map<String, BlockingQueue<Rmap>> m = Maps.ofQ(s, Rmap::table);

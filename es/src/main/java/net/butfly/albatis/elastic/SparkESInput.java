@@ -49,7 +49,6 @@ public class SparkESInput extends SparkRowInput {
 	protected List<Tuple2<String, Dataset<Row>>> load() {
 //		uniquery bug
 		System.setProperty("es.set.netty.runtime.available.processors", "false");
-
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
 			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
@@ -57,9 +56,9 @@ public class SparkESInput extends SparkRowInput {
 				Client client = null;
 				Object queryCondition = null;
 				try {
-					client = new Client(new ElasticConnection(targetUri));
+					client = new Client(new ElasticRestHighLevelConnection(targetUri));
 					String indexType = targetUri.getFile() +"."+ t.dbname;
-					queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", "");
+					queryCondition = client.getQueryCondition("select * from "+indexType+" where " + conditionExpr + " ", null);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -69,12 +68,16 @@ public class SparkESInput extends SparkRowInput {
 			if (t.fields().length > 0) options.put("es.read.field.include", //
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
-//			TODO add currentTime monitor
 			long start = System.currentTimeMillis();
-			Dataset<Row> reaultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
-			logger().trace(() -> "Loaded from elasticsearch, schema: " + reaultDS.schema().treeString());
-			logger().info("JavaEsSparkSQL esDF use:\t"+(System.currentTimeMillis()-start)/1000 + "s" );
-            return Colls.list(new Tuple2<>(t.name, reaultDS));
+			Dataset<Row> resultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
+			logger().trace(() -> "Loaded from elasticsearch, schema: " + resultDS.schema().treeString());
+
+			resultDS.cache();
+			logger().info("esDS cache use:"+ (System.currentTimeMillis()-start)/1000 + "s");
+			long count = resultDS.count();
+			logger().info("esDS count use:\t"+(System.currentTimeMillis()-start)/1000 + "s"+"\n\tcount:"+count);
+//			+"\n\tcount:\t"+count
+            return Colls.list(new Tuple2<>(t.name, resultDS));
 		});
 		return Colls.flat(list);
 	}

@@ -70,8 +70,10 @@ public class SparkKuduInput extends SparkRowInput {
 		    resultDs = cutedDS;
         }
 		logger().trace(() -> "Loaded from kudu, schema: " + cutedDS.schema().treeString());
-		long end = System.currentTimeMillis();
-		logger().info("readKudu use:\t"+ (end-start)/1000 + "s" );
+		resultDs.cache();
+		logger().info("kudu cache use:"+ (System.currentTimeMillis()-start)/1000 + "s");
+		long count = resultDs.count();
+		logger().info("readKudu use:\t"+ (System.currentTimeMillis()-start)/1000 + "s"+"\n\tcount:\t"+count+"");
 		return resultDs;
 	}
 
