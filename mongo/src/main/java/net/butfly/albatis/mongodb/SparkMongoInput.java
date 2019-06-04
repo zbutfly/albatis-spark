@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Strings;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -71,23 +72,22 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 				int limit = Integer.parseInt(Configs.gets(Albatis.PROP_DEBUG_INPUT_LIMIT, "-1")) / rdd.getNumPartitions() + 1;
 				if (limit > 0) rdd = rdd.withPipeline(Colls.list(Document.parse("{ $limit: " + limit + " }")));
 			}
-			Dataset<Row> ds = rdd.toDF();
+			Dataset<Row> ds = rdd.toDF().cache();
+			logger().info("mongo cache use:"+ (System.currentTimeMillis()-start)/1000.0 + "s");
 			String table_queryparam = (String) item.attr("TABLE_QUERYPARAM");
 			Dataset<Row> resultDS =null;
-			if (! table_queryparam.isEmpty()){
-				resultDS = ds.where(table_queryparam);
-			}else{
+			if (Strings.isNullOrEmpty(table_queryparam)){
 				resultDS = ds;
+			}else{
+				resultDS = ds.where(table_queryparam);
 			}
-			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col("_id.oid"));
-			resultDS.cache();
-			logger().info("mongo cache use:"+ (System.currentTimeMillis()-start)/1000 + "s");
+//			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col("_id.oid"));
+			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id"));
 			long count = resultDS.count();
-			logger().info("MongoSpark load use:\t"+ (System.currentTimeMillis()-start)/1000 + "s"+"\n\tcount:\t"+count);
+			logger().info("MongoSpark load use:\t"+ (System.currentTimeMillis()-start)/1000.0 + "s"+"\n\tcount:\t"+count);
 			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
 		});
-		List<Tuple2<String, Dataset<Row>>> flat = flat(resultList);
-		return flat;
+		return flat(resultList);
 	}
 
 	public Seq<Column> convertListToSeq(List<Column> inputList) {
