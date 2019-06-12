@@ -38,7 +38,6 @@ public final class SparkJoinInput extends SparkRowInput {
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<Tuple2<String, Dataset<Row>>> load(Object context) {
-
 		Map<String, Object> ctx = (Map<String, Object>) context;
 		List<Tuple2<String, Dataset<Row>>> rows;
 		rows = ((SparkInput<Rmap>) ctx.get("left")).rows;
@@ -48,19 +47,30 @@ public final class SparkJoinInput extends SparkRowInput {
 		rows = ((SparkInput<Rmap>) ctx.get("right")).rows;
 		if (rows.size() > 1) //
 			logger().warn("Input with multiple datasets not support, only first joined and other is ignored.\n\t" + rows);
-        long joinStart = System.currentTimeMillis();
+
+
 		Dataset<Row> right = rows.get(0)._2;
 		SparkJoinType t = (SparkJoinType) ctx.get("type");
-		Dataset<Row> joinDS = t.join(left, (String) ctx.get("lcol"), right, (String) ctx.get("rcol"));
+
+//		test count
+//		long joinBeforeStart = System.currentTimeMillis();
+//		long rightN = right.count();
+//		long leftN = left.count();
+//		logger().info("joinBefore use:"+(System.currentTimeMillis()-joinBeforeStart)/1000.0+"s"+"\tleft use:"+leftN+"\tright use:"+rightN);
+
+		long joinStart = System.currentTimeMillis();
+		Dataset<Row> joinDS = t.join(left, (String) ctx.get("lcol"), right, (String) ctx.get("rcol"));  //TODO will general new stage,give new partition
+		logger().info("joinDS use:\t"+(System.currentTimeMillis()-joinStart)/1000.0 + "s");
 		logger().info("Join [" + t + "]: \n\t<left:>" + left.schema().treeString() + //
 				"\t<right:>" + right.schema().treeString() + //
 				"\t<result:>" + joinDS.schema().treeString());
-
 		logger().trace(() -> "Loaded from elasticsearch, schema: " + joinDS.schema().treeString());
-		joinDS.cache();
-		logger().info("joinDS cache use:"+ (System.currentTimeMillis()-joinStart)/1000 + "s");
-		long count = joinDS.count();
-		logger().info("joinDS count use:\t"+(System.currentTimeMillis()-joinStart)/1000 + "s"+"\n\tcount:"+count);
+//		logger().info("joinDS cache use:"+ (System.currentTimeMillis()-joinStart)/1000.0 + "s");
+
+		long joinafterStart = System.currentTimeMillis();
+		joinDS.count();
+		logger().info("join after count use:"+(System.currentTimeMillis()-joinafterStart)/1000.0+"s");
+//		long count = joinDS.count();
 		logger().debug("Dataset loaded.");
 		return Colls.list(new Tuple2<>((String) ctx.get("targetTable"), joinDS));
 	}

@@ -203,7 +203,6 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	// 传入一个function,输入是动态类型V,输出是Sdream对象
 	public <V1> SparkInput<V1> thenFlat(Function<V, Sdream<V1>> conv) {
 		List<Tuple2<String, Dataset<Rmap>>> dss1 = list(vals(), t -> {
 			Dataset<Rmap> ds1 = t._2.flatMap((FlatMapFunction<V, Rmap>) v -> ((List<Rmap>) conv.apply(v).list()).iterator(), ENC_RMAP);

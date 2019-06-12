@@ -67,6 +67,7 @@ public class SparkConnection implements Environment {
 		return spark;
 	}
 
+
 	private final static Map<String, String> EXTRA_SPARK_CONFS = Maps.of();
 
 	public static void extra(String key, String value) {

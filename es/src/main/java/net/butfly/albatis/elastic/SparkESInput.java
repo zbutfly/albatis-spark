@@ -47,7 +47,6 @@ public class SparkESInput extends SparkRowInput {
 
 	@Override
 	protected List<Tuple2<String, Dataset<Row>>> load() {
-//		uniquery bug
 		System.setProperty("es.set.netty.runtime.available.processors", "false");
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
@@ -69,14 +68,11 @@ public class SparkESInput extends SparkRowInput {
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
 			long start = System.currentTimeMillis();
-			Dataset<Row> resultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options);
+			Dataset<Row> resultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options).persist();//direct cache it
 			logger().trace(() -> "Loaded from elasticsearch, schema: " + resultDS.schema().treeString());
-
-			resultDS.cache();
-			logger().info("esDS cache use:"+ (System.currentTimeMillis()-start)/1000 + "s");
-			long count = resultDS.count();
-			logger().info("esDS count use:\t"+(System.currentTimeMillis()-start)/1000 + "s"+"\n\tcount:"+count);
-//			+"\n\tcount:\t"+count
+			logger().info("esDS cache use:"+ (System.currentTimeMillis()-start)/1000.0 + "s");
+			long count = resultDS.count(); //coalesce(300)  explicit call cache
+			logger().info("esDS count use:\t"+(System.currentTimeMillis()-start)/1000.0 + "s"+"\n\tcount:"+count);
             return Colls.list(new Tuple2<>(t.name, resultDS));
 		});
 		return Colls.flat(list);

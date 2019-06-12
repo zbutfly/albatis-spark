@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.bson.Document;
@@ -38,12 +39,12 @@ import net.butfly.albatis.spark.util.DSdream;
 public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWriting, SparkMongo {
 	private static final long serialVersionUID = -887072515139730517L;
 	private final String mongodbn;
-	private final MongoSpark mongo;
+	private final MongoSpark mongoSpark;
 
 	public SparkMongoOutput(SparkSession spark, URISpec targetUri, TableDesc... table) {
 		super(spark, targetUri, table);
 		mongodbn = targetUri.getPathAt(0);
-		mongo = MongoSpark.builder().options(options(null)).javaSparkContext(new JavaSparkContext(spark.sparkContext())).build();
+		mongoSpark = MongoSpark.builder().options(options(null)).javaSparkContext(new JavaSparkContext(spark.sparkContext())).build();
 	}
 
 	@Override
@@ -67,8 +68,10 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 	@Override
 	public void enqueue(Sdream<Rmap> s) {
 		if (s instanceof DSdream) {
+			Dataset<Row> cache = ((DSdream) s).ds.cache();
+			cache.count();
 			long start = System.currentTimeMillis();
-			((DSdream) s).ds.foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap))); //TODO add time monitor
+			cache.foreachPartition((ForeachPartitionFunction<Row>) rows -> write(((DSdream) s).table, Colls.list(rows, Schemas::row2rmap))); //TODO add time monitor
 			long count = ((DSdream) s).ds.count(); //TODO make it fast
 			logger().info("foreachPartition use:\t"+ (System.currentTimeMillis()-start)/1000.0 + "s"+"\tcount:"+count);
 		} else {
@@ -84,7 +87,7 @@ public class SparkMongoOutput extends SparkSinkSaveOutput implements SparkWritin
 		if (docs instanceof BlockingQueue) l = (LinkedBlockingQueue<Rmap>) docs;
 		else l = new LinkedBlockingQueue<>(docs);
 
-		MongoCollection<Document> col = mongo.connector().acquireClient().getDatabase(mongodbn).getCollection(table);
+		MongoCollection<Document> col = mongoSpark.connector().acquireClient().getDatabase(mongodbn).getCollection(table);
 		AtomicLong succ = new AtomicLong();
 		while (!l.isEmpty()) {
 			List<Rmap> batch = Colls.list();

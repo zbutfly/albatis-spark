@@ -30,7 +30,6 @@ public abstract class SparkRowInput extends SparkInput<Row> {
 		return Colls.list(load(), t -> new Tuple2<>(t._1, (Dataset<T>) t._2));
 	}
 
-	// 当这个RowInput调用super父类构造器时,就传入这个mode()
 	@Override
 	protected final DatasetMode mode() {
 		return DatasetMode.ROW;

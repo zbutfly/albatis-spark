@@ -61,7 +61,8 @@ public class SparkKuduInput extends SparkRowInput {
 		logger().debug("Loading from kudu as : " + opts + "\n\tschema: " + schema.toString());
 //		TODO add time monitor
 		long start = System.currentTimeMillis();
-		Dataset<Row> cutedDS = spark.read().format(format()).schema(schema).options(opts).load();
+		Dataset<Row> cutedDS = spark.read().format(format()).schema(schema).options(opts).load().cache();
+		logger().info("kudu cache use:"+ (System.currentTimeMillis()-start)/1000.0 + "s");
 		String condition = (String) table().attr("TABLE_QUERYPARAM");
         Dataset<Row> resultDs = null;
 		if (!condition.isEmpty()){
@@ -70,10 +71,8 @@ public class SparkKuduInput extends SparkRowInput {
 		    resultDs = cutedDS;
         }
 		logger().trace(() -> "Loaded from kudu, schema: " + cutedDS.schema().treeString());
-		resultDs.cache();
-		logger().info("kudu cache use:"+ (System.currentTimeMillis()-start)/1000 + "s");
 		long count = resultDs.count();
-		logger().info("readKudu use:\t"+ (System.currentTimeMillis()-start)/1000 + "s"+"\n\tcount:\t"+count+"");
+		logger().info("readKudu use:\t"+ (System.currentTimeMillis()-start)/1000.0 + "s"+"\n\tcount:\t"+count+"");
 		return resultDs;
 	}
 
