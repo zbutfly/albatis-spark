@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.common.base.Strings;
 import com.hzcominfo.dataggr.uniquery.Client;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 
 import net.butfly.albacore.io.URISpec;
@@ -51,7 +49,7 @@ public class SparkESInput extends SparkRowInput {
 		List<List<Tuple2<String, Dataset<Row>>>> list = Colls.list(schemaAll().values(), t -> {
 			Map<String, String> options = options();
 			String conditionExpr = (String) t.attr("TABLE_QUERYPARAM");
-			if (!conditionExpr.isEmpty()){
+			if (!Strings.isNullOrEmpty(conditionExpr)){
 				Client client = null;
 				Object queryCondition = null;
 				try {

@@ -1,35 +1,30 @@
 package net.butfly.albatis.spark.impl;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ForkJoinPool;
-
-import net.butfly.albatis.Connection;
-import org.apache.spark.SparkConf;
-import org.apache.spark.scheduler.SparkListener;
-import org.apache.spark.scheduler.SparkListenerJobStart;
-import org.apache.spark.scheduler.SparkListenerStageCompleted;
-import org.apache.spark.scheduler.SparkListenerStageSubmitted;
-import org.apache.spark.scheduler.SparkListenerTaskEnd;
-import org.apache.spark.scheduler.SparkListenerTaskStart;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import net.butfly.albacore.io.URISpec;
 import net.butfly.albacore.utils.IOs;
 import net.butfly.albacore.utils.Systems;
 import net.butfly.albacore.utils.collection.Colls;
 import net.butfly.albacore.utils.collection.Maps;
 import net.butfly.albacore.utils.logger.Logger;
+import net.butfly.albatis.Connection;
+import net.butfly.albatis.Environment;
 import net.butfly.albatis.ddl.TableDesc;
 import net.butfly.albatis.io.Input;
 import net.butfly.albatis.io.Output;
 import net.butfly.albatis.io.Rmap;
+import org.apache.spark.SparkConf;
+import org.apache.spark.scheduler.*;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
-import net.butfly.albatis.Environment;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ForkJoinPool;
 
 public class SparkConnection implements Environment {
 	private static final long serialVersionUID = 5093686615279489589L;
@@ -130,6 +125,13 @@ public class SparkConnection implements Environment {
 	}
 
 
+	public void sparkConvertInput(String tableName) {  //TODO should return SparkConvertInput
+	}
+
+	public SparkSession convertInput(String table){
+		return spark;  //sparkConvertInput
+	}
+
 	@Override
 	public String defaultSchema() {
 		return "spark";
@@ -178,6 +180,8 @@ public class SparkConnection implements Environment {
 		});
 	}
 
+
+
 	public int getJobId() {
 		return spark.sparkContext().dagScheduler().nextJobId().get();
 	}
@@ -191,6 +195,8 @@ public class SparkConnection implements Environment {
 	public Dataset<Row> sql(String sql) {
 		return spark.sql(sql);
 	}
+
+
 
 	public static class Driver implements net.butfly.albatis.Connection.Driver<SparkConnection> {
 		static {

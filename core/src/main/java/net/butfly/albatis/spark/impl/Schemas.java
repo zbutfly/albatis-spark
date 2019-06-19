@@ -69,7 +69,6 @@ public interface Schemas {
 	static Rmap row2rmap(Row row) {
 		Map<String, Object> map = Maps.of();
 		for (int i = 0; i < row.schema().fieldNames().length; i++) {
-//			如果row里没有i,就跳过本次循环
 			if (row.isNullAt(i)) continue;
 			String f = row.schema().fieldNames()[i];
 			Object v = row.get(i);

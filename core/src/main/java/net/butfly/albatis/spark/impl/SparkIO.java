@@ -33,7 +33,6 @@ public abstract class SparkIO implements IO, Serializable {
 		super();
 		this.spark = spark;
 		this.targetUri = targetUri;
-
 		if (table.length > 0) schema(table);
 	}
 

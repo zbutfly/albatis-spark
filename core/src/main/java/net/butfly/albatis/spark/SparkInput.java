@@ -126,6 +126,11 @@ public abstract class SparkInput<V> extends SparkIO implements OddInput<V> {
 		return this;
 	}
 
+	public final SparkInput<V> getSparkInputByDS(String table) {
+		this.vals.clear();
+		return this;
+	}
+
 
 	@Override
 	public final V dequeue() {
