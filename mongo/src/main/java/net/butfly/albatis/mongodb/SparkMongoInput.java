@@ -81,15 +81,14 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 			}else{
 				resultDS = ds.where(table_queryparam);
 			}
-
-			String[] columns = resultDS.columns();  //			if ds has _id column ,drop it; it lead to codec problem
+			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid"));
+			String[] columns = resultDS.columns();  //if ds has _id column ,drop it; it lead to codec problem
 			for (String column : columns) {
 				if (column.equals("_id")){
 					resultDS = resultDS.drop(column);
 				}
 			}
 //			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col("_id.oid"));
-//			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid"));
 			long count = resultDS.count();
 			logger().info("MongoSpark load use:\t"+ (System.currentTimeMillis()-start)/1000.0 + "s"+"\n\tcount:\t"+count);
 			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
