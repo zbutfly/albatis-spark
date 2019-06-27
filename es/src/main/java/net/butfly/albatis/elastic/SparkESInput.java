@@ -9,6 +9,7 @@ import com.hzcominfo.dataggr.uniquery.Client;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.elasticsearch.spark.sql.api.java.JavaEsSparkSQL;
 
 import net.butfly.albacore.io.URISpec;
@@ -66,7 +67,7 @@ public class SparkESInput extends SparkRowInput {
 					String.join(",", Colls.list(f -> f.attr(Desc.PROJECT_FROM, f.name), t.fields())));
 			logger().debug("Loading from elasticsearch as: " + options);
 			long start = System.currentTimeMillis();
-			Dataset<Row> resultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options).persist();//direct cache it
+			Dataset<Row> resultDS = JavaEsSparkSQL.esDF(spark, options.get("es.resource"), options).persist(StorageLevel.MEMORY_AND_DISK());//direct cache it
 			logger().trace(() -> "Loaded from elasticsearch, schema: " + resultDS.schema().treeString());
 			logger().info("esDS cache use:"+ (System.currentTimeMillis()-start)/1000.0 + "s");
 			long count = resultDS.count(); //coalesce(300)  explicit call cache

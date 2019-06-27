@@ -24,6 +24,7 @@ import net.butfly.albatis.ddl.vals.ValType;
 import net.butfly.albatis.spark.SparkRowInput;
 import net.butfly.albatis.spark.impl.SparkIO.Schema;
 import net.butfly.albatis.spark.impl.Sparks;
+import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
 @Schema("kudu")
@@ -71,7 +72,7 @@ public class SparkKuduInput extends SparkRowInput {
 		    resultDs = cutedDS;
         }
 		logger().trace(() -> "Loaded from kudu, schema: " + cutedDS.schema().treeString());
-		long count = resultDs.count();
+		long count = resultDs.persist(StorageLevel.MEMORY_AND_DISK()).count();
 		logger().info("readKudu use:\t"+ (System.currentTimeMillis()-start)/1000.0 + "s"+"\n\tcount:\t"+count+"");
 		return resultDs;
 	}

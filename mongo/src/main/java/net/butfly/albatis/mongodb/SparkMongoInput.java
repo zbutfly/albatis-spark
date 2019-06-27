@@ -16,6 +16,7 @@ import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.bson.Document;
 
 import com.mongodb.spark.MongoSpark;
@@ -89,7 +90,7 @@ public class SparkMongoInput extends SparkRowInput implements SparkMongo {
 				}
 			}
 //			resultDS = resultDS.withColumn(FIELD_TABLE_NAME, lit(item.name)).withColumn(FIELD_KEY_VALUE, ds.col("_id.oid")).withColumn("_id", ds.col("_id.oid"));
-			long count = resultDS.count();
+			long count = resultDS.persist(StorageLevel.MEMORY_AND_DISK()).count();
 			logger().info("MongoSpark load use:\t"+ (System.currentTimeMillis()-start)/1000.0 + "s"+"\n\tcount:\t"+count);
 			return Colls.list(split(resultDS, false), ds1 -> new Tuple2<>(item.name, ds1));
 		});

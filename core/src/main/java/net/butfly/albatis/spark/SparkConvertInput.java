@@ -24,39 +24,44 @@ import static net.butfly.albatis.spark.impl.Schemas.rmap2row;
 
 public final class SparkConvertInput extends SparkRowInput {
 	private static final long serialVersionUID = -4870210186801496L;
+//	private SparkSession sparksc = null;
 
-    public SparkConvertInput(SparkInput<Rmap> input,  List<Map<String, Object>> allDocs, String tableName, URISpec uri, Map<String, String> fieldSet) throws IOException {
-        super(null,null,Maps.of("allDocs",allDocs,"tableName",tableName,"fieldSet",fieldSet));
+    public SparkConvertInput(SparkInput<Rmap> input, SparkSession sparksc, List<Map<String, Object>> allDocs, String tableName, URISpec uri, Map<String, String> fieldSet) throws IOException {
+        super(null,null,Maps.of("sparksc",sparksc,"allDocs",allDocs,"tableName",tableName,"fieldSet",fieldSet));
+//        this.sparksc = sparksc;
 //		super(input.spark,input.targetUri,Maps.of("allDocs",allDocs,"tableName",tableName,"fieldSet",fieldSet));
     }
 
 	@Override
-	protected List<Tuple2<String, Dataset<Row>>> load(Object context) throws IOException { //TODO context should contains
+	protected List<Tuple2<String, Dataset<Row>>> load(Object context) throws IOException {
 		Map<String, Object> config = (Map<String, Object>) context;
 		Encoder<Rmap> rowEncoder = Encoders.kryo(Rmap.class);
 //      should convert map to row, map to rmap ,thne make it row;
         List<Map<String, Object>> esResult = (List<Map<String, Object>>) config.get("allDocs");
         if (esResult.size() < 1)
             throw new IllegalArgumentException("esResult is empty");
-        List<Rmap> rmapList = esResult.parallelStream().map(x -> new Rmap().map(x)).collect(Collectors.toList()); //TODO get from Obj
-//        context
+        List<Rmap> rmapList = esResult.parallelStream().map(x -> new Rmap().map(x)).collect(Collectors.toList());
         URISpec hotel1URI = new URISpec("es:rest://hzcominfo@172.30.10.31:39200/hotel_info_2");
 		DBDesc dbDesc = DBDesc.of("hotel_info_2",hotel1URI.getPath()); //TODO this.targetUri.getFile()
 		TableDesc tableDesc = dbDesc.table(String.valueOf(config.get("fieldSet")));
 		List<String> fieldList = new ArrayList<String>( esResult.get(0).keySet()); //TODO allDocs is not empty
-		for (int i =0;i<fieldList.size();i++) { //TODO cut field
+		for (int i =0;i<fieldList.size();i++) {
 //            ValType type = ValType.of("string");
-			FieldDesc fieldDesc = new FieldDesc(tableDesc, fieldList.get(i), null);
+			FieldDesc fieldDesc = new FieldDesc(tableDesc, fieldList.get(i), null); //
 			tableDesc.field(fieldDesc);
 		}
 		long createDSStart = System.currentTimeMillis();
-		Dataset<Rmap> dataset = spark.createDataset(rmapList, rowEncoder);//TODO  first get spark
-		logger().info("create ds use:"+(System.currentTimeMillis() - createDSStart)+"ms");
-		Dataset<Row> ds = rmap2row(tableDesc,dataset); //TODO tableDesc should has struct
+        SparkSession sparkss = (SparkSession) config.get("sparksc");
+		Dataset<Rmap> dataset = sparkss.createDataset(rmapList, rowEncoder);//TODO  first get spark
+		Dataset<Row> ds = rmap2row(tableDesc,dataset); //TODO tableDesc should has struct slowly
 		Dataset<Row> aliasDS = getAliasDS(ds, (Map<String, String>) config.get("fieldSet"));
-        String table = String.valueOf(config.get("table"));
-//        List<Tuple2<String, Dataset<T>>> list = Colls.list(new Tuple2<>(table,aliasDS));
-        return Colls.list(new Tuple2<>(table, aliasDS));
+		logger().info("<convertDs>"+aliasDS.schema().treeString());
+//		logger().info("convert list to ds use:"+(System.currentTimeMillis() - createDSStart)+"ms");
+
+		long countStart = System.currentTimeMillis();
+		long count = aliasDS.cache().count();
+		logger().info("count use:"+(System.currentTimeMillis()-countStart)+"ms"+"\t"+"convertDS count:"+count);
+        return Colls.list(new Tuple2<>(String.valueOf(config.get("table")), aliasDS));
 	}
 
 	public Dataset<Row> getAliasDS(Dataset<Row> ds, Map<String, String> fieldMap) {

@@ -51,7 +51,7 @@ public final class SparkJoinInput extends SparkRowInput {
 		SparkJoinType t = (SparkJoinType) ctx.get("type");
 		long joinStart = System.currentTimeMillis();
 		Dataset<Row> joinDS = t.join(left, (String) ctx.get("lcol"), right, (String) ctx.get("rcol"));  //TODO will general new stage,give new partition
-		logger().info("joinDS use:\t"+(System.currentTimeMillis()-joinStart)/1000.0 + "s");
+		logger().info("joinDS use:\t"+(System.currentTimeMillis()-joinStart) + "ms");
 
 		logger().info("Join [" + t + "]: \n\t<left:>" + left.schema().treeString() + //
 				"\t<right:>" + right.schema().treeString() + //
@@ -59,9 +59,9 @@ public final class SparkJoinInput extends SparkRowInput {
 		logger().trace(() -> "Loaded from elasticsearch, schema: " + joinDS.schema().treeString());
 
 		long joinafterStart = System.currentTimeMillis();
-		joinDS.cache();
-		joinDS.count();
-		logger().info("join after count use:"+(System.currentTimeMillis()-joinafterStart)/1000.0+"s");
+//		joinDS.cache();
+//		joinDS.count();
+//		logger().info("join after count use:"+(System.currentTimeMillis()-joinafterStart)/1000.0+"s");
 		logger().debug("Dataset loaded.");
 		return Colls.list(new Tuple2<>((String) ctx.get("targetTable"), joinDS));
 	}
